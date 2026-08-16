@@ -58,6 +58,16 @@ Watch requests stream in real time with key, model, status, token count, and dur
 
 ![Metrics page with request and token charts plus backend health](screenshots/metrics.png)
 
+## CLI
+
+Manage everything from the terminal with `aivm` — backends, virtual models, keys, plugins, and more. Ideal for scripting and automation; the same operations are available in the web UI.
+
+![AiVM startup screen with ASCII banner, endpoints, backends, and virtual model health](screenshots/cli-loading-screen.png)
+
+![AiVM CLI help output and virtual model list table](screenshots/cli-example.png)
+
+See [CLI reference](docs/guide/cli.md) for the full command set.
+
 ## Supported providers
 
 LM Studio, Ollama, vLLM, OpenAI, and generic OpenAI-compatible backends.
