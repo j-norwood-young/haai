@@ -15,7 +15,14 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
     const result = await Promise.all(
       rows.map(async (vm) => {
         const backends = await ctx.db.db
-          .select()
+          .select({
+            id: vmodelBackendsTable.id,
+            backendId: vmodelBackendsTable.backendId,
+            backendModelId: vmodelBackendsTable.backendModelId,
+            weight: vmodelBackendsTable.weight,
+            enabled: vmodelBackendsTable.enabled,
+            createdAt: vmodelBackendsTable.createdAt,
+          })
           .from(vmodelBackendsTable)
           .where(eq(vmodelBackendsTable.vmodelId, vm.id))
           .all();
@@ -35,7 +42,14 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
     if (!vm) return reply.status(404).send({ error: "VModel not found" });
 
     const backends = await ctx.db.db
-      .select()
+      .select({
+        id: vmodelBackendsTable.id,
+        backendId: vmodelBackendsTable.backendId,
+        backendModelId: vmodelBackendsTable.backendModelId,
+        weight: vmodelBackendsTable.weight,
+        enabled: vmodelBackendsTable.enabled,
+        createdAt: vmodelBackendsTable.createdAt,
+      })
       .from(vmodelBackendsTable)
       .where(eq(vmodelBackendsTable.vmodelId, vm.id))
       .all();
@@ -98,7 +112,14 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
       .where(eq(vmodelsTable.id, id))
       .get();
     const backends = await ctx.db.db
-      .select()
+      .select({
+        id: vmodelBackendsTable.id,
+        backendId: vmodelBackendsTable.backendId,
+        backendModelId: vmodelBackendsTable.backendModelId,
+        weight: vmodelBackendsTable.weight,
+        enabled: vmodelBackendsTable.enabled,
+        createdAt: vmodelBackendsTable.createdAt,
+      })
       .from(vmodelBackendsTable)
       .where(eq(vmodelBackendsTable.vmodelId, id))
       .all();
@@ -183,6 +204,27 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
         .where(eq(vmodelBackendsTable.id, req.params.backendMappingId))
         .run();
       return reply.status(204).send();
+    },
+  );
+
+  // Update backend weight for v-model
+  app.patch<{ Params: { id: string; backendMappingId: string }; Body: Record<string, unknown> }>(
+    "/api/v1/vmodels/:id/backends/:backendMappingId",
+    async (req, reply) => {
+      const body = req.body;
+      const weight = body["weight"] as number | undefined;
+      
+      if (weight === undefined || weight < 0) {
+        return reply.status(400).send({ error: "weight is required and must be >= 0" });
+      }
+
+      await ctx.db.db
+        .update(vmodelBackendsTable)
+        .set({ weight })
+        .where(eq(vmodelBackendsTable.id, req.params.backendMappingId))
+        .run();
+
+      return reply.status(200).send({ success: true });
     },
   );
 }

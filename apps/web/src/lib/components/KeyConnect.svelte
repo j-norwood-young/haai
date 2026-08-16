@@ -43,7 +43,7 @@
 	const availabilityIssue = $derived(getVModelAvailabilityIssue(vmodels, allowedVModels));
 
 	const selectedVModel = $derived(
-		selectableVModels.find((vm) => vm.model_id === selectedModelId) ?? null
+		selectableVModels.find((vm) => vm.id === selectedModelId) ?? null
 	);
 
 	const selectedHasBackends = $derived((selectedVModel?.backends.length ?? 0) > 0);
@@ -75,9 +75,9 @@
 
 			vmodels = loadedVModels;
 			const eligible = eligibleVModelsForKey(loadedVModels, allowedVModels);
-			if (!eligible.some((vm) => vm.model_id === selectedModelId)) {
+			if (!eligible.some((vm) => vm.id === selectedModelId)) {
 				const preferred = connectableVModels(loadedVModels, allowedVModels);
-				selectedModelId = (preferred[0] ?? eligible[0])?.model_id ?? '';
+				selectedModelId = (preferred[0] ?? eligible[0])?.id ?? '';
 			}
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load connection details';
@@ -144,7 +144,7 @@
 				</label>
 				<select id="connect-vmodel" bind:value={selectedModelId} class="input w-full">
 					{#each selectableVModels as vm (vm.id)}
-						<option value={vm.model_id}>
+						<option value={vm.id}>
 							{vm.display_name || vm.model_id} ({vm.model_id}){vm.backends.length === 0
 								? ' — no backends'
 								: ''}

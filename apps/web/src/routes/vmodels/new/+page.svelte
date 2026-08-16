@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api } from '$lib/api.js';
+	import { api, type AvailableModel } from '$lib/api.js';
 	import type { Backend, VModel, VModelCreateInput } from '$lib/api.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 
@@ -16,11 +16,38 @@
 	let strategy = $state<VModel['strategy']>('session-pin');
 	let streaming = $state(true);
 	let selectedBackendIds = $state<string[]>([]);
+	let backendModels: Record<string, string> = {}; // Maps backendId -> backendModelId
+
+	// Available models grouped by backend for dropdowns
+	let availableModelsByBackend: Record<string, Array<{ id: string; name: string }>> = {};
 
 	async function load() {
 		try {
 			backends = await api.getBackends();
 			selectedBackendIds = backends.map((b) => b.id);
+			
+			// Fetch available models from all backends
+			const result = await api.getAvailableModels();
+			
+			// Group models by backend ID
+			availableModelsByBackend = {};
+			for (const model of result.models ?? []) {
+				if (model.type === 'backend-model' && model.backendId) {
+					const backendId = model.backendId;
+					if (!availableModelsByBackend[backendId]) {
+						availableModelsByBackend[backendId] = [];
+					}
+					availableModelsByBackend[backendId].push({
+						id: model.id,
+						name: `${model.id} (${model.backendName || model.ownedBy})`
+					});
+				}
+			}
+			
+			// Initialize backend models with modelId as default
+			for (const b of backends) {
+				backendModels[b.id] = modelId || '';
+			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load backends';
 		} finally {
@@ -32,10 +59,19 @@
 		if (selected) {
 			if (!selectedBackendIds.includes(backendId)) {
 				selectedBackendIds = [...selectedBackendIds, backendId];
+				// Initialize with modelId as default if not already set
+				if (!(backendId in backendModels)) {
+					backendModels[backendId] = modelId || '';
+				}
 			}
 		} else {
 			selectedBackendIds = selectedBackendIds.filter((id) => id !== backendId);
+			delete backendModels[backendId];
 		}
+	}
+
+	function updateBackendModel(backendId: string, value: string) {
+		backendModels[backendId] = value;
 	}
 
 	async function handleSubmit(e: SubmitEvent) {
@@ -50,7 +86,7 @@
 				streaming,
 				backends: selectedBackendIds.map((backendId) => ({
 					backend_id: backendId,
-					backend_model_id: modelId
+					backend_model_id: backendModels[backendId] || modelId
 				}))
 			};
 			await api.createVModel(payload);
@@ -137,16 +173,36 @@
 							No backends configured. <a href="/backends/new" class="text-cyan-400 hover:text-cyan-300">Add a backend</a> first.
 						</p>
 					{:else}
-						<div class="space-y-1.5 rounded-lg border border-gray-800 bg-gray-800/30 p-3 max-h-48 overflow-y-auto">
+						<div class="space-y-2 rounded-lg border border-gray-800 bg-gray-800/30 p-3 max-h-48 overflow-y-auto">
 							{#each backends as b (b.id)}
-								<label class="flex items-center gap-3 cursor-pointer rounded-md px-2 py-1.5 hover:bg-gray-800/60">
+								<label class="flex items-start gap-3 cursor-pointer rounded-md px-2 py-1.5 hover:bg-gray-800/60 block w-full">
 									<input
 										type="checkbox"
 										checked={selectedBackendIds.includes(b.id)}
 										onchange={(e) => toggleBackend(b.id, e.currentTarget.checked)}
-										class="checkbox"
+										class="checkbox mt-1"
 									/>
-									<span class="text-sm text-gray-200 flex-1">{b.name}</span>
+									<div class="flex-1 min-w-0">
+										<span class="text-sm text-gray-200 block">{b.name}</span>
+										{#if selectedBackendIds.includes(b.id)}
+											<select
+												bind:value={backendModels[b.id]}
+												oninput={(e) => updateBackendModel(b.id, e.currentTarget.value)}
+												class="mt-1 w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-300"
+											>
+												<option value="">Use default</option>
+												{#if ((availableModelsByBackend[b.id] ?? [])?.length ?? 0) > 0}
+													{#each (availableModelsByBackend[b.id] ?? []) as m}
+														<option value={m.id}>{m.name}</option>
+													{/each}
+												{:else}
+													<optgroup label="No models discovered">
+														<option value="">— No models found —</option>
+													</optgroup>
+												{/if}
+											</select>
+										{/if}
+									</div>
 									<span class="text-xs text-gray-500">{b.provider}</span>
 								</label>
 							{/each}

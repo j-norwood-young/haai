@@ -27,28 +27,32 @@
 
 	const mode = $derived(!restrict ? 'all' : selectedIds.length > 0 ? 'specific' : 'none');
 
-	function setMode(m: 'all' | 'specific' | 'none') {
-		if (m === 'all') {
-			restrict = false;
-			selectedIds = [];
-		} else if (m === 'specific') {
-			restrict = true;
-			if (selectedIds.length === 0) {
-				selectedIds = enabledVModels.map((vm) => vm.model_id);
+		function setMode(m: 'all' | 'specific' | 'none') {
+			if (m === 'all') {
+				restrict = false;
+				selectedIds = [];
+			} else if (m === 'specific') {
+				restrict = true;
+				if (selectedIds.length === 0) {
+					selectedIds = enabledVModels.map((vm) => vm.id);
+				}
+			} else {
+				restrict = true;
+				selectedIds = [];
 			}
-		} else {
-			restrict = true;
-			selectedIds = [];
 		}
-	}
 
-	function toggleModel(modelId: string) {
-		if (selectedIds.includes(modelId)) {
-			selectedIds = selectedIds.filter((id) => id !== modelId);
-		} else {
-			selectedIds = [...selectedIds, modelId];
+		function toggleModel(modelId: string) {
+			if (selectedIds.includes(modelId)) {
+				selectedIds = selectedIds.filter((id) => id !== modelId);
+			} else {
+				selectedIds = [...selectedIds, modelId];
+			}
 		}
-	}
+
+		function displayName(vm: VModel): string {
+			return vm.display_name && vm.display_name !== vm.model_id ? `${vm.model_id} — ${vm.display_name}` : vm.model_id;
+		}
 </script>
 
 <div class="space-y-2">
@@ -107,8 +111,8 @@
 					<input
 						type="checkbox"
 						class="checkbox"
-						checked={selectedIds.includes(vm.model_id)}
-						onchange={() => toggleModel(vm.model_id)}
+						checked={selectedIds.includes(vm.id)}
+						onchange={() => toggleModel(vm.id)}
 					/>
 					<span class="font-mono text-cyan-400/90">{vm.model_id}</span>
 					{#if vm.display_name && vm.display_name !== vm.model_id}

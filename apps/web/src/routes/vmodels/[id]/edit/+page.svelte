@@ -22,12 +22,38 @@
 
 	let addBackendId = $state('');
 	let addBackendLoading = $state(false);
+	let newBackendModelId = $state(''); // For specifying backend model when adding
+	let addBackendWeight = $state<string>('1'); // Weight for new backend mapping
+	let editingWeightFor = $state<string | null>(null); // Backend mapping ID being edited
+	let tempWeight = $state<string>('1'); // Temporary weight input
+
+	// Available models grouped by backend for dropdowns
+	let availableModelsByBackend = $state<Record<string, Array<{ id: string; name: string }>>>({});
 
 	async function load() {
 		loading = true;
 		error = null;
 		try {
 			[vmodel, backends] = await Promise.all([api.getVModel(id), api.getBackends()]);
+			
+			// Fetch available models from all backends
+			const result = await api.getAvailableModels();
+			
+			// Group models by backend ID
+			availableModelsByBackend = {};
+			for (const model of result.models ?? []) {
+				if (model.type === 'backend-model' && model.backendId) {
+					const backendId = model.backendId;
+					if (!availableModelsByBackend[backendId]) {
+						availableModelsByBackend[backendId] = [];
+					}
+					availableModelsByBackend[backendId].push({
+						id: model.id,
+						name: `${model.id} (${model.backendName || model.ownedBy})`
+					});
+				}
+			}
+			
 			displayName = vmodel.display_name;
 			strategy = vmodel.strategy;
 			streaming = vmodel.streaming;
@@ -59,10 +85,13 @@
 		try {
 			await api.addVModelBackend(id, {
 				backend_id: addBackendId,
-				backend_model_id: vmodel.model_id
+				backend_model_id: newBackendModelId || vmodel.model_id,
+				weight: parseInt(addBackendWeight, 10)
 			});
 			vmodel = await api.getVModel(id);
 			addBackendId = '';
+			newBackendModelId = '';
+			addBackendWeight = '1'; // Reset weight after adding
 		} catch (err) {
 			saveError = err instanceof Error ? err.message : 'Failed to add backend';
 		} finally {
@@ -86,6 +115,16 @@
 
 	function backendName(backendId: string): string {
 		return backends.find((b) => b.id === backendId)?.name ?? backendId;
+	}
+
+	async function handleUpdateWeight(mappingId: string, weight: number) {
+		if (!vmodel || !mappingId) return;
+		try {
+			await api.updateVModelBackendWeight(vmodel.id, mappingId, weight);
+			vmodel = await api.getVModel(vmodel.id);
+		} catch (err) {
+			saveError = err instanceof Error ? err.message : 'Failed to update weight';
+		}
 	}
 
 	onMount(load);
@@ -113,16 +152,16 @@
 		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-6">
 			<form onsubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Model ID</label>
-					<input value={vmodel.model_id} disabled class="input w-full opacity-60 cursor-not-allowed font-mono" />
+					<label for="edit-model-id" class="block text-xs font-medium text-gray-400 mb-1">Model ID</label>
+					<input id="edit-model-id" value={vmodel.model_id} disabled class="input w-full opacity-60 cursor-not-allowed font-mono" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Display Name</label>
-					<input bind:value={displayName} required class="input w-full" />
+					<label for="edit-display-name" class="block text-xs font-medium text-gray-400 mb-1">Display Name</label>
+					<input id="edit-display-name" bind:value={displayName} required class="input w-full" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Strategy</label>
-					<select bind:value={strategy} class="input w-full">
+					<label for="edit-strategy" class="block text-xs font-medium text-gray-400 mb-1">Strategy</label>
+					<select id="edit-strategy" bind:value={strategy} class="input w-full">
 						<option value="session-pin">Session Pin</option>
 						<option value="round-robin">Round Robin</option>
 						<option value="weighted">Weighted</option>
@@ -140,6 +179,7 @@
 							class:bg-gray-700={!streaming}
 							role="switch"
 							aria-checked={streaming}
+							aria-label="Streaming"
 						>
 							<span
 								class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -158,6 +198,7 @@
 							class:bg-gray-700={!enabled}
 							role="switch"
 							aria-checked={enabled}
+							aria-label="Enabled"
 						>
 							<span
 								class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -193,7 +234,7 @@
 			</form>
 
 			<div class="border-t border-gray-800 pt-6">
-				<h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Backend Mappings</h2>
+				<h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Backend Model Mappings</h2>
 				{#if vmodel.backends.length === 0}
 					<p class="text-sm text-gray-500 mb-3">No backends assigned.</p>
 				{:else}
@@ -202,8 +243,54 @@
 							<div class="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2">
 								<span class="text-sm text-gray-200 flex-1">{backendName(b.backend_id)}</span>
 								<span class="text-xs text-gray-500 font-mono">{b.backend_model_id}</span>
-								{#if b.weight != null}
-									<span class="text-xs text-gray-500">weight: {b.weight}</span>
+								{#if editingWeightFor === b.id}
+									<div class="flex items-center gap-2 shrink-0">
+										<input
+											type="number"
+											bind:value={tempWeight}
+											min="1"
+											max="100"
+											class="input !w-20 shrink-0 text-xs"
+											placeholder="weight"
+										/>
+										<button
+											type="button"
+											onclick={() => {
+												if (b.id) handleUpdateWeight(b.id, parseInt(tempWeight, 10));
+												editingWeightFor = null;
+												tempWeight = '1';
+											}}
+											class="text-xs text-green-400 hover:text-green-300"
+										>
+											Save
+										</button>
+										<button
+											type="button"
+											onclick={() => {
+												editingWeightFor = null;
+												tempWeight = '1';
+											}}
+											class="text-xs text-gray-500 hover:text-gray-400"
+										>
+											Cancel
+										</button>
+									</div>
+								{:else}
+									{#if b.weight != null}
+										<span class="text-xs text-cyan-400 font-mono">weight: {b.weight}</span>
+									{:else}
+										<span class="text-xs text-gray-500 font-mono">weight: 1</span>
+									{/if}
+									<button
+										type="button"
+										onclick={() => {
+											editingWeightFor = b.id;
+											tempWeight = (b.weight ?? 1).toString();
+										}}
+										class="text-xs text-gray-500 hover:text-cyan-400 transition-colors"
+									>
+										Edit weight
+									</button>
 								{/if}
 								<button
 									type="button"
@@ -216,20 +303,49 @@
 						{/each}
 					</div>
 				{/if}
-				<div class="flex gap-2">
-					<select bind:value={addBackendId} class="input flex-1 text-xs">
+				<div
+					class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_5rem_auto] gap-2 items-center"
+				>
+					<select bind:value={addBackendId} class="input !w-full min-w-0 text-xs">
 						<option value="">Select backend…</option>
 						{#each backends as b (b.id)}
-							{#if !vmodel.backends.some((vb) => vb.backend_id === b.id)}
-								<option value={b.id}>{b.name}</option>
-							{/if}
+							<option value={b.id}>{b.name}</option>
 						{/each}
 					</select>
+					<select
+						bind:value={newBackendModelId}
+						class="input !w-full min-w-0 text-xs"
+						disabled={!addBackendId}
+					>
+						<option value="">Use default</option>
+						{#if addBackendId && ((availableModelsByBackend[addBackendId] ?? [])?.length ?? 0) > 0}
+							{#each (availableModelsByBackend[addBackendId] ?? []) as m (m.id)}
+								<option value={m.id}>{m.name}</option>
+							{/each}
+						{:else if !vmodel || !addBackendId}
+							<optgroup label="Select a backend first">
+								<option disabled>Select a backend to see available models</option>
+							</optgroup>
+						{:else}
+							<optgroup label="No models discovered">
+								<option value="">— No models found —</option>
+							</optgroup>
+						{/if}
+					</select>
+					<input
+						type="number"
+						bind:value={addBackendWeight}
+						min="0"
+						max="100"
+						class="input !w-full text-xs"
+						placeholder="weight"
+						aria-label="Weight"
+					/>
 					<button
 						type="button"
 						onclick={handleAddBackend}
 						disabled={!addBackendId || addBackendLoading}
-						class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-800 text-white rounded-md transition-colors"
+						class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-800 text-white rounded-md transition-colors shrink-0 justify-self-start sm:justify-self-auto"
 					>
 						Add
 					</button>

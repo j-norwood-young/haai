@@ -31,7 +31,7 @@ export function eligibleVModelsForKey(
 ): VModel[] {
 	return vmodels.filter(
 		(vm) =>
-			vm.enabled && (!allowedVModels?.length || allowedVModels.includes(vm.model_id))
+			vm.enabled && (!allowedVModels?.length || allowedVModels.includes(vm.id))
 	);
 }
 

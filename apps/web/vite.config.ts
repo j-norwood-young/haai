@@ -6,9 +6,9 @@ const PROXY_TARGET = process.env.AIVM_PROXY_URL ?? 'http://localhost:4001';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-	server: {
-		proxy: {
-			// Same-origin dev: browser → :5173/api → proxy :4001/api (cookies work)
+		server: {
+			proxy: {
+				// Same-origin dev: browser → :5173/api → proxy :4001/api (cookies work)
 			'/api': {
 				target: PROXY_TARGET,
 				changeOrigin: true

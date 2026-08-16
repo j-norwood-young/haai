@@ -594,6 +594,15 @@ export const api = {
 		}),
 	removeVModelBackend: (vmodelId: string, backendMappingId: string) =>
 		request<void>(`/vmodels/${vmodelId}/backends/${backendMappingId}`, { method: 'DELETE' }),
+	updateVModelBackendWeight: (
+		vmodelId: string,
+		backendMappingId: string,
+		weight: number
+	) =>
+		request<{ success: boolean }>(`/vmodels/${vmodelId}/backends/${backendMappingId}`, {
+			method: 'PATCH',
+			json: { weight }
+		}),
 
 	// Keys
 	getKeys: async () => {
