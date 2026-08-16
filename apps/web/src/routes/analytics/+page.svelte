@@ -4,20 +4,24 @@
 	import { sse } from '$lib/sse.svelte.js';
 	import type { ApiKey, Backend, MetricsSummary, MetricsRollup, VModel } from '$lib/api.js';
 
-	let summary = $state<MetricsSummary | null>(null);
-	let rollups = $state<MetricsRollup[]>([]);
+	let summary = $state.raw<MetricsSummary | null>(null);
+	let rollups = $state.raw<MetricsRollup[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let period = $state<'hour' | 'day' | 'week' | 'month'>('hour');
 
-	let backends = $state<Backend[]>([]);
-	let vmodels = $state<VModel[]>([]);
-	let keys = $state<ApiKey[]>([]);
+	let backends = $state.raw<Backend[]>([]);
+	let vmodels = $state.raw<VModel[]>([]);
+	let keys = $state.raw<ApiKey[]>([]);
 
 	let filterBackendId = $state('');
 	let filterVmodelId = $state('');
 	let filterModelId = $state('');
 	let filterKeyId = $state('');
+
+	// Non-reactive guards — must not be $state or effects re-enter
+	let loadSeq = 0;
+	let lastHandledAt: number | null = null;
 
 	const hasFilters = $derived(
 		Boolean(filterBackendId || filterVmodelId || filterModelId || filterKeyId)
@@ -47,7 +51,7 @@
 	}
 
 	async function load() {
-		loading = true;
+		const my = ++loadSeq;
 		error = null;
 		try {
 			const windowMs =
@@ -69,12 +73,14 @@
 				api.getMetricsSummary(filters),
 				api.getMetricsRollups({ period, limit: 48, since, ...filters })
 			]);
+			if (my !== loadSeq) return;
 			summary = nextSummary;
 			rollups = nextRollups;
 		} catch (err) {
+			if (my !== loadSeq) return;
 			error = err instanceof Error ? err.message : 'Failed to load metrics';
 		} finally {
-			loading = false;
+			if (my === loadSeq) loading = false;
 		}
 	}
 
@@ -95,8 +101,16 @@
 		void filterVmodelId;
 		void filterModelId;
 		void filterKeyId;
-		void sse.latestEvent;
-		load();
+		void load();
+	});
+
+	$effect(() => {
+		const event = sse.latestEvent;
+		if (event?.type !== 'usage-event' && event?.type !== 'backend-health') return;
+		const ts = typeof event.timestamp === 'number' ? event.timestamp : Date.now();
+		if (lastHandledAt === ts) return;
+		lastHandledAt = ts;
+		void load();
 	});
 
 	const maxRequests = $derived(
