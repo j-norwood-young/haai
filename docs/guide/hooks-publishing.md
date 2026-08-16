@@ -5,7 +5,7 @@ Share hooks as NPM packages so others can install them with one command.
 ## Package structure
 
 ```
-my-avm-hook/
+my-haai-hook/
   package.json
   src/index.ts
   dist/index.js
@@ -15,11 +15,11 @@ my-avm-hook/
 
 ```json
 {
-  "name": "my-avm-hook",
+  "name": "my-haai-hook",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.js",
-  "avm-hook": {
+  "haai-hook": {
     "name": "My Hook",
     "description": "Prepends a system prompt",
     "trigger": "pre-request",
@@ -31,12 +31,12 @@ my-avm-hook/
     }
   },
   "dependencies": {
-    "@ai-v-models/hooks-sdk": "^0.0.1"
+    "@haai/hooks-sdk": "^0.0.1"
   }
 }
 ```
 
-The `avm-hook` key is required — the installer validates it.
+The `haai-hook` key is required — the installer validates it.
 
 ## Publish
 
@@ -47,22 +47,22 @@ npm publish
 ## Install on a server
 
 ```bash
-aivm hook add-internal \
+haai hook add-internal \
   --name my-hook \
-  --module my-avm-hook \
+  --module my-haai-hook \
   --trigger pre-request
 ```
 
-Modules are copied to `{AIVM_DATA_DIR}/hooks/`.
+Modules are copied to `{HAAI_DATA_DIR}/hooks/`.
 
 ## Install from GitHub
 
 ```bash
-npm install github:owner/repo#v1.0.0 --prefix ~/.aivm/hooks
+npm install github:owner/repo#v1.0.0 --prefix ~/.haai/hooks
 
-aivm hook add-internal \
+haai hook add-internal \
   --name github-hook \
-  --module ~/.aivm/hooks/node_modules/my-avm-hook/dist/index.js \
+  --module ~/.haai/hooks/node_modules/my-haai-hook/dist/index.js \
   --trigger pre-request
 ```
 

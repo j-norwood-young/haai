@@ -3,8 +3,8 @@
 ## From source
 
 ```bash
-git clone https://github.com/your-org/ai-v-models.git
-cd ai-v-models
+git clone https://github.com/j-norwood-young/haai.git
+cd haai
 pnpm install
 pnpm build
 ```
@@ -32,21 +32,21 @@ Continue with [Quick Start](./quickstart.md).
 docker-compose up
 ```
 
-Data persists in the `aivm-data` volume. Configuration can be passed via environment variables — see [Configuration](./configuration.md).
+Data persists in the `haai-data` volume. Configuration can be passed via environment variables — see [Configuration](./configuration.md).
 
 ## Data directory
 
-On first start, ai-v-models creates `~/.aivm/`:
+On first start, HAAI creates `~/.haai/`:
 
 ```
-~/.aivm/
+~/.haai/
   config.yaml      # Optional declarative config
   data.db          # SQLite database
   master.key       # Encryption key for backend secrets (mode 0600)
   logs/            # Rotating log files
 ```
 
-Override the location with `AIVM_DATA_DIR`.
+Override the location with `HAAI_DATA_DIR`.
 
 ## Upgrading
 

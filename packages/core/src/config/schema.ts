@@ -22,7 +22,7 @@ export const LogConfigSchema = z.object({
 export const MetricsConfigSchema = z.object({
   enabled: z.coerce.boolean().default(true),
   otelEndpoint: z.string().url().optional(),
-  otelServiceName: z.string().default("ai-v-models"),
+  otelServiceName: z.string().default("haai"),
 });
 
 export const HealthConfigSchema = z.object({

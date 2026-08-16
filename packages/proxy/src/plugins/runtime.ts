@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import ivm from "isolated-vm";
-import type { ChatRequest, ChatResponse } from "@ai-v-models/plugin-sdk";
-import type { ResolvedBinding } from "@ai-v-models/core";
+import type { ChatRequest, ChatResponse } from "@haai/plugin-sdk";
+import type { ResolvedBinding } from "@haai/core";
 import { getLogger } from "../logger.js";
 
 /** Host-side context passed into every plugin execution */
@@ -111,7 +111,7 @@ export class PluginRuntime {
       // Inject host capabilities
       await this.injectCapabilities(ctx, jail, binding, hostCtx);
 
-      // Run the bundle to register __aivmPluginDef on globalThis
+      // Run the bundle to register __haaiPluginDef on globalThis
       await script.run(ctx, { timeout: DEFAULT_TIMEOUT_MS });
 
       // Build the plugin context object visible inside the isolate
@@ -131,11 +131,11 @@ export class PluginRuntime {
       // Execute the hook inside the isolate
       const resultJson = await ctx.eval(
         `(async () => {
-          const def = globalThis.__aivmPluginDef;
+          const def = globalThis.__haaiPluginDef;
           if (!def || !def.hooks || !def.hooks['${hookName}']) {
             return JSON.stringify(${payloadJson});
           }
-          const ctx = Object.assign({}, ${pluginCtxJson}, __aivmCapabilities);
+          const ctx = Object.assign({}, ${pluginCtxJson}, __haaiCapabilities);
           const payload = ${payloadJson};
           const result = await def.hooks['${hookName}'](payload, ctx);
           return JSON.stringify(result != null ? result : payload);
@@ -157,7 +157,7 @@ export class PluginRuntime {
   ): Promise<void> {
     const log = getLogger();
 
-    // __aivmCapabilities is merged into ctx inside the isolate
+    // __haaiCapabilities is merged into ctx inside the isolate
     // We expose each capability as an async function reference
 
     // ctx.log
@@ -187,22 +187,22 @@ export class PluginRuntime {
         });
 
     // Build the capabilities glue that wires these references into promise-returning functions
-    await jail.set("__aivmLogRef", logFn);
-    await jail.set("__aivmAiCompleteRef", aiCompleteFn);
-    await jail.set("__aivmFetchRef", fetchFn);
-    await jail.set("__aivmCapabilities", undefined); // placeholder
+    await jail.set("__haaiLogRef", logFn);
+    await jail.set("__haaiAiCompleteRef", aiCompleteFn);
+    await jail.set("__haaiFetchRef", fetchFn);
+    await jail.set("__haaiCapabilities", undefined); // placeholder
 
     await ctx.eval(`
-      globalThis.__aivmCapabilities = {
-        log: (level, msg, data) => __aivmLogRef.apply(undefined, [level, msg, data ? JSON.stringify(data) : undefined]),
+      globalThis.__haaiCapabilities = {
+        log: (level, msg, data) => __haaiLogRef.apply(undefined, [level, msg, data ? JSON.stringify(data) : undefined]),
         ai: {
           complete: async (opts) => {
-            const result = await __aivmAiCompleteRef.apply(undefined, [JSON.stringify(opts)], { result: { promise: true } });
+            const result = await __haaiAiCompleteRef.apply(undefined, [JSON.stringify(opts)], { result: { promise: true } });
             return JSON.parse(result);
           },
         },
         fetch: async (url, init) => {
-          const result = await __aivmFetchRef.apply(undefined, [url, init ? JSON.stringify(init) : undefined], { result: { promise: true } });
+          const result = await __haaiFetchRef.apply(undefined, [url, init ? JSON.stringify(init) : undefined], { result: { promise: true } });
           return JSON.parse(result);
         },
       };

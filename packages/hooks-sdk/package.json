@@ -1,7 +1,7 @@
 {
-  "name": "@ai-v-models/hooks-sdk",
+  "name": "@haai/hooks-sdk",
   "version": "0.0.1",
-  "description": "SDK for authoring ai-v-models hooks",
+  "description": "SDK for authoring haai hooks",
   "type": "module",
   "exports": {
     ".": {

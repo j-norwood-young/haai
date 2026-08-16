@@ -15,7 +15,7 @@ python -m vllm.entrypoints.openai.api_server \
 ## Add backend
 
 ```bash
-aivm backend add \
+haai backend add \
   --name vllm-a100 \
   --base-url http://10.0.0.5:8000 \
   --provider vllm \

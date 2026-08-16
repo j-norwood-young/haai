@@ -5,7 +5,7 @@ import { getLogger } from "./logger.js";
 
 export function resolveDocsBuildDir(): string | null {
   const candidates = [
-    process.env["AIVM_DOCS_DIR"],
+    process.env["HAAI_DOCS_DIR"],
     join(process.cwd(), "docs/.vitepress/dist"),
     join(process.cwd(), "../../docs/.vitepress/dist"),
   ].filter((p): p is string => Boolean(p));
@@ -22,7 +22,7 @@ export async function registerDocsSite(app: FastifyInstance): Promise<boolean> {
 
   if (!docsDir) {
     log.info(
-      "Documentation not bundled (docs/.vitepress/dist missing). Run `pnpm --filter @ai-v-models/docs build` to serve docs at /docs/",
+      "Documentation not bundled (docs/.vitepress/dist missing). Run `pnpm --filter @haai/docs build` to serve docs at /docs/",
     );
     return false;
   }

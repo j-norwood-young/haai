@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
-import type { DbClient } from "@ai-v-models/core";
-import { usageEvents, usageRollups, requestLogs, apiKeys } from "@ai-v-models/core";
+import type { DbClient } from "@haai/core";
+import { usageEvents, usageRollups, requestLogs, apiKeys } from "@haai/core";
 import type { ProxyResult } from "./streaming-proxy.js";
 import type { SseEmitter } from "./sse.js";
 

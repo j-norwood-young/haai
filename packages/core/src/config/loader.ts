@@ -6,9 +6,9 @@ import { config as loadDotenv } from "dotenv";
 import { AppConfigSchema, type AppConfig } from "./schema.js";
 import { DEV_PORT, PROD_PORT } from "./constants.js";
 
-/** Returns the default data directory: ~/.aivm */
+/** Returns the default data directory: ~/.haai */
 export function defaultDataDir(): string {
-  return join(homedir(), ".aivm");
+  return join(homedir(), ".haai");
 }
 
 /** Ensure the data directory exists with correct structure. */
@@ -25,22 +25,22 @@ function envToPartialConfig(): Record<string, unknown> {
   const partial: Record<string, unknown> = {};
 
   const map: Record<string, string[]> = {
-    AIVM_HOST: ["server", "host"],
-    AIVM_PORT: ["server", "port"],
-    AIVM_TLS_CERT: ["server", "tlsCert"],
-    AIVM_TLS_KEY: ["server", "tlsKey"],
-    AIVM_CORS_ORIGINS: ["server", "corsOrigins"],
-    AIVM_LOG_LEVEL: ["log", "level"],
-    AIVM_LOG_FORMAT: ["log", "format"],
-    AIVM_LOG_FILE: ["log", "file"],
-    AIVM_METRICS_ENABLED: ["metrics", "enabled"],
-    AIVM_OTEL_ENDPOINT: ["metrics", "otelEndpoint"],
-    AIVM_OTEL_SERVICE_NAME: ["metrics", "otelServiceName"],
-    AIVM_HEALTH_CHECK_INTERVAL: ["health", "checkIntervalSecs"],
-    AIVM_SESSION_SECRET: ["security", "sessionSecret"],
-    AIVM_WEBAUTHN_RP_ID: ["security", "webauthnRpId"],
-    AIVM_WEBAUTHN_ORIGINS: ["security", "webauthnOrigins"],
-    AIVM_DATA_DIR: ["dataDir"],
+    HAAI_HOST: ["server", "host"],
+    HAAI_PORT: ["server", "port"],
+    HAAI_TLS_CERT: ["server", "tlsCert"],
+    HAAI_TLS_KEY: ["server", "tlsKey"],
+    HAAI_CORS_ORIGINS: ["server", "corsOrigins"],
+    HAAI_LOG_LEVEL: ["log", "level"],
+    HAAI_LOG_FORMAT: ["log", "format"],
+    HAAI_LOG_FILE: ["log", "file"],
+    HAAI_METRICS_ENABLED: ["metrics", "enabled"],
+    HAAI_OTEL_ENDPOINT: ["metrics", "otelEndpoint"],
+    HAAI_OTEL_SERVICE_NAME: ["metrics", "otelServiceName"],
+    HAAI_HEALTH_CHECK_INTERVAL: ["health", "checkIntervalSecs"],
+    HAAI_SESSION_SECRET: ["security", "sessionSecret"],
+    HAAI_WEBAUTHN_RP_ID: ["security", "webauthnRpId"],
+    HAAI_WEBAUTHN_ORIGINS: ["security", "webauthnOrigins"],
+    HAAI_DATA_DIR: ["dataDir"],
   };
 
   for (const [envKey, path] of Object.entries(map)) {
@@ -90,7 +90,7 @@ export function loadConfig(opts: LoadConfigOptions = {}): AppConfig {
   }
 
   // 2. Determine data dir (needed to find default config.yaml)
-  const dataDir = process.env["AIVM_DATA_DIR"] ?? defaultDataDir();
+  const dataDir = process.env["HAAI_DATA_DIR"] ?? defaultDataDir();
 
   // 3. Load config.yaml
   const configFile = opts.configFile ?? join(dataDir, "config.yaml");
@@ -104,10 +104,10 @@ export function loadConfig(opts: LoadConfigOptions = {}): AppConfig {
   const envConfig = envToPartialConfig();
 
   // Dev mode uses a separate default port so `pnpm dev` and `pnpm start` can run together.
-  // Ignore AIVM_PORT when it matches the production default — shared .env files often set
-  // AIVM_PORT=4000 for Docker while local dev should still bind to DEV_PORT.
-  if (process.env["AIVM_DEV"] === "1") {
-    const envPort = process.env["AIVM_PORT"];
+  // Ignore HAAI_PORT when it matches the production default — shared .env files often set
+  // HAAI_PORT=4000 for Docker while local dev should still bind to DEV_PORT.
+  if (process.env["HAAI_DEV"] === "1") {
+    const envPort = process.env["HAAI_PORT"];
     const port =
       envPort === undefined || envPort === String(PROD_PORT) ? DEV_PORT : Number(envPort);
     envConfig["server"] = deepMerge(

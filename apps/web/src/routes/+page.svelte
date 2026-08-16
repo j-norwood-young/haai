@@ -62,7 +62,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard — AiVM</title>
+	<title>Dashboard — HAAI</title>
 </svelte:head>
 
 <div class="page">

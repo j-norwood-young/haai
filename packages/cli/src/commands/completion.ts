@@ -25,8 +25,8 @@ const TOP_LEVEL_COMMANDS = [
 const PROMPT_FLAGS = ["-m", "--model", "-k", "--key", "-s", "--system", "--no-stream"];
 
 function bashCompletionScript(): string {
-  return `# aivm bash completion
-_aivm() {
+  return `# haai bash completion
+_haai() {
   local cur prev words cword
   _init_completion -s || return
 
@@ -40,11 +40,11 @@ _aivm() {
   if [[ "$cmd" == "prompt" ]]; then
     case "$prev" in
       -m|--model)
-        mapfile -t COMPREPLY < <(compgen -W "$(aivm __complete models 2>/dev/null)" -- "$cur")
+        mapfile -t COMPREPLY < <(compgen -W "$(haai __complete models 2>/dev/null)" -- "$cur")
         return
         ;;
       -k|--key)
-        mapfile -t COMPREPLY < <(compgen -W "$(aivm __complete keys 2>/dev/null)" -- "$cur")
+        mapfile -t COMPREPLY < <(compgen -W "$(haai __complete keys 2>/dev/null)" -- "$cur")
         return
         ;;
     esac
@@ -61,14 +61,14 @@ _aivm() {
   fi
 }
 
-complete -F _aivm aivm
+complete -F _haai haai
 `;
 }
 
 function zshCompletionScript(): string {
-  return `#compdef aivm
+  return `#compdef haai
 
-_aivm() {
+_haai() {
   local -a commands
   commands=(
     ${TOP_LEVEL_COMMANDS.map((c) => `'${c}:…'`).join("\n    ")}
@@ -86,10 +86,10 @@ _aivm() {
       case $words[1] in
         prompt)
           _arguments \\
-            '-m[Model]:model:($(aivm __complete models 2>/dev/null))' \\
-            '--model[Model]:model:($(aivm __complete models 2>/dev/null))' \\
-            '-k[API key]:key:($(aivm __complete keys 2>/dev/null))' \\
-            '--key[API key]:key:($(aivm __complete keys 2>/dev/null))' \\
+            '-m[Model]:model:($(haai __complete models 2>/dev/null))' \\
+            '--model[Model]:model:($(haai __complete models 2>/dev/null))' \\
+            '-k[API key]:key:($(haai __complete keys 2>/dev/null))' \\
+            '--key[API key]:key:($(haai __complete keys 2>/dev/null))' \\
             '-s[System prompt]:system:' \\
             '--system[System prompt]:system:' \\
             '--no-stream[Disable streaming]' \\
@@ -103,7 +103,7 @@ _aivm() {
   esac
 }
 
-_aivm "$@"
+_haai "$@"
 `;
 }
 
@@ -162,7 +162,7 @@ export function registerCompletionCommands(program: Command): void {
 
   cmd
     .command("bash")
-    .description("Print bash completion script (eval \"$(aivm completion bash)\")")
+    .description("Print bash completion script (eval \"$(haai completion bash)\")")
     .action(() => {
       process.stdout.write(bashCompletionScript());
     });
@@ -181,10 +181,10 @@ export function registerCompletionCommands(program: Command): void {
       const shell = process.env["SHELL"] ?? "";
       if (shell.includes("zsh")) {
         console.log("# Add to your ~/.zshrc:");
-        console.log('eval "$(aivm completion zsh)"');
+        console.log('eval "$(haai completion zsh)"');
       } else {
         console.log("# Add to your ~/.bashrc:");
-        console.log('eval "$(aivm completion bash)"');
+        console.log('eval "$(haai completion bash)"');
       }
     });
 }

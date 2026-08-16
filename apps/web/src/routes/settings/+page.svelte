@@ -236,7 +236,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings — AiVM</title>
+	<title>Settings — HAAI</title>
 </svelte:head>
 
 <div class="p-6 max-w-3xl mx-auto">
@@ -468,8 +468,8 @@
 		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-6">
 			<h2 class="text-base font-semibold text-gray-100 mb-4">Admin API tokens</h2>
 			<p class="text-xs text-gray-500 mb-4">
-				Bearer tokens for CLI and automation (<code class="text-gray-400">aivm-at-…</code>).
-				Set <code class="text-gray-400">AIVM_ADMIN_TOKEN</code> or pass <code class="text-gray-400">-t</code> to the CLI.
+				Bearer tokens for CLI and automation (<code class="text-gray-400">haai-at-…</code>).
+				Set <code class="text-gray-400">HAAI_ADMIN_TOKEN</code> or pass <code class="text-gray-400">-t</code> to the CLI.
 			</p>
 
 			<form onsubmit={handleCreateAdminToken} class="flex gap-2 mb-4 max-w-md">

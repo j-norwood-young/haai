@@ -1,11 +1,11 @@
 # API Reference
 
-ai-v-models exposes two HTTP surfaces:
+HAAI exposes two HTTP surfaces:
 
 | Surface | Base path | Auth |
 |---------|-----------|------|
 | Management API | `/api/v1/` | Admin session cookie or Bearer token |
-| Inference API | `/v1/` | Client API key (`Authorization: Bearer aivm-sk-…`) |
+| Inference API | `/v1/` | Client API key (`Authorization: Bearer haai-sk-…`) |
 
 ## Guides
 

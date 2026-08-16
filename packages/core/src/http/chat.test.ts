@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAivmPromptCommand, buildChatCompletionUrl } from "./chat.js";
+import { buildHaaiPromptCommand, buildChatCompletionUrl } from "./chat.js";
 
 describe("buildChatCompletionUrl", () => {
   it("builds the chat completions endpoint", () => {
@@ -9,16 +9,16 @@ describe("buildChatCompletionUrl", () => {
   });
 });
 
-describe("buildAivmPromptCommand", () => {
+describe("buildHaaiPromptCommand", () => {
   it("builds a streaming prompt command", () => {
     expect(
-      buildAivmPromptCommand("http://localhost:4001", "aivm-sk-test", "smart-chat"),
+      buildHaaiPromptCommand("http://localhost:4001", "haai-sk-test", "smart-chat"),
     ).toBe(
       [
-        "aivm prompt",
+        "haai prompt",
         '"Hello!"',
         '-u "http://localhost:4001"',
-        '-k "aivm-sk-test"',
+        '-k "haai-sk-test"',
         '-m "smart-chat"',
       ].join(" \\\n  "),
     );
@@ -26,7 +26,7 @@ describe("buildAivmPromptCommand", () => {
 
   it("includes --no-stream when streaming is disabled", () => {
     expect(
-      buildAivmPromptCommand("http://localhost:4001", "aivm-sk-test", "smart-chat", "Hi", false),
+      buildHaaiPromptCommand("http://localhost:4001", "haai-sk-test", "smart-chat", "Hi", false),
     ).toContain("--no-stream");
   });
 });

@@ -6,7 +6,7 @@ import {
   apiTokens,
   ADMIN_TOKEN_PREFIX,
   verifyToken,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { AppContext } from "./context.js";
 
 export interface AuthUser {
@@ -88,7 +88,7 @@ async function getUserFromSession(
   ctx: AppContext,
   req: FastifyRequest,
 ): Promise<AuthUser | null> {
-  const sessionToken = req.cookies["aivm_session"];
+  const sessionToken = req.cookies["haai_session"];
   if (!sessionToken) return null;
 
   const session = await ctx.db.db

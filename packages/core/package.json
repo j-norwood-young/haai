@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/core",
+  "name": "@haai/core",
   "version": "0.0.1",
   "private": true,
   "type": "module",

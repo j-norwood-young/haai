@@ -2,8 +2,8 @@ import { describe, it, beforeAll, afterAll, expect } from "vitest";
 import { startMockServer, type StartedMockServer } from "./helpers/mock-server.js";
 import { startTestProxy, type TestProxy } from "./helpers/proxy-server.js";
 import { nanoid } from "nanoid";
-import { generateApiKey, hashToken, encrypt } from "@ai-v-models/core";
-import { backends as backendsTable, apiKeys, vmodels, vmodelBackends } from "@ai-v-models/core";
+import { generateApiKey, hashToken, encrypt } from "@haai/core";
+import { backends as backendsTable, apiKeys, vmodels, vmodelBackends } from "@haai/core";
 import { createHash } from "node:crypto";
 
 function hashKey(key: string): string {
@@ -137,7 +137,7 @@ describe("Streaming proxy", () => {
     const res = await fetch(`${proxy.url}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: "Bearer aivm-sk-invalid-key-xyz",
+        Authorization: "Bearer haai-sk-invalid-key-xyz",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

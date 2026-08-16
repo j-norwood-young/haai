@@ -23,7 +23,7 @@ Each entry includes:
 There is no management API for audit logs yet. Query directly:
 
 ```bash
-sqlite3 ~/.aivm/data.db \
+sqlite3 ~/.haai/data.db \
   "SELECT datetime(timestamp/1000,'unixepoch'), username, action, ipAddress FROM audit_log ORDER BY timestamp DESC LIMIT 20;"
 ```
 

@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
-import { sessions, users, auditLog } from "@ai-v-models/core";
+import { sessions, users, auditLog } from "@haai/core";
 import type { AppContext } from "./context.js";
 
 type SessionRequest = {
@@ -60,7 +60,7 @@ export async function createSession(
     })
     .run();
 
-  reply.setCookie("aivm_session", sessionToken, {
+  reply.setCookie("haai_session", sessionToken, {
     httpOnly: true,
     secure: req.protocol === "https",
     sameSite: "lax",

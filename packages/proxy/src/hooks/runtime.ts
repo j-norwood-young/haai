@@ -7,7 +7,7 @@ import type {
   HookContext,
   PreRequestHook,
   PostCompletionHook,
-} from "@ai-v-models/hooks-sdk";
+} from "@haai/hooks-sdk";
 import { getLogger } from "../logger.js";
 
 export interface HookDefinition {
@@ -152,12 +152,12 @@ export class HookRuntime {
     const body = JSON.stringify({ request, ctx });
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-AIVM-Hook-Trigger": "pre-request",
+      "X-HAAI-Hook-Trigger": "pre-request",
     };
 
     if (hook.webhookSecret) {
       const sig = createHmac("sha256", hook.webhookSecret).update(body).digest("hex");
-      headers["X-AIVM-Signature"] = `sha256=${sig}`;
+      headers["X-HAAI-Signature"] = `sha256=${sig}`;
     }
 
     const res = await fetch(hook.webhookUrl!, {
@@ -183,12 +183,12 @@ export class HookRuntime {
     const body = JSON.stringify({ response, ctx });
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-AIVM-Hook-Trigger": "post-completion",
+      "X-HAAI-Hook-Trigger": "post-completion",
     };
 
     if (hook.webhookSecret) {
       const sig = createHmac("sha256", hook.webhookSecret).update(body).digest("hex");
-      headers["X-AIVM-Signature"] = `sha256=${sig}`;
+      headers["X-HAAI-Signature"] = `sha256=${sig}`;
     }
 
     await fetch(hook.webhookUrl!, {

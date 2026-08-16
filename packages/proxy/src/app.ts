@@ -54,7 +54,7 @@ export async function createApp(ctx: AppContext) {
 
   // Cookies
   await app.register(cookie, {
-    secret: ctx.config.security.sessionSecret ?? "aivm-change-me-in-production",
+    secret: ctx.config.security.sessionSecret ?? "haai-change-me-in-production",
   });
 
   // Rate limiting for login endpoint

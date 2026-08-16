@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { backends as backendsTable } from "@ai-v-models/core";
-import { encrypt } from "@ai-v-models/core";
+import { backends as backendsTable } from "@haai/core";
+import { encrypt } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { checkAndPersistBackendHealth, checkBackendHealth } from "../../health.js";
 import { getLogger } from "../../logger.js";

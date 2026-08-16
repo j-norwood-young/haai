@@ -7,8 +7,8 @@ Pre-request hooks run **before** the proxy forwards a chat completion to the bac
 Export a default async function:
 
 ```typescript
-import type { PreRequestHook } from "@ai-v-models/hooks-sdk";
-import { prependSystemPrompt } from "@ai-v-models/hooks-sdk";
+import type { PreRequestHook } from "@haai/hooks-sdk";
+import { prependSystemPrompt } from "@haai/hooks-sdk";
 
 const hook: PreRequestHook = async (request, ctx) => {
   return prependSystemPrompt(request, "You are a helpful assistant.");
@@ -28,7 +28,7 @@ export default hook;
     "vmodelId": "vmodel-abc",
     "backendId": "backend-xyz",
     "backendModelId": "qwen3.5-35b",
-    "keyPrefix": "aivm-sk-Xn7",
+    "keyPrefix": "haai-sk-Xn7",
     "timestamp": 1710000000000,
     "config": {}
   }
@@ -47,8 +47,8 @@ Return:
 
 | Header | Description |
 |--------|-------------|
-| `X-AIVM-Hook-Trigger` | `pre-request` |
-| `X-AVM-Signature` | `sha256=<hmac>` when `webhookSecret` is set |
+| `X-HAAI-Hook-Trigger` | `pre-request` |
+| `X-HAAI-Signature` | `sha256=<hmac>` when `webhookSecret` is set |
 
 ## Failure behavior
 
@@ -64,7 +64,7 @@ import {
   appendSystemPrompt,
   replaceInMessages,
   setParam,
-} from "@ai-v-models/hooks-sdk";
+} from "@haai/hooks-sdk";
 ```
 
 See [Authoring Hooks](./hooks-authoring) for full examples.

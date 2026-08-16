@@ -1,6 +1,6 @@
 # Load Balancing
 
-ai-v-models supports multiple load balancing strategies per virtual model.
+HAAI supports multiple load balancing strategies per virtual model.
 
 ## Strategies
 
@@ -70,7 +70,7 @@ Weights are per v-model backend mapping, not global:
 
 ```bash
 # Add backend with weight 3
-aivm vmodel add-backend smart-chat \
+haai vmodel add-backend smart-chat \
   --backend-id backend-abc \
   --backend-model qwen3.5-35b \
   --weight 3

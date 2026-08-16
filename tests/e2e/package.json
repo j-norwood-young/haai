@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/e2e",
+  "name": "@haai/e2e",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,9 +9,9 @@
     "clean": "rm -rf coverage"
   },
   "dependencies": {
-    "@ai-v-models/core": "workspace:*",
-    "@ai-v-models/mock-backend": "workspace:*",
-    "@ai-v-models/proxy": "workspace:*",
+    "@haai/core": "workspace:*",
+    "@haai/mock-backend": "workspace:*",
+    "@haai/proxy": "workspace:*",
     "@node-rs/argon2": "^2.0.0",
     "nanoid": "^5.1.5"
   },

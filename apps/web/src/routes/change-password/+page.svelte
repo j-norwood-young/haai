@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { api, ApiError } from '$lib/api.js';
 	import { auth } from '$lib/auth.svelte.js';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 
 	let currentPassword = $state('');
 	let newPassword = $state('');
@@ -46,15 +47,15 @@
 </script>
 
 <svelte:head>
-	<title>Change password — AiVM</title>
+	<title>Change password — HAAI</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-950 flex items-center justify-center px-4">
 	<div class="w-full max-w-sm">
 		<div class="text-center mb-8">
-			<h1 class="text-3xl font-bold tracking-tight text-white">
-				Ai<span class="text-cyan-400">VM</span>
-			</h1>
+			<div class="flex items-center justify-center mb-3">
+				<BrandLogo variant="full" class="h-10 max-w-[12rem] text-cyan-400" />
+			</div>
 		</div>
 
 		<div class="bg-gray-900 rounded-xl border border-amber-800/50 p-6 shadow-2xl">

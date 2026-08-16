@@ -1,10 +1,10 @@
 # Guide
 
-Documentation for **ai-v-models** — a streaming reverse proxy for OpenAI-compatible LLMs.
+Documentation for **HAAI** — a streaming reverse proxy for OpenAI-compatible LLMs.
 
 ## Getting started
 
-- [Introduction](./introduction) — what ai-v-models does and how it fits together
+- [Introduction](./introduction) — what HAAI does and how it fits together
 - [Installation](./installation) — install and first run
 - [Quick Start](./quickstart) — add a backend and send your first request
 - [Development](./development) — contributing and local dev setup

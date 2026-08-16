@@ -2,7 +2,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
-const PROXY_TARGET = process.env.AIVM_PROXY_URL ?? 'http://localhost:4001';
+const PROXY_TARGET = process.env.HAAI_PROXY_URL ?? 'http://localhost:4001';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],

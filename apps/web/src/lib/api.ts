@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from './api-base.js';
-import { ApiHttpError, apiFetch } from '@ai-v-models/core/http';
+import { ApiHttpError, apiFetch } from '@haai/core/http';
 import type {
 	PublicKeyCredentialCreationOptionsJSON,
 	PublicKeyCredentialRequestOptionsJSON

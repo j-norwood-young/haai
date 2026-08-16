@@ -9,7 +9,7 @@ import {
   isBackendAllowed,
   isVModelAllowed,
   parseAllowedList,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { AppContext } from "../../context.js";
 
 export async function modelsRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {
@@ -103,7 +103,7 @@ export async function modelsRoutes(app: FastifyInstance, ctx: AppContext): Promi
         id: vm.modelId,
         object: "model",
         created: Math.floor(vm.createdAt / 1000),
-        owned_by: "ai-v-models",
+        owned_by: "haai",
         context_length: undefined,
       });
     }

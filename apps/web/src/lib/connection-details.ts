@@ -1,1 +1,1 @@
-export { buildAivmPromptCommand, buildChatCompletionUrl } from '@ai-v-models/core/http';
+export { buildHaaiPromptCommand, buildChatCompletionUrl } from '@haai/core/http';

@@ -1,10 +1,10 @@
 # Reverse Proxy (nginx)
 
-ai-v-models listens on plain HTTP (default port **4000**). For production, put nginx (or Caddy — see [TLS Setup](./tls)) in front for TLS termination, long-lived connections, and a familiar deployment pattern.
+HAAI listens on plain HTTP (default port **4000**). For production, put nginx (or Caddy — see [TLS Setup](./tls)) in front for TLS termination, long-lived connections, and a familiar deployment pattern.
 
 ## Production nginx with TLS
 
-Use this when ai-v-models runs on the same host as nginx (systemd, bare metal, or a single container). The config below includes headers and settings needed for:
+Use this when HAAI runs on the same host as nginx (systemd, bare metal, or a single container). The config below includes headers and settings needed for:
 
 - Admin UI session cookies (`X-Forwarded-Proto`)
 - Streaming chat completions (`proxy_buffering off`)
@@ -39,7 +39,7 @@ server {
 
 Point `proxy_pass` at wherever the proxy process listens (`127.0.0.1:4000` for a local systemd service, or a Docker service hostname in compose networks).
 
-Set `AIVM_CORS_ORIGINS` to your public HTTPS admin URL. See [TLS Setup](./tls) for WebAuthn origin settings and Caddy examples.
+Set `HAAI_CORS_ORIGINS` to your public HTTPS admin URL. See [TLS Setup](./tls) for WebAuthn origin settings and Caddy examples.
 
 ## Docker Compose `web` service
 
@@ -53,9 +53,9 @@ The included `docker-compose.yml` runs a separate **nginx** container (`web`) th
 Host ports are configurable in `.env`:
 
 ```env
-AIVM_HOST_PROXY_PORT=4000
-AIVM_HOST_WEB_PORT=5173
-AIVM_CORS_ORIGINS=http://localhost:4000,http://localhost:5173
+HAAI_HOST_PROXY_PORT=4000
+HAAI_HOST_WEB_PORT=5173
+HAAI_CORS_ORIGINS=http://localhost:4000,http://localhost:5173
 ```
 
 The nginx config is at `docker/admin-ui.conf` in the repo root and is mounted into the `web` container:

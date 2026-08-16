@@ -12,7 +12,7 @@ import {
   users,
   webauthnCredentials,
   webauthnChallenges,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { getLogger } from "../../logger.js";
 import { requireAuth, serializeUser } from "../../auth-session.js";

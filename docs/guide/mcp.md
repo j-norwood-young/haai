@@ -1,20 +1,20 @@
 # MCP Server
 
-The **Model Context Protocol** server lets AI assistants (Cursor, Claude Desktop, etc.) manage ai-v-models through tools.
+The **Model Context Protocol** server lets AI assistants (Cursor, Claude Desktop, etc.) manage HAAI through tools.
 
 ## Binary
 
 ```bash
 node packages/mcp/dist/index.js
-# package bin: aivm-mcp
+# package bin: haai-mcp
 ```
 
 ## Environment
 
 | Variable | Description |
 |----------|-------------|
-| `AIVM_URL` | Proxy base URL (default `http://localhost:4000`) |
-| `AIVM_ADMIN_TOKEN` | Admin Bearer token |
+| `HAAI_URL` | Proxy base URL (default `http://localhost:4000`) |
+| `HAAI_ADMIN_TOKEN` | Admin Bearer token |
 
 ## Cursor configuration
 
@@ -23,19 +23,19 @@ Add to MCP settings (`.cursor/mcp.json` or Cursor settings):
 ```json
 {
   "mcpServers": {
-    "ai-v-models": {
+    "haai": {
       "command": "node",
       "args": ["/path/to/ai-reverse-proxy-cursor/packages/mcp/dist/index.js"],
       "env": {
-        "AIVM_URL": "http://localhost:4000",
-        "AIVM_ADMIN_TOKEN": "aivm-at-..."
+        "HAAI_URL": "http://localhost:4000",
+        "HAAI_ADMIN_TOKEN": "haai-at-..."
       }
     }
   }
 }
 ```
 
-Create an admin token in **Settings → Admin API Tokens** or via `aivm admin-token create`.
+Create an admin token in **Settings → Admin API Tokens** or via `haai admin-token create`.
 
 ## Available tools
 

@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/plugin-vllm-system-prompt-fix",
+  "name": "@haai/plugin-vllm-system-prompt-fix",
   "version": "1.0.0",
   "description": "Merges multiple system messages into a single system prompt for strict vLLM backends.",
   "type": "module",
@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
-  "aivm-plugin": {
+  "haai-plugin": {
     "name": "vLLM System Prompt Fix",
     "description": "vLLM and some other backends only support a single system message. This plugin merges multiple system messages into one before forwarding the request.",
     "version": "1.0.0",
@@ -32,7 +32,7 @@
     }
   },
   "devDependencies": {
-    "@ai-v-models/plugin-sdk": "workspace:*",
+    "@haai/plugin-sdk": "workspace:*",
     "@types/node": "^22.15.30",
     "typescript": "^5.8.3"
   }

@@ -1,7 +1,7 @@
-import { buildChatCompletionUrl } from "@ai-v-models/core/http";
+import { buildChatCompletionUrl } from "@haai/core/http";
 import type { ApiClient } from "./api-client.js";
 
-const API_KEY_PREFIX = "aivm-sk-";
+const API_KEY_PREFIX = "haai-sk-";
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -42,7 +42,7 @@ export async function resolveApiKey(
 
   if (!adminClient) {
     throw new Error(
-      "Key prefix given but no admin token — set AIVM_ADMIN_TOKEN or pass a full aivm-sk-… key",
+      "Key prefix given but no admin token — set HAAI_ADMIN_TOKEN or pass a full haai-sk-… key",
     );
   }
 
@@ -163,5 +163,5 @@ async function streamResponse(res: Response): Promise<void> {
 }
 
 export function readApiKeyFromEnv(): string | undefined {
-  return process.env["AIVM_API_KEY"];
+  return process.env["HAAI_API_KEY"];
 }

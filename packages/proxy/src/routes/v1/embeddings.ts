@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { eq, and } from "drizzle-orm";
 import { fetch } from "undici";
-import { backends as backendsTable, buildBackendApiUrl, decrypt } from "@ai-v-models/core";
+import { backends as backendsTable, buildBackendApiUrl, decrypt } from "@haai/core";
 import type { AppContext } from "../../context.js";
 
 export async function embeddingsRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {

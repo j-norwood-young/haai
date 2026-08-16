@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>Virtual Models — AiVM</title>
+	<title>Virtual Models — HAAI</title>
 </svelte:head>
 
 <div class="page">

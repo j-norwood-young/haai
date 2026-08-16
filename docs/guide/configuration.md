@@ -1,6 +1,6 @@
 # Configuration
 
-ai-v-models supports multiple configuration sources with the following precedence (highest wins):
+HAAI supports multiple configuration sources with the following precedence (highest wins):
 
 ```
 DB runtime overrides  (highest)
@@ -14,7 +14,7 @@ Built-in defaults     (lowest)
 
 ## config.yaml
 
-Located at `~/.aivm/config.yaml` by default (override with `AIVM_DATA_DIR`).
+Located at `~/.haai/config.yaml` by default (override with `HAAI_DATA_DIR`).
 
 ```yaml
 server:
@@ -51,17 +51,17 @@ Quick reference:
 
 | Variable | Default | Description |
 |---|---|---|
-| `AIVM_HOST` | `0.0.0.0` | Listen host |
-| `AIVM_PORT` | `4000` | Listen port |
-| `AIVM_DATA_DIR` | `~/.aivm` | Data directory |
-| `AIVM_LOG_LEVEL` | `info` | Log level |
-| `AIVM_SESSION_SECRET` | — | Session cookie signing secret |
-| `AIVM_ADMIN_PASSWORD` | `admin` | Initial admin password (first run only) |
+| `HAAI_HOST` | `0.0.0.0` | Listen host |
+| `HAAI_PORT` | `4000` | Listen port |
+| `HAAI_DATA_DIR` | `~/.haai` | Data directory |
+| `HAAI_LOG_LEVEL` | `info` | Log level |
+| `HAAI_SESSION_SECRET` | — | Session cookie signing secret |
+| `HAAI_ADMIN_PASSWORD` | `admin` | Initial admin password (first run only) |
 
 ## Data directory structure
 
 ```
-~/.aivm/
+~/.haai/
   config.yaml      # Main configuration (human-editable)
   data.db          # SQLite database (keys, usage, metrics, etc.)
   data.db-wal      # WAL journal

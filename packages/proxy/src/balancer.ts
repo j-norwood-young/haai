@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Backend } from "@ai-v-models/core";
-import type { BalancingStrategy } from "@ai-v-models/core";
+import type { Backend } from "@haai/core";
+import type { BalancingStrategy } from "@haai/core";
 import { CircuitBreaker } from "./circuit-breaker.js";
 import { backendConcurrencyGauge } from "./metrics.js";
 import {

@@ -41,7 +41,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
       const client = getClient();
       const plugins = await client.get<Plugin[]>("/api/v1/plugins");
       if (plugins.length === 0) {
-        console.log(chalk.yellow("No plugins installed. Use `aivm plugin install` to add one."));
+        console.log(chalk.yellow("No plugins installed. Use `haai plugin install` to add one."));
         return;
       }
       const rows = [
@@ -82,9 +82,9 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
         }
         console.log();
         console.log(chalk.yellow("Now bind it to a scope:"));
-        console.log(`  aivm plugin bind ${plugin.id} --scope global`);
-        console.log(`  aivm plugin bind ${plugin.id} --scope vmodel --scope-id <modelId>`);
-        console.log(`  aivm plugin bind ${plugin.id} --scope backend --scope-id <backendId>`);
+        console.log(`  haai plugin bind ${plugin.id} --scope global`);
+        console.log(`  haai plugin bind ${plugin.id} --scope vmodel --scope-id <modelId>`);
+        console.log(`  haai plugin bind ${plugin.id} --scope backend --scope-id <backendId>`);
       } catch (err) {
         console.error(chalk.red("Installation failed:"), err instanceof Error ? err.message : String(err));
         process.exit(1);
@@ -160,7 +160,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
       const client = getClient();
       const bindings = await client.get<Binding[]>(`/api/v1/plugins/${pluginId}/bindings`);
       if (bindings.length === 0) {
-        console.log(chalk.yellow("No bindings. Use `aivm plugin bind` to attach this plugin to a scope."));
+        console.log(chalk.yellow("No bindings. Use `haai plugin bind` to attach this plugin to a scope."));
         return;
       }
       const rows = [
@@ -213,7 +213,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
         JSON.stringify({
           name: `@my-org/${slug}`,
           version: "1.0.0",
-          description: `${name} plugin for ai-v-models`,
+          description: `${name} plugin for haai`,
           type: "module",
           main: "dist/index.js",
           module: "dist/index.js",
@@ -221,7 +221,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
             build: "tsc -p tsconfig.json",
             dev: "tsc -p tsconfig.json --watch",
           },
-          "aivm-plugin": {
+          "haai-plugin": {
             name,
             description: `${name} plugin`,
             version: "1.0.0",
@@ -236,7 +236,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
             },
           },
           devDependencies: {
-            "@ai-v-models/plugin-sdk": "^0.1.0",
+            "@haai/plugin-sdk": "^0.1.0",
             typescript: "^5.8.3",
             "@types/node": "^22.0.0",
           },
@@ -263,7 +263,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
       // src/index.ts
       writeFileSync(
         join(targetDir, "src/index.ts"),
-        `import { definePlugin, t, prependSystemPrompt } from "@ai-v-models/plugin-sdk";
+        `import { definePlugin, t, prependSystemPrompt } from "@haai/plugin-sdk";
 
 export default definePlugin({
   name: ${JSON.stringify(name)},
@@ -294,7 +294,7 @@ export default definePlugin({
         join(targetDir, "README.md"),
         `# ${name} Plugin
 
-An ai-v-models plugin.
+An haai plugin.
 
 ## Development
 
@@ -303,19 +303,19 @@ npm install
 npm run build
 \`\`\`
 
-## Install in ai-v-models
+## Install in haai
 
 \`\`\`bash
 # From the local directory:
-aivm plugin install local:${targetDir}
+haai plugin install local:${targetDir}
 
 # After publishing to npm:
-aivm plugin install npm:@my-org/${slug}
+haai plugin install npm:@my-org/${slug}
 \`\`\`
 
 ## Config
 
-See \`package.json\` under the \`"aivm-plugin".configSchema\` key for available config options.
+See \`package.json\` under the \`"haai-plugin".configSchema\` key for available config options.
 `,
       );
 
@@ -326,7 +326,7 @@ See \`package.json\` under the \`"aivm-plugin".configSchema\` key for available 
       console.log("  npm install");
       console.log("  # Edit src/index.ts to implement your plugin");
       console.log("  npm run build");
-      console.log(`  aivm plugin install local:${targetDir}`);
+      console.log(`  haai plugin install local:${targetDir}`);
       console.log();
       console.log("See the plugin authoring guide: docs/guide/plugin-authoring.md");
     });

@@ -1,10 +1,10 @@
 {
-  "name": "@ai-v-models/cli",
+  "name": "@haai/cli",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "bin": {
-    "aivm": "./dist/index.js"
+    "haai": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -13,7 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ai-v-models/core": "workspace:*",
+    "@haai/core": "workspace:*",
     "@node-rs/argon2": "^2.0.0",
     "commander": "^13.1.0",
     "chalk": "^5.4.1",

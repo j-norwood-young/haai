@@ -1,6 +1,6 @@
 # Development
 
-This guide is for **contributors** working on the ai-v-models source tree. End users running the product should follow [Quick Start](./quickstart.md) instead.
+This guide is for **contributors** working on the HAAI source tree. End users running the product should follow [Quick Start](./quickstart.md) instead.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ pnpm dev
 
 The Vite dev server proxies `/api` to the dev proxy on port 4001, so login cookies work without CORS configuration.
 
-Override the dev API port with `AIVM_PORT` (and set `AIVM_PROXY_URL` for the Vite proxy to match).
+Override the dev API port with `HAAI_PORT` (and set `HAAI_PROXY_URL` for the Vite proxy to match).
 
 ### Run services individually
 
@@ -44,14 +44,14 @@ pnpm dev:web     # web UI only (port 5173)
 Rebuild the proxy after TypeScript changes if you are not using `pnpm dev` (which uses `tsx watch` on source):
 
 ```bash
-pnpm --filter @ai-v-models/proxy build
+pnpm --filter @haai/proxy build
 pnpm dev:proxy
 ```
 
 ## Default admin login
 
 - Username: `admin`
-- Password: `admin` (or `AIVM_ADMIN_PASSWORD` on first run)
+- Password: `admin` (or `HAAI_ADMIN_PASSWORD` on first run)
 
 Use **http://localhost:5173** for the admin UI in development. The dev API listens on **http://localhost:4001** (production uses 4000).
 
@@ -83,7 +83,7 @@ Production serves the built admin UI from the proxy process. Development intenti
 ```
 packages/core/     Shared types, config, SQLite schema, crypto
 packages/proxy/    Fastify server, /v1 API, management API
-packages/cli/      `aivm` CLI
+packages/cli/      `haai` CLI
 packages/hooks-sdk Hook authoring interface
 packages/mcp/      MCP management server
 packages/tui/      Ink terminal dashboard
@@ -96,7 +96,7 @@ docs/              VitePress documentation
 ## Mock backend (testing)
 
 ```bash
-pnpm --filter @ai-v-models/mock-backend start
+pnpm --filter @haai/mock-backend start
 ```
 
 Configurable fault injection via environment variables — see `tools/mock-backend/src/config.ts`.

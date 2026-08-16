@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/web",
+  "name": "@haai/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
     "clean": "rm -rf build .svelte-kit"
   },
   "dependencies": {
-    "@ai-v-models/core": "workspace:*",
+    "@haai/core": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0"
   },
   "devDependencies": {

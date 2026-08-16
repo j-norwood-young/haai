@@ -4,7 +4,7 @@ Each backend has a **key mode** that controls how API keys are sent to the upstr
 
 ## passthrough (default)
 
-The client's ai-v-models key (`aivm-sk-…`) is forwarded as `Authorization: Bearer` to the backend.
+The client's HAAI key (`haai-sk-…`) is forwarded as `Authorization: Bearer` to the backend.
 
 Use when:
 
@@ -21,7 +21,7 @@ Use when:
 - You want to hide provider keys from application developers
 
 ```bash
-aivm backend add \
+haai backend add \
   --name openai-main \
   --base-url https://api.openai.com/v1 \
   --provider openai \
@@ -32,7 +32,7 @@ aivm backend add \
 
 ## Encryption
 
-Abstraction-mode keys are encrypted with AES-256-GCM using `{AIVM_DATA_DIR}/master.key`. **Back up `master.key` securely.** If it is lost, you must re-enter backend API keys.
+Abstraction-mode keys are encrypted with AES-256-GCM using `{HAAI_DATA_DIR}/master.key`. **Back up `master.key` securely.** If it is lost, you must re-enter backend API keys.
 
 ## Comparison
 

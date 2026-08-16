@@ -1,13 +1,13 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { eq, and } from "drizzle-orm";
-import type { DbClient } from "@ai-v-models/core";
-import { apiKeys, tokenBudgetCounters } from "@ai-v-models/core";
-import type { ApiKey } from "@ai-v-models/core";
+import type { DbClient } from "@haai/core";
+import { apiKeys, tokenBudgetCounters } from "@haai/core";
+import type { ApiKey } from "@haai/core";
 import {
   isBackendAllowed,
   isVModelAllowed,
   parseAllowedList,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import { rateLimitHitsTotal } from "./metrics.js";
 import { getLogger } from "./logger.js";
 
@@ -63,7 +63,7 @@ export class KeyAuthenticator {
   async authenticate(rawKey: string): Promise<AuthResult> {
     const log = getLogger();
 
-    if (!rawKey.startsWith("aivm-sk-")) {
+    if (!rawKey.startsWith("haai-sk-")) {
       return { success: false, status: 401, error: "Invalid key format", code: "invalid_key" };
     }
 

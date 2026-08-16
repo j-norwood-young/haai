@@ -1,5 +1,5 @@
-import { createMockServer } from "@ai-v-models/mock-backend/server";
-import type { MockBackendConfig } from "@ai-v-models/mock-backend/config";
+import { createMockServer } from "@haai/mock-backend/server";
+import type { MockBackendConfig } from "@haai/mock-backend/config";
 import type { FastifyInstance } from "fastify";
 import { getPort } from "./ports.js";
 

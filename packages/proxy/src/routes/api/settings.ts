@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { getApiKeysShowOnce, setSetting, SETTING_API_KEYS_SHOW_ONCE } from "@ai-v-models/core";
+import { getApiKeysShowOnce, setSetting, SETTING_API_KEYS_SHOW_ONCE } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { requireAdmin, requireAuth } from "../../auth-session.js";
 

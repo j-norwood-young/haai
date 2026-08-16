@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/proxy",
+  "name": "@haai/proxy",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -31,12 +31,12 @@
     }
   },
   "bin": {
-    "aivm-proxy": "./dist/index.js"
+    "haai-proxy": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && cp src/openapi.yaml dist/openapi.yaml",
-    "dev": "AIVM_DEV=1 tsx watch src/index.ts",
-    "start:watch": "AIVM_DEV=1 node --watch dist/index.js",
+    "dev": "HAAI_DEV=1 tsx watch src/index.ts",
+    "start:watch": "HAAI_DEV=1 node --watch dist/index.js",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
@@ -44,9 +44,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ai-v-models/core": "workspace:*",
-    "@ai-v-models/hooks-sdk": "workspace:*",
-    "@ai-v-models/plugin-sdk": "workspace:*",
+    "@haai/core": "workspace:*",
+    "@haai/hooks-sdk": "workspace:*",
+    "@haai/plugin-sdk": "workspace:*",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^10.0.3",
     "@fastify/rate-limit": "^10.2.1",

@@ -1,5 +1,5 @@
-import type { DbClient } from "@ai-v-models/core";
-import type { AppConfig } from "@ai-v-models/core";
+import type { DbClient } from "@haai/core";
+import type { AppConfig } from "@haai/core";
 import type { KeyAuthenticator } from "./key-auth.js";
 import type { BackendBalancer } from "./balancer.js";
 import type { SseEmitter } from "./sse.js";

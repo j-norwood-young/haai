@@ -1,7 +1,7 @@
-# Ai-V-Models Codebase Overview
+# HAAI Codebase Overview
 
 ## Project Summary
-**Ai-V-Models** is a modern streaming reverse proxy for OpenAI-compatible LLMs, designed for homelab users and sysadmins managing multiple LLM backends across different machines. It functions like HAProxy/Nginx but purpose-built for LLMs with virtual models, key management, load balancing, hooks, plugins, and a full admin UI.
+**HAAI** (High Availability AI) is a modern streaming reverse proxy for OpenAI-compatible LLMs, designed for homelab users and sysadmins managing multiple LLM backends across different machines. It functions like HAProxy/Nginx but purpose-built for LLMs with virtual models, key management, load balancing, hooks, plugins, and a full admin UI.
 
 ---
 
@@ -9,10 +9,10 @@
 
 ### Monorepo Structure (pnpm + Turbo)
 ```
-ai-v-models/
+haai/
 ├── apps/web/           # Admin UI (SvelteKit)
 ├── packages/
-│   ├── cli/           # aivm CLI tool
+│   ├── cli/           # haai CLI tool
 │   ├── core/          # Shared config, DB, types
 │   ├── hooks-sdk/     # Hook authoring SDK
 │   ├── mcp/           # MCP server support
@@ -89,16 +89,16 @@ ai-v-models/
 ### 3. **packages/cli/** - Command Line Interface
 Built with Commander.js, provides full management via terminal:
 ```bash
-aivm backend add --name my-backend --base-url http://... --provider ollama
-aivm key create --name "my-app"
-aivm vmodel list
-aivm plugin install npm:@ai-v-models/pirate-speak
-aivm status
+haai backend add --name my-backend --base-url http://... --provider ollama
+haai key create --name "my-app"
+haai vmodel list
+haai plugin install npm:@haai/pirate-speak
+haai status
 ```
 
 Features:
 - Tab completion for commands and values
-- Environment variable configuration (`AIVM_URL`, `AIVM_ADMIN_TOKEN`)
+- Environment variable configuration (`HAAI_URL`, `HAAI_ADMIN_TOKEN`)
 - Secure token handling (displayed once at creation)
 
 ---
@@ -106,7 +106,7 @@ Features:
 ### 4. **Plugin System** - Sandboxed Extensions
 **SDK** (`plugin-sdk/`):
 ```typescript
-import { definePlugin, t } from "@ai-v-models/plugin-sdk";
+import { definePlugin, t } from "@haai/plugin-sdk";
 
 export default definePlugin({
   name: "pirate-speak",

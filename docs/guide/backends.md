@@ -1,6 +1,6 @@
 # Adding Backends
 
-A **backend** is an upstream OpenAI-compatible LLM server. ai-v-models proxies `/v1/chat/completions`, `/v1/models`, and `/v1/embeddings` to it.
+A **backend** is an upstream OpenAI-compatible LLM server. HAAI proxies `/v1/chat/completions`, `/v1/models`, and `/v1/embeddings` to it.
 
 ## Required fields
 
@@ -14,7 +14,7 @@ A **backend** is an upstream OpenAI-compatible LLM server. ai-v-models proxies `
 ## Add via CLI
 
 ```bash
-aivm backend add \
+haai backend add \
   --name lmstudio-bob \
   --base-url http://192.168.1.100:1234 \
   --provider lmstudio \
@@ -25,7 +25,7 @@ aivm backend add \
 For backends that require their own API key, use abstraction mode:
 
 ```bash
-aivm backend add \
+haai backend add \
   --name openai-main \
   --base-url https://api.openai.com/v1 \
   --provider openai \
@@ -55,7 +55,7 @@ curl -X POST http://localhost:4000/api/v1/backends \
 ## Test connectivity
 
 ```bash
-aivm backend test lmstudio-bob
+haai backend test lmstudio-bob
 # or
 curl -X POST http://localhost:4000/api/v1/backends/<id>/test \
   -H "Authorization: Bearer $ADMIN_TOKEN"

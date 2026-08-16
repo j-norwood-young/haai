@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { nanoid } from "nanoid";
 import { createHash } from "node:crypto";
-import { apiKeys, backends as backendsTable, generateApiKey } from "@ai-v-models/core";
+import { apiKeys, backends as backendsTable, generateApiKey } from "@haai/core";
 import { startTestProxy, type TestProxy } from "./helpers/proxy-server.js";
 import { startMockServer, type StartedMockServer } from "./helpers/mock-server.js";
 

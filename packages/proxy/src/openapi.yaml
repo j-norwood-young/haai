@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: ai-v-models API
+  title: HAAI API
   description: |
-    Management REST API and OpenAI-compatible inference endpoints for ai-v-models.
+    Management REST API and OpenAI-compatible inference endpoints for HAAI.
 
     **Management API** (`/api/v1/*`) requires admin authentication via session cookie or Bearer token.
 
@@ -38,14 +38,14 @@ components:
     sessionCookie:
       type: apiKey
       in: cookie
-      name: aivm_session
+      name: haai_session
     bearerAuth:
       type: http
       scheme: bearer
     apiKeyAuth:
       type: http
       scheme: bearer
-      description: Client API key (aivm-sk-…)
+      description: Client API key (haai-sk-…)
 
   schemas:
     Error:
@@ -72,7 +72,7 @@ paths:
                 password: { type: string, format: password }
       responses:
         "200":
-          description: Session established (aivm_session cookie set)
+          description: Session established (haai_session cookie set)
         "401":
           description: Invalid credentials
 

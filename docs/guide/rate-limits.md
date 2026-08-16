@@ -1,6 +1,6 @@
 # Rate Limiting & Budgets
 
-ai-v-models supports per-key **token budgets** and stores an **RPM** limit field. Admin login has a separate rate limit.
+HAAI supports per-key **token budgets** and stores an **RPM** limit field. Admin login has a separate rate limit.
 
 ## Token budgets (enforced)
 
@@ -18,7 +18,7 @@ All configured budgets are checked **before** each request. If any period is exc
 Usage is recorded after the response completes (including streamed tokens).
 
 ```bash
-aivm key create --name limited \
+haai key create --name limited \
   --day-budget 100000 \
   --hour-budget 10000
 ```
@@ -37,7 +37,7 @@ Returns current usage vs limits for each active period.
 The `rateLimitRpm` field is stored and configurable via CLI/API:
 
 ```bash
-aivm key create --name app --rpm 60
+haai key create --name app --rpm 60
 ```
 
 ::: info
@@ -49,8 +49,8 @@ RPM limits are **stored but not yet enforced** on the inference path. Token budg
 Admins can suspend keys regardless of budget:
 
 ```bash
-aivm key suspend <prefix-or-id> --reason "Policy violation"
-aivm key resume <prefix-or-id>
+haai key suspend <prefix-or-id> --reason "Policy violation"
+haai key resume <prefix-or-id>
 ```
 
 Suspended keys return 403.
@@ -66,6 +66,6 @@ Applied to `/api/v1/auth/login` via Fastify rate limiting.
 
 ## Metrics
 
-Prometheus counter `aivm_rate_limit_hits_total{key_prefix, reason}` tracks budget and suspension hits.
+Prometheus counter `haai_rate_limit_hits_total{key_prefix, reason}` tracks budget and suspension hits.
 
 See [Prometheus & OTLP](./prometheus).

@@ -12,7 +12,7 @@ The admin UI manages backends, v-models, keys, hooks, plugins, and metrics.
 ## Default login
 
 - Username: `admin`
-- Password: `admin` (or `AIVM_ADMIN_PASSWORD` on first database creation)
+- Password: `admin` (or `HAAI_ADMIN_PASSWORD` on first database creation)
 
 You may be prompted to change the password on first login.
 

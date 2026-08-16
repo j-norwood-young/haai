@@ -4,19 +4,19 @@
 
 | Layer | Mechanism |
 |-------|-----------|
-| Admin UI / management API | Session cookie (`avm_session`) or Bearer admin token (`aivm-at-…`) |
-| Inference API (`/v1/*`) | Client API key (`aivm-sk-…`) |
+| Admin UI / management API | Session cookie (`haai_session`) or Bearer admin token (`haai-at-…`) |
+| Inference API (`/v1/*`) | Client API key (`haai-sk-…`) |
 | Backend upstream | Passthrough client key or encrypted abstraction key |
 
 ## Client API keys
 
-- Format: `aivm-sk-<random>`
+- Format: `haai-sk-<random>`
 - Only SHA-256 hash stored; full key shown once at creation
 - Prefix (first 13 chars) used for lookup and logs — never log full keys
 
 ## Backend keys (abstraction mode)
 
-Encrypted with AES-256-GCM using `{AIVM_DATA_DIR}/master.key`. Protect this file like a root credential.
+Encrypted with AES-256-GCM using `{HAAI_DATA_DIR}/master.key`. Protect this file like a root credential.
 
 ## Admin accounts
 
@@ -30,7 +30,7 @@ Encrypted with AES-256-GCM using `{AIVM_DATA_DIR}/master.key`. Protect this file
 Long-lived Bearer tokens for CLI, MCP, and automation:
 
 ```bash
-aivm admin-token create --name ci --expires-in 90
+haai admin-token create --name ci --expires-in 90
 ```
 
 Revoke compromised tokens immediately from Settings or CLI.
@@ -43,17 +43,17 @@ Revoke compromised tokens immediately from Settings or CLI.
 
 ## Webhook security
 
-External hooks support HMAC-SHA256 signatures via `webhookSecret`. Verify `X-AVM-Signature` in your handler — see [Authoring Hooks](./hooks-authoring).
+External hooks support HMAC-SHA256 signatures via `webhookSecret`. Verify `X-HAAI-Signature` in your handler — see [Authoring Hooks](./hooks-authoring).
 
 ## Hardening checklist
 
-- [ ] Set `AVM_SESSION_SECRET` in production
+- [ ] Set `HAAI_SESSION_SECRET` in production
 - [ ] Change default admin password
 - [ ] Back up `master.key`
 - [ ] Use abstraction mode for cloud API keys
 - [ ] Set token budgets on client keys
 - [ ] Enable TOTP or passkeys for admin accounts
-- [ ] Restrict CORS origins (`AVM_CORS_ORIGINS`)
+- [ ] Restrict CORS origins (`HAAI_CORS_ORIGINS`)
 - [ ] Run behind TLS-terminating reverse proxy
 
 ## Related

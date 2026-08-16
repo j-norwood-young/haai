@@ -44,7 +44,7 @@ export function registerHookCommands(program: Command, getClient: () => ApiClien
     .command("add-webhook")
     .description("Register an external webhook hook")
     .requiredOption("--name <name>", "Hook name")
-    // Named --webhook-url (not --url) to avoid clashing with global aivm --url (proxy URL).
+    // Named --webhook-url (not --url) to avoid clashing with global haai --url (proxy URL).
     .requiredOption("--webhook-url <url>", "Webhook URL")
     .requiredOption("--trigger <trigger>", "pre-request|post-completion")
     .option("--secret <secret>", "Signing secret")

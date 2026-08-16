@@ -12,8 +12,8 @@ A **virtual model** is a user-facing alias that maps to one or more backends. Cl
 ## Create a v-model
 
 ```bash
-aivm vmodel create --model-id smart-chat --display-name "Smart Chat"
-aivm vmodel add-backend smart-chat \
+haai vmodel create --model-id smart-chat --display-name "Smart Chat"
+haai vmodel add-backend smart-chat \
   --backend-id backend-abc123 \
   --backend-model qwen3.5-35b \
   --weight 1

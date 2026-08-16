@@ -1,6 +1,6 @@
 # Docker
 
-Run ai-v-models in a container with persistent data on a volume.
+Run HAAI in a container with persistent data on a volume.
 
 ## Quick start
 
@@ -22,39 +22,39 @@ The included compose file defines two services:
 Both services:
 
 - Build `proxy` from the repo `Dockerfile` (or use a published image)
-- Mount volume `aivm-data` → `/data` (`AIVM_DATA_DIR`) on `proxy`
+- Mount volume `haai-data` → `/data` (`HAAI_DATA_DIR`) on `proxy`
 - Health check `GET /health` on `proxy`
 
-Host ports are overridable via `.env` (`AIVM_HOST_PROXY_PORT`, `AIVM_HOST_WEB_PORT`). See [Reverse Proxy (nginx)](./reverse-proxy) for the `web` service config and production nginx examples.
+Host ports are overridable via `.env` (`HAAI_HOST_PROXY_PORT`, `HAAI_HOST_WEB_PORT`). See [Reverse Proxy (nginx)](./reverse-proxy) for the `web` service config and production nginx examples.
 
 ### Environment
 
 | Variable | Value in compose |
 |----------|------------------|
-| `AIVM_HOST` | `0.0.0.0` |
-| `AIVM_PORT` | `4000` |
-| `AIVM_DATA_DIR` | `/data` |
-| `AIVM_LOG_LEVEL` | `info` |
-| `AIVM_LOG_FORMAT` | `json` |
-| `AIVM_CORS_ORIGINS` | `http://localhost:4000,http://localhost:5173` |
+| `HAAI_HOST` | `0.0.0.0` |
+| `HAAI_PORT` | `4000` |
+| `HAAI_DATA_DIR` | `/data` |
+| `HAAI_LOG_LEVEL` | `info` |
+| `HAAI_LOG_FORMAT` | `json` |
+| `HAAI_CORS_ORIGINS` | `http://localhost:4000,http://localhost:5173` |
 
 Add secrets via compose `environment` or an env file:
 
 ```yaml
 environment:
-  AIVM_SESSION_SECRET: "${AVM_SESSION_SECRET}"
-  AIVM_ADMIN_PASSWORD: "${AVM_ADMIN_PASSWORD}"
+  HAAI_SESSION_SECRET: "${HAAI_SESSION_SECRET}"
+  HAAI_ADMIN_PASSWORD: "${HAAI_ADMIN_PASSWORD}"
 ```
 
 ## Build manually
 
 ```bash
-docker build -t ai-v-models .
+docker build -t haai .
 docker run -d \
   -p 4000:4000 \
-  -v aivm-data:/data \
-  -e AIVM_DATA_DIR=/data \
-  ai-v-models
+  -v haai-data:/data \
+  -e HAAI_DATA_DIR=/data \
+  haai
 ```
 
 The image includes the built admin UI and VitePress docs.

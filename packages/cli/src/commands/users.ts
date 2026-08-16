@@ -9,10 +9,10 @@ import {
   runMigrations,
   defaultDataDir,
   users,
-} from "@ai-v-models/core";
+} from "@haai/core";
 
 async function openDb() {
-  const dataDir = process.env["AIVM_DATA_DIR"] ?? defaultDataDir();
+  const dataDir = process.env["HAAI_DATA_DIR"] ?? defaultDataDir();
   const dbPath = join(dataDir, "data.db");
   runMigrations(dbPath);
   return { db: createDbClient(dbPath), dataDir, dbPath };

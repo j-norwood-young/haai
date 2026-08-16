@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/plugin-talk-like-a-pirate",
+  "name": "@haai/plugin-talk-like-a-pirate",
   "version": "1.0.0",
   "description": "Makes your AI talk like a pirate. Arrr!",
   "type": "module",
@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
-  "aivm-plugin": {
+  "haai-plugin": {
     "name": "Talk like a Pirate",
     "description": "Injects a pirate-speak instruction into the system prompt. Arrr!",
     "version": "1.0.0",
@@ -32,7 +32,7 @@
     }
   },
   "devDependencies": {
-    "@ai-v-models/plugin-sdk": "workspace:*",
+    "@haai/plugin-sdk": "workspace:*",
     "@types/node": "^22.15.30",
     "typescript": "^5.8.3"
   }

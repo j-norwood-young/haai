@@ -11,7 +11,7 @@ The management API is available at `/api/v1/`. All endpoints require admin authe
 { "username": "admin", "password": "admin" }
 ```
 
-Returns a session cookie `aivm_session`.
+Returns a session cookie `haai_session`.
 
 ### Get current user
 `GET /api/v1/auth/me`

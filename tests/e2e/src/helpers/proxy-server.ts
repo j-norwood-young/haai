@@ -12,12 +12,12 @@ import {
   apiTokens,
   generateAdminToken,
   hashToken,
-} from "@ai-v-models/core";
-import { createApp } from "@ai-v-models/proxy/app";
-import { KeyAuthenticator } from "@ai-v-models/proxy/key-auth";
-import { BackendBalancer } from "@ai-v-models/proxy/balancer";
-import { SseEmitter } from "@ai-v-models/proxy/sse";
-import { PluginRuntime } from "@ai-v-models/proxy/plugins/runtime";
+} from "@haai/core";
+import { createApp } from "@haai/proxy/app";
+import { KeyAuthenticator } from "@haai/proxy/key-auth";
+import { BackendBalancer } from "@haai/proxy/balancer";
+import { SseEmitter } from "@haai/proxy/sse";
+import { PluginRuntime } from "@haai/proxy/plugins/runtime";
 import { getPort } from "./ports.js";
 
 export interface TestProxy {
@@ -32,7 +32,7 @@ export interface TestProxy {
 
 export async function startTestProxy(): Promise<TestProxy> {
   const port = await getPort();
-  const dataDir = mkdtempSync(join(tmpdir(), "aivm-test-"));
+  const dataDir = mkdtempSync(join(tmpdir(), "haai-test-"));
   ensureDataDir(dataDir);
 
   const dbPath = join(dataDir, "data.db");

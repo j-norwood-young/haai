@@ -10,13 +10,13 @@ After any change to TypeScript or Svelte code, **verify before finishing**:
 1. **IDE diagnostics** — Run ReadLints on every file you edited.
 2. **Svelte** — For `.svelte` / `.svelte.ts` / `.svelte.js` changes, run `svelte-autofixer` (Svelte MCP) and keep fixing until clean. Also run:
    ```bash
-   pnpm --filter @ai-v-models/web exec svelte-check --threshold error
+   pnpm --filter @haai/web exec svelte-check --threshold error
    ```
    Fix errors in files you touched (or that your change broke). Do not ignore new errors.
 3. **TypeScript** — For package/backend changes, typecheck the affected package:
    ```bash
-   pnpm --filter @ai-v-models/proxy exec tsc --noEmit
-   pnpm --filter @ai-v-models/web exec tsc --noEmit
+   pnpm --filter @haai/proxy exec tsc --noEmit
+   pnpm --filter @haai/web exec tsc --noEmit
    ```
 4. **Runtime** — If the app is running, check the dev terminal for compile/proxy errors (e.g. ECONNREFUSED → API 500s) and confirm the changed route loads.
 

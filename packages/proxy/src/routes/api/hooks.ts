@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { hooks as hooksTable } from "@ai-v-models/core";
+import { hooks as hooksTable } from "@haai/core";
 import type { AppContext } from "../../context.js";
 
 export async function hooksRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {

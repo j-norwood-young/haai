@@ -6,7 +6,7 @@ import {
   ensureDataDir,
   createDbClient,
   getMasterKey,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import { createLogger } from "./logger.js";
 import { createApp } from "./app.js";
 import { printStartupBanner, resolvePublicBaseUrl } from "./startup-banner.js";
@@ -24,14 +24,14 @@ const dataDir = config.dataDir ?? defaultDataDir();
 ensureDataDir(dataDir);
 
 const log = createLogger(config.log, dataDir);
-log.info({ dataDir }, "Starting AiVM proxy");
+log.info({ dataDir }, "Starting HAAI proxy");
 
 // Database
 const dbPath = join(dataDir, "data.db");
 const db = createDbClient(dbPath);
 
 // Run embedded migrations
-const { runMigrations } = await import("@ai-v-models/core");
+const { runMigrations } = await import("@haai/core");
 try {
   runMigrations(dbPath);
   log.info("Database migrations applied");
@@ -88,7 +88,7 @@ const { host, port } = config.server;
 await app.listen({ host, port });
 
 const publicUrl = resolvePublicBaseUrl(config);
-log.info({ host, port, publicUrl }, `AiVM listening on ${publicUrl}`);
+log.info({ host, port, publicUrl }, `HAAI listening on ${publicUrl}`);
 await flushLogs(log);
 await waitForLogDrain();
 await printStartupBanner({ config, db, dataDir });

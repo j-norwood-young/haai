@@ -140,7 +140,7 @@
 </script>
 
 <svelte:head>
-	<title>Metrics — AiVM</title>
+	<title>Metrics — HAAI</title>
 </svelte:head>
 
 <div class="page">

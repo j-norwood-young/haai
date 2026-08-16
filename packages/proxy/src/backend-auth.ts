@@ -1,4 +1,4 @@
-import { decrypt } from "@ai-v-models/core";
+import { decrypt } from "@haai/core";
 
 export interface BackendAuthFields {
   keyMode: string;

@@ -1,18 +1,11 @@
 <script lang="ts">
+	import BrandLogo from './BrandLogo.svelte';
+
 	interface Props {
 		message?: string;
 	}
 
-	const { message = 'Connecting to AiVM…' }: Props = $props();
-
-	const logo = [
-		'   █████╗   ██╗  ██╗   ██╗  ███╗   ███╗',
-		'  ██╔══██╗  ╚═╝  ██║   ██║  ████╗ ████║',
-		'  ███████║  ██╗  ██║   ██║  ██╔████╔██║',
-		'  ██╔══██║  ██║  ╚██╗ ██╔╝  ██║╚██╔╝██║',
-		'  ██║  ██║  ██║   ╚████╔╝   ██║ ╚═╝ ██║',
-		'  ╚═╝  ╚═╝  ╚═╝    ╚═══╝    ╚═╝     ╚═╝'
-	].join('\n');
+	const { message = 'Connecting to HAAI…' }: Props = $props();
 </script>
 
 <div class="loader" role="status" aria-live="polite">
@@ -23,10 +16,10 @@
 	</div>
 
 	<div class="loader__inner">
-		<pre class="loader__logo" aria-hidden="true">{logo}</pre>
-		<span class="sr-only">AiVM</span>
+		<BrandLogo variant="full" class="loader__logo" />
+		<span class="sr-only">HAAI</span>
 
-		<p class="loader__tagline">AI Virtual Models · OpenAI-compatible LLM proxy</p>
+		<p class="loader__tagline">High Availability AI · OpenAI-compatible LLM proxy</p>
 
 		<div class="loader__bar" aria-hidden="true">
 			<div class="loader__bar-fill"></div>
@@ -84,16 +77,12 @@
 		text-align: center;
 	}
 
-	.loader__logo {
-		margin: 0;
-		font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Menlo,
-			Consolas, monospace;
-		font-size: clamp(0.4rem, 2.4vw, 0.85rem);
-		line-height: 1.1;
-		font-weight: 700;
-		white-space: pre;
+	.loader__inner :global(.loader__logo) {
+		height: clamp(2.5rem, 8vw, 4rem);
+		max-width: min(20rem, 80vw);
+		width: auto;
 		color: var(--color-brand);
-		text-shadow: 0 0 18px var(--color-brand-glow-strong);
+		filter: drop-shadow(0 0 18px var(--color-brand-glow-strong));
 		animation: loader-glow 2.4s ease-in-out infinite;
 	}
 
@@ -160,11 +149,11 @@
 	@keyframes loader-glow {
 		0%,
 		100% {
-			text-shadow: 0 0 12px var(--color-brand-glow);
+			filter: drop-shadow(0 0 12px var(--color-brand-glow));
 			opacity: 0.92;
 		}
 		50% {
-			text-shadow: 0 0 26px var(--color-brand-glow-strong);
+			filter: drop-shadow(0 0 26px var(--color-brand-glow-strong));
 			opacity: 1;
 		}
 	}
@@ -190,7 +179,7 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.loader__logo,
+		.loader__inner :global(.loader__logo),
 		.loader__bar-fill,
 		.loader__cursor {
 			animation: none;

@@ -1,5 +1,5 @@
 import pino from "pino";
-import type { LogConfig } from "@ai-v-models/core";
+import type { LogConfig } from "@haai/core";
 
 let logger: pino.Logger;
 
@@ -23,7 +23,7 @@ export function createLogger(config: LogConfig, _dataDir: string): pino.Logger {
   logger = pino(
     {
       level: config.level,
-      base: { service: "ai-v-models" },
+      base: { service: "haai" },
       timestamp: pino.stdTimeFunctions.isoTime,
     },
     transport ?? pino.multistream(streams),

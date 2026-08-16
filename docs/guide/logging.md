@@ -1,6 +1,6 @@
 # Logging
 
-ai-v-models uses [Pino](https://getpino.io/) for structured logging.
+HAAI uses [Pino](https://getpino.io/) for structured logging.
 
 ## Configuration
 
@@ -11,7 +11,7 @@ log:
   file: ""         # optional file path
 ```
 
-Environment overrides: `AVM_LOG_LEVEL`, `AVM_LOG_FORMAT`, `AVM_LOG_FILE`
+Environment overrides: `HAAI_LOG_LEVEL`, `HAAI_LOG_FORMAT`, `HAAI_LOG_FILE`
 
 ## Formats
 
@@ -38,9 +38,9 @@ The admin UI **Live Logs** page streams log entries over SSE. Useful during deve
 ## Production tips
 
 - Use `json` format and ship logs to your aggregator (Loki, Elasticsearch, etc.)
-- Set `AVM_LOG_LEVEL=info` in production; use `debug` only when troubleshooting
-- Optional `log.file` writes to disk under `{AIVM_DATA_DIR}/logs/` when configured
+- Set `HAAI_LOG_LEVEL=info` in production; use `debug` only when troubleshooting
+- Optional `log.file` writes to disk under `{HAAI_DATA_DIR}/logs/` when configured
 
 ## Base fields
 
-Every log line includes `"service":"ai-v-models"` for easy filtering.
+Every log line includes `"service":"haai"` for easy filtering.

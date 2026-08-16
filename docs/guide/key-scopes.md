@@ -12,10 +12,10 @@ API keys control **what** clients can access and **which features** they can use
 If both lists are set, the key must match at least one allowed source for each request type.
 
 ```bash
-aivm key create --name app-a \
+haai key create --name app-a \
   --models smart-chat,fast-summarizer
 
-aivm key create --name gpu-only \
+haai key create --name gpu-only \
   --backends backend-gpu1,backend-gpu2
 ```
 
@@ -30,7 +30,7 @@ Checked on every inference request:
 | `allowEmbeddings` | `false` | Reject `/v1/embeddings` |
 
 ```bash
-aivm key create --name no-tools --no-tools
+haai key create --name no-tools --no-tools
 ```
 
 ## `/v1/models` filtering

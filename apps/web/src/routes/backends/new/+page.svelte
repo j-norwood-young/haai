@@ -134,7 +134,7 @@
 </script>
 
 <svelte:head>
-	<title>New Backend — AiVM</title>
+	<title>New Backend — HAAI</title>
 </svelte:head>
 
 <div class="p-6 max-w-3xl mx-auto">

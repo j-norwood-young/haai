@@ -61,7 +61,7 @@ export function registerAdminTokenCommands(
       console.log(chalk.bold("\n  Token (save this — shown once):\n"));
       console.log(`  ${result.token}\n`);
       console.log(chalk.dim(`  Prefix: ${result.prefix}`));
-      console.log(chalk.dim(`  Export: export AIVM_ADMIN_TOKEN="${result.token}"`));
+      console.log(chalk.dim(`  Export: export HAAI_ADMIN_TOKEN="${result.token}"`));
     });
 
   cmd

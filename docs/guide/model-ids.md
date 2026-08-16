@@ -1,6 +1,6 @@
 # Model ID Convention
 
-ai-v-models exposes two kinds of model IDs in `GET /v1/models`.
+HAAI exposes two kinds of model IDs in `GET /v1/models`.
 
 ## Pass-through (backend) models
 

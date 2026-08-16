@@ -55,7 +55,7 @@ export function registerBackendCommands(
     .command("add")
     .description("Add a backend")
     .requiredOption("--name <name>", "Unique backend name")
-    // Named --base-url (not --url) to avoid clashing with global aivm --url (proxy URL).
+    // Named --base-url (not --url) to avoid clashing with global haai --url (proxy URL).
     .requiredOption("--base-url <url>", "Backend base URL")
     .requiredOption("--provider <provider>", "Provider: lmstudio|ollama|vllm|openai|generic")
     .requiredOption("--hostname <hostname>", "Hostname label (e.g. bob)")

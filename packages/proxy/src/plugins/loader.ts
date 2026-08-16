@@ -1,7 +1,7 @@
 import { eq, and, or } from "drizzle-orm";
-import { plugins as pluginsTable, pluginBindings as bindingsTable } from "@ai-v-models/core";
-import type { ResolvedBinding } from "@ai-v-models/core";
-import type { DbClient } from "@ai-v-models/core";
+import { plugins as pluginsTable, pluginBindings as bindingsTable } from "@haai/core";
+import type { ResolvedBinding } from "@haai/core";
+import type { DbClient } from "@haai/core";
 import { getLogger } from "../logger.js";
 
 export interface BindingLookupOpts {

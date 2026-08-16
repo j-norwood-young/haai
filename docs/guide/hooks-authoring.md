@@ -1,6 +1,6 @@
 # Authoring Hooks
 
-Hooks extend ai-v-models with custom pre-request mutations and post-completion callbacks.
+Hooks extend HAAI with custom pre-request mutations and post-completion callbacks.
 
 ## Hook types
 
@@ -15,8 +15,8 @@ Create a Node.js module that exports a default function:
 
 ```typescript
 // my-hook/index.ts
-import type { PreRequestHook } from "@ai-v-models/hooks-sdk";
-import { prependSystemPrompt } from "@ai-v-models/hooks-sdk";
+import type { PreRequestHook } from "@haai/hooks-sdk";
+import { prependSystemPrompt } from "@haai/hooks-sdk";
 
 const hook: PreRequestHook = async (request, ctx) => {
   const prefix = ctx.config["systemPromptPrefix"] as string ?? "";
@@ -33,11 +33,11 @@ export default hook;
 
 ```json
 {
-  "name": "my-aivm-hook",
+  "name": "my-haai-hook",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.js",
-  "aivm-hook": {
+  "haai-hook": {
     "name": "My System Prompt Hook",
     "description": "Prepends a system prompt prefix",
     "trigger": "pre-request",
@@ -55,10 +55,10 @@ export default hook;
 
 ```bash
 # Install from NPM
-aivm hook add-internal --name my-hook --module my-aivm-hook --trigger pre-request
+haai hook add-internal --name my-hook --module my-haai-hook --trigger pre-request
 
 # Install from local path
-aivm hook add-internal --name my-hook --module /path/to/hook/dist/index.js --trigger pre-request
+haai hook add-internal --name my-hook --module /path/to/hook/dist/index.js --trigger pre-request
 ```
 
 ## External hooks (webhooks)
@@ -98,7 +98,7 @@ Response body is ignored for streaming v-models.
 
 ### Webhook signature verification
 
-All webhooks include an `X-AIVM-Signature: sha256=<hmac>` header when a `webhookSecret` is configured. Verify it in your handler:
+All webhooks include an `X-HAAI-Signature: sha256=<hmac>` header when a `webhookSecret` is configured. Verify it in your handler:
 
 ```typescript
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -112,9 +112,9 @@ function verifySignature(body: string, signature: string, secret: string): boole
 ### Register a webhook
 
 ```bash
-aivm hook add-webhook \
+haai hook add-webhook \
   --name my-webhook \
-  --webhook-url https://my-server.example.com/aivm-hook \
+  --webhook-url https://my-server.example.com/haai-hook \
   --trigger pre-request \
   --secret my-signing-secret \
   --timeout 5000
@@ -128,7 +128,7 @@ import {
   appendSystemPrompt,
   replaceInMessages,
   setParam,
-} from "@ai-v-models/hooks-sdk";
+} from "@haai/hooks-sdk";
 
 // Prepend to system prompt
 const req2 = prependSystemPrompt(request, "Always respond in French.");
@@ -159,9 +159,9 @@ interface HookContext {
 
 ```bash
 # Install hook directly from GitHub
-npm install github:owner/repo#tag --prefix ~/.aivm/hooks
-aivm hook add-internal \
+npm install github:owner/repo#tag --prefix ~/.haai/hooks
+haai hook add-internal \
   --name github-hook \
-  --module ~/.aivm/hooks/node_modules/repo-name/dist/index.js \
+  --module ~/.haai/hooks/node_modules/repo-name/dist/index.js \
   --trigger pre-request
 ```

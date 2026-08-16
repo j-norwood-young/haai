@@ -5,7 +5,7 @@ Use the `openai` or `generic` provider label for any OpenAI-compatible HTTP API 
 ## OpenAI
 
 ```bash
-aivm backend add \
+haai backend add \
   --name openai-main \
   --base-url https://api.openai.com/v1 \
   --provider openai \
@@ -21,7 +21,7 @@ Always use **abstraction** mode so your OpenAI key is not exposed to clients.
 Use `generic` when the upstream is OpenAI-compatible but not one of the named providers:
 
 ```bash
-aivm backend add \
+haai backend add \
   --name litellm-gateway \
   --base-url https://gateway.internal/v1 \
   --provider generic \

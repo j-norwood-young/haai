@@ -1,6 +1,6 @@
 # TLS Setup
 
-ai-v-models listens on **plain HTTP** by default. TLS is typically handled by a reverse proxy in front of the proxy process.
+HAAI listens on **plain HTTP** by default. TLS is typically handled by a reverse proxy in front of the proxy process.
 
 ## Why reverse proxy TLS?
 
@@ -37,11 +37,11 @@ server {
 }
 ```
 
-Update `AIVM_CORS_ORIGINS` to include your HTTPS admin URL.
+Update `HAAI_CORS_ORIGINS` to include your HTTPS admin URL.
 
 ## Config file TLS fields
 
-`config.yaml` accepts `server.tlsCert` and `server.tlsKey` (env: `AVM_TLS_CERT`, `AVM_TLS_KEY`).
+`config.yaml` accepts `server.tlsCert` and `server.tlsKey` (env: `HAAI_TLS_CERT`, `HAAI_TLS_KEY`).
 
 ::: info
 Native HTTPS termination in the Fastify server is **not implemented yet**. These settings are reserved for a future release. Use a reverse proxy today.

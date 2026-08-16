@@ -1,0 +1,86 @@
+<script lang="ts">
+	interface Props {
+		/** Compact fin mark, or full wordmark */
+		variant?: 'fin' | 'full';
+		/** Extra classes applied to the SVG */
+		class?: string;
+		/** Accessible name; empty string marks decorative */
+		label?: string;
+	}
+
+	const { variant = 'fin', class: className = '', label = 'HAAI' }: Props = $props();
+</script>
+
+{#if variant === 'full'}
+	<svg
+		viewBox="0 0 639 356"
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		class={['brand-logo', 'brand-logo--full', className]}
+		role={label ? 'img' : undefined}
+		aria-label={label || undefined}
+		aria-hidden={label ? undefined : true}
+	>
+		<g stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+			<path
+				d="M 185 279 C 197.127502 220.024399 229.845642 146.658539 303.54364 94.341461 C 322.201355 81.024384 342.724792 69.609741 366.046936 62 C 356.718079 125.73172 365.866028 182.021271 390 235 C 398.61853 253.919373 411.506775 268.74176 425 279"
+			/>
+			<path
+				d="M 305 279 C 317.127502 220.024399 349.845642 146.658539 423.54364 94.341461 C 442.201355 81.024384 462.724792 69.609741 486.046936 62 C 476.718079 125.73172 485.866028 182.021271 510 235 C 518.61853 253.919373 531.506775 268.74176 545 279"
+			/>
+			<path
+				d="M 28 327 C 105.200912 314 162.436066 314 224.995438 327 C 290.216888 341 355.438354 341 423.32193 326 C 484.550232 313 543.116455 314 611 328"
+			/>
+		</g>
+		<text
+			x="3"
+			y="288"
+			font-family="Futura, Avenir Next, Avenir, Helvetica Neue, Helvetica, Arial, sans-serif"
+			font-size="336"
+			font-weight="500"
+			fill="currentColor">h</text
+		>
+		<text
+			x="548"
+			y="288"
+			font-family="Futura, Avenir Next, Avenir, Helvetica Neue, Helvetica, Arial, sans-serif"
+			font-size="336"
+			font-weight="500"
+			fill="currentColor">i</text
+		>
+	</svg>
+{:else}
+	<svg
+		viewBox="0 0 273 249"
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		class={['brand-logo', 'brand-logo--fin', className]}
+		role={label ? 'img' : undefined}
+		aria-label={label || undefined}
+		aria-hidden={label ? undefined : true}
+	>
+		<path
+			stroke="currentColor"
+			stroke-width="15"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			d="M 16 234 C 28.127502 175.024399 60.845642 101.658539 134.54364 49.341461 C 153.201355 36.024384 173.724792 24.609741 197.046936 17 C 187.718079 80.73172 196.866028 137.021271 221 190 C 229.61853 208.919373 242.506775 223.74176 255.999985 234"
+		/>
+	</svg>
+{/if}
+
+<style>
+	.brand-logo {
+		display: block;
+		flex-shrink: 0;
+	}
+	.brand-logo--fin {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+	.brand-logo--full {
+		height: 1.75rem;
+		width: auto;
+		max-width: 8rem;
+	}
+</style>

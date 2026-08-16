@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import * as esbuild from "esbuild";
-import type { PluginManifest } from "@ai-v-models/plugin-sdk";
+import type { PluginManifest } from "@haai/plugin-sdk";
 import { getLogger } from "../logger.js";
 
 const _require = createRequire(import.meta.url);
@@ -47,11 +47,11 @@ export async function installPlugin(
       ? source.slice("npm:".length)
       : `github:${source.slice("github:".length)}`;
 
-    const tmpInstallDir = join(tmpdir(), `aivm-plugin-install-${pluginId}`);
+    const tmpInstallDir = join(tmpdir(), `haai-plugin-install-${pluginId}`);
     mkdirSync(tmpInstallDir, { recursive: true });
 
     // Create a minimal package.json for the install sandbox
-    const sandboxPkg = JSON.stringify({ name: "aivm-install-sandbox", type: "module", private: true });
+    const sandboxPkg = JSON.stringify({ name: "haai-install-sandbox", type: "module", private: true });
     require("node:fs").writeFileSync(join(tmpInstallDir, "package.json"), sandboxPkg);
 
     log.info({ source, installSpec }, "Installing plugin package");
@@ -67,22 +67,22 @@ export async function installPlugin(
     pkgJson = readPkgJson(packageDir);
   }
 
-  // Read and validate the "aivm-plugin" manifest from package.json
-  const aivmPlugin = pkgJson["aivm-plugin"] as Partial<PluginManifest> | undefined;
-  if (!aivmPlugin) {
+  // Read and validate the "haai-plugin" manifest from package.json
+  const haaiPlugin = pkgJson["haai-plugin"] as Partial<PluginManifest> | undefined;
+  if (!haaiPlugin) {
     throw new Error(
-      `Package missing "aivm-plugin" key in package.json. Is this an ai-v-models plugin? See docs for the required manifest format.`,
+      `Package missing "haai-plugin" key in package.json. Is this an haai plugin? See docs for the required manifest format.`,
     );
   }
 
-  const rawDesc = aivmPlugin.description ?? (pkgJson["description"] as string | undefined);
+  const rawDesc = haaiPlugin.description ?? (pkgJson["description"] as string | undefined);
   const manifest: PluginManifest = {
-    name: (aivmPlugin.name ?? pkgJson["name"] ?? "unknown") as string,
+    name: (haaiPlugin.name ?? pkgJson["name"] ?? "unknown") as string,
     ...(rawDesc !== undefined ? { description: rawDesc } : {}),
-    version: (aivmPlugin.version ?? pkgJson["version"] ?? "0.0.0") as string,
-    ...(aivmPlugin.configSchema !== undefined ? { configSchema: aivmPlugin.configSchema } : {}),
-    needsResponseBuffer: aivmPlugin.needsResponseBuffer ?? false,
-    hooks: aivmPlugin.hooks ?? [],
+    version: (haaiPlugin.version ?? pkgJson["version"] ?? "0.0.0") as string,
+    ...(haaiPlugin.configSchema !== undefined ? { configSchema: haaiPlugin.configSchema } : {}),
+    needsResponseBuffer: haaiPlugin.needsResponseBuffer ?? false,
+    hooks: haaiPlugin.hooks ?? [],
   };
 
   // Find the main entry point for bundling
@@ -98,14 +98,14 @@ export async function installPlugin(
     bundle: true,
     platform: "neutral",
     format: "iife",
-    globalName: "__aivmPlugin",
+    globalName: "__haaiPlugin",
     outfile: bundlePath,
     define: { "process.env.NODE_ENV": '"production"' },
-    // After the IIFE, expose the default export as __aivmPluginDef
+    // After the IIFE, expose the default export as __haaiPluginDef
     footer: {
       js: [
-        "if (typeof __aivmPlugin !== 'undefined') {",
-        "  globalThis.__aivmPluginDef = __aivmPlugin && __aivmPlugin.default ? __aivmPlugin.default : __aivmPlugin;",
+        "if (typeof __haaiPlugin !== 'undefined') {",
+        "  globalThis.__haaiPluginDef = __haaiPlugin && __haaiPlugin.default ? __haaiPlugin.default : __haaiPlugin;",
         "}",
       ].join("\n"),
     },
@@ -117,7 +117,7 @@ export async function installPlugin(
   return {
     bundlePath,
     manifest,
-    configSchema: aivmPlugin.configSchema ? (aivmPlugin.configSchema as Record<string, unknown>) : null,
+    configSchema: haaiPlugin.configSchema ? (haaiPlugin.configSchema as Record<string, unknown>) : null,
     needsResponseBuffer: manifest.needsResponseBuffer ?? false,
     version: manifest.version ?? null,
   };

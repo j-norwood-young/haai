@@ -9,7 +9,7 @@ import type { ConfigSchema, PluginDefinition } from "./types.js";
  *
  * @example
  * ```ts
- * import { definePlugin, t } from "@ai-v-models/plugin-sdk";
+ * import { definePlugin, t } from "@haai/plugin-sdk";
  *
  * export default definePlugin({
  *   name: "Talk like a pirate",

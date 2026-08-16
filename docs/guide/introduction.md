@@ -1,10 +1,10 @@
 # Introduction
 
-**ai-v-models** is a modern, rock-solid streaming reverse proxy purpose-built for OpenAI-compatible LLMs. It's aimed at homelab users and systems administrators who want to manage access to multiple LLMs running on different machines.
+**HAAI** is a modern, rock-solid streaming reverse proxy purpose-built for OpenAI-compatible LLMs. It's aimed at homelab users and systems administrators who want to manage access to multiple LLMs running on different machines.
 
 ## What it does
 
-ai-v-models sits between your users (or applications) and your LLM backends (LM Studio, Ollama, vLLM, etc.), providing:
+HAAI sits between your users (or applications) and your LLM backends (LM Studio, Ollama, vLLM, etc.), providing:
 
 - **Streaming reverse proxy** — Full SSE pass-through with zero-buffering overhead
 - **Virtual models (v-models)** — User-facing model aliases that map to one or more backends

@@ -1,7 +1,7 @@
 import { fetch } from "undici";
-import { buildBackendApiUrl, type DbClient } from "@ai-v-models/core";
+import { buildBackendApiUrl, type DbClient } from "@haai/core";
 import { eq } from "drizzle-orm";
-import { backends as backendsTable } from "@ai-v-models/core";
+import { backends as backendsTable } from "@haai/core";
 import { backendHealthGauge } from "./metrics.js";
 import { getLogger } from "./logger.js";
 import { backendAuthHeaders } from "./backend-auth.js";
@@ -49,7 +49,7 @@ export async function checkBackendHealth(
     const res = await fetch(buildBackendApiUrl(backend.baseUrl, "/v1/models"), {
       signal: controller.signal,
       headers: {
-        "User-Agent": "ai-v-models/healthcheck",
+        "User-Agent": "haai/healthcheck",
         ...backendAuthHeaders(backend, masterKey),
       },
     });

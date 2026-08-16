@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
-import { backends as backendsTable, vmodels as vmodelsTable } from "@ai-v-models/core";
-import { buildBackendApiUrl, decrypt } from "@ai-v-models/core";
+import { backends as backendsTable, vmodels as vmodelsTable } from "@haai/core";
+import { buildBackendApiUrl, decrypt } from "@haai/core";
 import { fetch } from "undici";
 import type { AppContext } from "../../context.js";
 import { getLogger } from "../../logger.js";
@@ -72,7 +72,7 @@ export async function availableModelsRoute(app: FastifyInstance, ctx: AppContext
     for (const vm of vmodels) {
       models.push({
         id: vm.modelId,
-        ownedBy: "ai-v-models",
+        ownedBy: "haai",
         type: "vmodel",
       });
     }

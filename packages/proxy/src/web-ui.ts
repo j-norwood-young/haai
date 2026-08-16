@@ -18,7 +18,7 @@ function isProxyRoute(url: string): boolean {
 
 export function resolveWebBuildDir(): string | null {
   const candidates = [
-    process.env["AIVM_WEB_DIR"],
+    process.env["HAAI_WEB_DIR"],
     join(process.cwd(), "apps/web/build"),
     join(process.cwd(), "../../apps/web/build"),
   ].filter((p): p is string => Boolean(p));
@@ -32,7 +32,7 @@ export function resolveWebBuildDir(): string | null {
 export async function registerWebUi(app: FastifyInstance): Promise<boolean> {
   const log = getLogger();
 
-  if (process.env["AIVM_DEV"] === "1") {
+  if (process.env["HAAI_DEV"] === "1") {
     log.info("Admin UI disabled in development — use the Vite dev server (pnpm dev:web)");
     return false;
   }

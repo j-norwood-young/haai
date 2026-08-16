@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-	<title>Hooks — AiVM</title>
+	<title>Hooks — HAAI</title>
 </svelte:head>
 
 <div class="page">

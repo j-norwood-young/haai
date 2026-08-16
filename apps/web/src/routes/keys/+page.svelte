@@ -40,7 +40,7 @@
 </script>
 
 <svelte:head>
-	<title>API Keys — AiVM</title>
+	<title>API Keys — HAAI</title>
 </svelte:head>
 
 <div class="page">

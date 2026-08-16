@@ -14,7 +14,7 @@ Set `streaming: false` on the v-model when you need to buffer and transform the 
 ## Internal hook
 
 ```typescript
-import type { PostCompletionHook } from "@ai-v-models/hooks-sdk";
+import type { PostCompletionHook } from "@haai/hooks-sdk";
 
 const hook: PostCompletionHook = async (response, ctx) => {
   // log, transform, or return modified response (non-streaming only)
@@ -40,11 +40,11 @@ For streaming v-models the response body is ignored.
 ## Register
 
 ```bash
-aivm hook add-internal --name audit-log --module ./audit-hook.js --trigger post-completion
+haai hook add-internal --name audit-log --module ./audit-hook.js --trigger post-completion
 
-aivm hook add-webhook \
+haai hook add-webhook \
   --name completion-webhook \
-  --webhook-url https://example.com/avm-complete \
+  --webhook-url https://example.com/haai-complete \
   --trigger post-completion
 ```
 

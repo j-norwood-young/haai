@@ -1,7 +1,7 @@
 import { fetch } from "undici";
 import type { RequestInit } from "undici";
 import type { FastifyReply } from "fastify";
-import type { ChatResponse } from "@ai-v-models/plugin-sdk";
+import type { ChatResponse } from "@haai/plugin-sdk";
 import {
   httpRequestsTotal,
   httpRequestDurationMs,
@@ -61,7 +61,7 @@ export async function streamingProxy(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "User-Agent": "ai-v-models/1.0",
+    "User-Agent": "haai/1.0",
   };
   if (opts.upstreamApiKey) {
     headers["Authorization"] = `Bearer ${opts.upstreamApiKey}`;
@@ -303,7 +303,7 @@ function reconstructResponseFromSse(raw: string): ChatResponse {
   }
 
   const result: ChatResponse = {
-    id: id || `aivm-reconstructed-${Date.now()}`,
+    id: id || `haai-reconstructed-${Date.now()}`,
     object: "chat.completion",
     created,
     model: model || "unknown",

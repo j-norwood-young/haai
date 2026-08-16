@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { apiFetch } from "@ai-v-models/core/http";
+import { apiFetch } from "@haai/core/http";
 import { z } from "zod";
 
-const BASE_URL = process.env["AIVM_URL"] ?? "http://localhost:4000";
-const TOKEN = process.env["AIVM_ADMIN_TOKEN"];
+const BASE_URL = process.env["HAAI_URL"] ?? "http://localhost:4000";
+const TOKEN = process.env["HAAI_ADMIN_TOKEN"];
 
 async function apiRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
@@ -15,7 +15,7 @@ async function apiRequest<T>(method: string, path: string, body?: unknown): Prom
 }
 
 const server = new McpServer({
-  name: "ai-v-models",
+  name: "haai",
   version: "0.0.1",
 });
 

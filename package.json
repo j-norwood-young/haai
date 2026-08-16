@@ -1,8 +1,8 @@
 {
-  "name": "ai-v-models",
-  "version": "0.1.1",
+  "name": "haai",
+  "version": "0.2.1",
   "private": true,
-  "description": "Modern streaming reverse proxy for OpenAI-compatible LLMs",
+  "description": "HAAI — High Availability AI: modern streaming reverse proxy for OpenAI-compatible LLMs",
   "license": "MIT",
   "packageManager": "pnpm@11.1.2",
   "engines": {
@@ -11,11 +11,11 @@
   },
   "scripts": {
     "start": "node packages/proxy/dist/index.js",
-    "dev": "pnpm --filter @ai-v-models/docs build && concurrently -k -n proxy,web \"pnpm --filter @ai-v-models/proxy dev\" \"pnpm --filter @ai-v-models/web dev\"",
-    "dev:docs": "pnpm --filter @ai-v-models/docs dev",
-    "dev:proxy": "pnpm --filter @ai-v-models/proxy dev",
-    "dev:web": "pnpm --filter @ai-v-models/web dev",
-    "aivm": "node packages/cli/dist/index.js",
+    "dev": "pnpm --filter @haai/docs build && concurrently -k -n proxy,web \"pnpm --filter @haai/proxy dev\" \"pnpm --filter @haai/web dev\"",
+    "dev:docs": "pnpm --filter @haai/docs dev",
+    "dev:proxy": "pnpm --filter @haai/proxy dev",
+    "dev:web": "pnpm --filter @haai/web dev",
+    "haai": "node packages/cli/dist/index.js",
     "build": "turbo run build",
     "test": "turbo run test",
     "test:e2e": "vitest run --project e2e",

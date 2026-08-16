@@ -1,7 +1,7 @@
 import { hash } from "@node-rs/argon2";
 import { nanoid } from "nanoid";
-import { users } from "@ai-v-models/core";
-import type { DbClient } from "@ai-v-models/core";
+import { users } from "@haai/core";
+import type { DbClient } from "@haai/core";
 import { getLogger } from "./logger.js";
 
 /**
@@ -14,8 +14,8 @@ export async function ensureAdminUser(db: DbClient): Promise<void> {
 
   if (existing.length > 0) return;
 
-  const adminUsername = process.env["AIVM_ADMIN_USER"] ?? "admin";
-  const adminPassword = process.env["AIVM_ADMIN_PASSWORD"] ?? "admin";
+  const adminUsername = process.env["HAAI_ADMIN_USER"] ?? "admin";
+  const adminPassword = process.env["HAAI_ADMIN_PASSWORD"] ?? "admin";
 
   const passwordHash = await hash(adminPassword);
   const now = Date.now();

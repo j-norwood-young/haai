@@ -136,7 +136,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit Virtual Model — AiVM</title>
+	<title>Edit Virtual Model — HAAI</title>
 </svelte:head>
 
 <div class="p-6 max-w-3xl mx-auto">

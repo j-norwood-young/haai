@@ -43,6 +43,6 @@ COPY --from=builder /app/docs/.vitepress/dist ./docs/.vitepress/dist
 
 EXPOSE 4000
 VOLUME ["/data"]
-ENV AIVM_DATA_DIR=/data
+ENV HAAI_DATA_DIR=/data
 
 CMD ["node", "packages/proxy/dist/index.js"]

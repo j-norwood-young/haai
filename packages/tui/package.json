@@ -1,10 +1,10 @@
 {
-  "name": "@ai-v-models/tui",
+  "name": "@haai/tui",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "bin": {
-    "aivm-tui": "./dist/index.js"
+    "haai-tui": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -14,7 +14,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ai-v-models/core": "workspace:*",
+    "@haai/core": "workspace:*",
     "ink": "^5.2.1",
     "react": "^18.3.1",
     "@types/react": "^18.3.21"

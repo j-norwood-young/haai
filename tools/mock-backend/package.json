@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/mock-backend",
+  "name": "@haai/mock-backend",
   "version": "0.0.1",
   "private": true,
   "type": "module",

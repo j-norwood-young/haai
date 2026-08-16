@@ -1,5 +1,5 @@
 {
-  "name": "@ai-v-models/plugin-caveman",
+  "name": "@haai/plugin-caveman",
   "version": "1.0.0",
   "description": "Token compression — make AI talk like caveman. Why use many token when few do trick.",
   "type": "module",
@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch"
   },
-  "aivm-plugin": {
+  "haai-plugin": {
     "name": "Caveman",
     "description": "Compress AI output tokens by ~65% using caveman-style terse communication. Why use many token when few do trick.",
     "version": "1.0.0",
@@ -26,7 +26,7 @@
     }
   },
   "devDependencies": {
-    "@ai-v-models/plugin-sdk": "workspace:*",
+    "@haai/plugin-sdk": "workspace:*",
     "@types/node": "^22.15.30",
     "typescript": "^5.8.3"
   }

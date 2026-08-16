@@ -1,10 +1,10 @@
 # API Key Management
 
-ai-v-models uses its own API keys for authenticating users/applications. These are separate from backend API keys.
+HAAI uses its own API keys for authenticating users/applications. These are separate from backend API keys.
 
 ## Key format
 
-Keys have the format: `aivm-sk-<random>` (e.g. `aivm-sk-Xn7kP2mQ9vZw4aB`).
+Keys have the format: `haai-sk-<random>` (e.g. `haai-sk-Xn7kP2mQ9vZw4aB`).
 
 Only a SHA-256 hash is stored. The key is shown only once at creation.
 
@@ -13,7 +13,7 @@ Only a SHA-256 hash is stored. The key is shown only once at creation.
 ### Via CLI
 
 ```bash
-aivm key create --name "my-app" \
+haai key create --name "my-app" \
   --day-budget 100000 \
   --rpm 60 \
   --expires-in 90
@@ -57,14 +57,14 @@ Budgets use rolling periods. At the start of each period (hour/day/week/month), 
 ## Suspending and resuming
 
 ```bash
-aivm key suspend aivm-sk-xxxx --reason "Over usage"
-aivm key resume aivm-sk-xxxx
+haai key suspend haai-sk-xxxx --reason "Over usage"
+haai key resume haai-sk-xxxx
 ```
 
 ## Per-key logs
 
 ```bash
-aivm key logs aivm-sk-xxxx --limit 50
+haai key logs haai-sk-xxxx --limit 50
 ```
 
 Or via API:

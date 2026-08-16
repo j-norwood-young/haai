@@ -1,5 +1,5 @@
-import { definePlugin, t } from "@ai-v-models/plugin-sdk";
-import type { ChatRequest, ChatMessage } from "@ai-v-models/plugin-sdk";
+import { definePlugin, t } from "@haai/plugin-sdk";
+import type { ChatRequest, ChatMessage } from "@haai/plugin-sdk";
 
 /**
  * vLLM System Prompt Fix
@@ -13,7 +13,7 @@ import type { ChatRequest, ChatMessage } from "@ai-v-models/plugin-sdk";
  * by a configurable separator, and place the merged message at the front of the array.
  *
  * Recommended usage: bind this plugin to your vLLM backend(s) specifically:
- *   aivm plugin bind <pluginId> --scope backend --scope-id <vllm-backend-id>
+ *   haai plugin bind <pluginId> --scope backend --scope-id <vllm-backend-id>
  */
 export default definePlugin({
   name: "vLLM System Prompt Fix",

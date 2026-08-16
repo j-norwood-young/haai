@@ -11,8 +11,8 @@ import {
   decrypt,
   getApiKeysShowOnce,
   validateKeyModelAccess,
-} from "@ai-v-models/core";
-import { hashToken } from "@ai-v-models/core";
+} from "@haai/core";
+import { hashToken } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { requireAuth } from "../../auth-session.js";
 

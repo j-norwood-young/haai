@@ -1,6 +1,6 @@
-# Skill: Create an ai-v-models Plugin
+# Skill: Create a HAAI Plugin
 
-Use this skill whenever you need to create a new plugin for the ai-v-models reverse proxy.
+Use this skill whenever you need to create a new plugin for the HAAI reverse proxy.
 
 ## What is a plugin?
 
@@ -9,13 +9,13 @@ A plugin is a TypeScript package that hooks into the proxy's request/response pi
 ## Quick scaffold
 
 ```bash
-aivm plugin create my-plugin-name
+haai plugin create my-plugin-name
 cd my-plugin-name
 npm install
 ```
 
 This creates:
-- `package.json` — includes the required `"aivm-plugin"` manifest
+- `package.json` — includes the required `"haai-plugin"` manifest
 - `src/index.ts` — the plugin implementation
 - `tsconfig.json` — TypeScript config
 - `README.md`
@@ -24,7 +24,7 @@ This creates:
 
 ```ts
 // src/index.ts
-import { definePlugin, t, prependSystemPrompt } from "@ai-v-models/plugin-sdk";
+import { definePlugin, t, prependSystemPrompt } from "@haai/plugin-sdk";
 
 export default definePlugin({
   name: "My Plugin",
@@ -113,14 +113,14 @@ import {
   mergeSystemPrompts,    // Merge multiple system messages into one (for vLLM)
   replaceInMessages,     // Find & replace in all message content
   setParam,             // Override a request param (e.g. temperature)
-} from "@ai-v-models/plugin-sdk";
+} from "@haai/plugin-sdk";
 ```
 
-## The `"aivm-plugin"` manifest (in `package.json`)
+## The `"haai-plugin"` manifest (in `package.json`)
 
 ```json
 {
-  "aivm-plugin": {
+  "haai-plugin": {
     "name": "My Plugin",
     "description": "Short description",
     "version": "1.0.0",
@@ -147,20 +147,20 @@ Keep `configSchema` in sync with the `config` object passed to `definePlugin`. T
 npm run build
 
 # Install locally into a running proxy
-aivm plugin install local:/absolute/path/to/your/plugin
+haai plugin install local:/absolute/path/to/your/plugin
 
 # Bind globally (applies to all requests)
-aivm plugin bind <pluginId> --scope global
+haai plugin bind <pluginId> --scope global
 
 # Bind to a specific v-model
-aivm plugin bind <pluginId> --scope vmodel --scope-id my-model-id
+haai plugin bind <pluginId> --scope vmodel --scope-id my-model-id
 
 # Bind to a specific backend
-aivm plugin bind <pluginId> --scope backend --scope-id <backendId>
+haai plugin bind <pluginId> --scope backend --scope-id <backendId>
 
 # Publish to npm then install
 npm publish
-aivm plugin install npm:@my-org/my-plugin
+haai plugin install npm:@my-org/my-plugin
 ```
 
 ## Sandboxing constraints
@@ -179,7 +179,7 @@ Code that imports Node built-ins will fail at bundle time. Keep your plugin's de
 For plugins that need to read or modify the full response (translation, summarisation, etc.):
 
 ```json
-{ "aivm-plugin": { "needsResponseBuffer": true, "hooks": ["onRequest", "onResponse"] } }
+{ "haai-plugin": { "needsResponseBuffer": true, "hooks": ["onRequest", "onResponse"] } }
 ```
 
 ```ts
@@ -227,6 +227,6 @@ hooks: {
 
 ## Testing your plugin locally
 
-Use `aivm plugin install local:<path>` to install from your local directory, then bind it and make a test request through the proxy. The proxy logs show plugin execution details.
+Use `haai plugin install local:<path>` to install from your local directory, then bind it and make a test request through the proxy. The proxy logs show plugin execution details.
 
 The admin UI at `/plugins` lets you manage bindings and configure per-binding settings through the auto-generated config form.

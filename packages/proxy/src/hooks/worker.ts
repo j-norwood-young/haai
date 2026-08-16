@@ -1,5 +1,5 @@
 import { workerData, parentPort } from "node:worker_threads";
-import type { ChatRequest, ChatResponse, HookContext } from "@ai-v-models/hooks-sdk";
+import type { ChatRequest, ChatResponse, HookContext } from "@haai/hooks-sdk";
 
 interface WorkerData {
   type: "pre-request" | "post-completion";

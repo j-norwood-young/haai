@@ -41,7 +41,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@ai-v-models/core':
+      '@haai/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@simplewebauthn/browser':
@@ -90,7 +90,7 @@ importers:
 
   examples/plugins/caveman:
     devDependencies:
-      '@ai-v-models/plugin-sdk':
+      '@haai/plugin-sdk':
         specifier: workspace:*
         version: link:../../../packages/plugin-sdk
       '@types/node':
@@ -102,7 +102,7 @@ importers:
 
   examples/plugins/talk-like-a-pirate:
     devDependencies:
-      '@ai-v-models/plugin-sdk':
+      '@haai/plugin-sdk':
         specifier: workspace:*
         version: link:../../../packages/plugin-sdk
       '@types/node':
@@ -114,7 +114,7 @@ importers:
 
   examples/plugins/vllm-system-prompt-fix:
     devDependencies:
-      '@ai-v-models/plugin-sdk':
+      '@haai/plugin-sdk':
         specifier: workspace:*
         version: link:../../../packages/plugin-sdk
       '@types/node':
@@ -126,7 +126,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@ai-v-models/core':
+      '@haai/core':
         specifier: workspace:*
         version: link:../core
       '@node-rs/argon2':
@@ -209,7 +209,7 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@ai-v-models/core':
+      '@haai/core':
         specifier: workspace:*
         version: link:../core
       '@modelcontextprotocol/sdk':
@@ -237,15 +237,6 @@ importers:
 
   packages/proxy:
     dependencies:
-      '@ai-v-models/core':
-        specifier: workspace:*
-        version: link:../core
-      '@ai-v-models/hooks-sdk':
-        specifier: workspace:*
-        version: link:../hooks-sdk
-      '@ai-v-models/plugin-sdk':
-        specifier: workspace:*
-        version: link:../plugin-sdk
       '@fastify/cookie':
         specifier: ^11.0.2
         version: 11.0.2
@@ -264,6 +255,15 @@ importers:
       '@fastify/swagger-ui':
         specifier: ^5.2.1
         version: 5.2.6
+      '@haai/core':
+        specifier: workspace:*
+        version: link:../core
+      '@haai/hooks-sdk':
+        specifier: workspace:*
+        version: link:../hooks-sdk
+      '@haai/plugin-sdk':
+        specifier: workspace:*
+        version: link:../plugin-sdk
       '@node-rs/argon2':
         specifier: ^2.0.0
         version: 2.0.2
@@ -325,7 +325,7 @@ importers:
 
   packages/tui:
     dependencies:
-      '@ai-v-models/core':
+      '@haai/core':
         specifier: workspace:*
         version: link:../core
       '@types/react':
@@ -347,13 +347,13 @@ importers:
 
   tests/e2e:
     dependencies:
-      '@ai-v-models/core':
+      '@haai/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@ai-v-models/mock-backend':
+      '@haai/mock-backend':
         specifier: workspace:*
         version: link:../../tools/mock-backend
-      '@ai-v-models/proxy':
+      '@haai/proxy':
         specifier: workspace:*
         version: link:../../packages/proxy
       '@node-rs/argon2':

@@ -1,6 +1,6 @@
 # Hooks Overview
 
-Hooks extend ai-v-models with custom logic at two points in the request lifecycle.
+Hooks extend HAAI with custom logic at two points in the request lifecycle.
 
 | Trigger | When | Can mutate? |
 |---------|------|-------------|
@@ -14,20 +14,20 @@ Hooks extend ai-v-models with custom logic at two points in the request lifecycl
 Node.js modules run in worker threads. Install from NPM or a local path.
 
 ```bash
-aivm hook add-internal \
+haai hook add-internal \
   --name my-hook \
-  --module my-avm-hook \
+  --module my-haai-hook \
   --trigger pre-request
 ```
 
 ### External (webhooks)
 
-HTTP POST to your URL with optional HMAC signature (`X-AVM-Signature`).
+HTTP POST to your URL with optional HMAC signature (`X-HAAI-Signature`).
 
 ```bash
-aivm hook add-webhook \
+haai hook add-webhook \
   --name my-webhook \
-  --webhook-url https://example.com/avm-hook \
+  --webhook-url https://example.com/haai-hook \
   --trigger pre-request \
   --secret my-secret \
   --timeout 5000
@@ -37,7 +37,7 @@ aivm hook add-webhook \
 
 | | Hooks | Plugins |
 |---|-------|---------|
-| SDK | `@ai-v-models/hooks-sdk` | `@ai-v-models/plugin-sdk` |
+| SDK | `@haai/hooks-sdk` | `@haai/plugin-sdk` |
 | Runtime | Worker threads / webhooks | V8 isolates |
 | Request mutation in chat path | Registered in DB; pipeline integration in progress | **Active today** |
 | Admin UI | `/hooks` | `/plugins` |
@@ -47,9 +47,9 @@ For production request mutation today, prefer **plugins**. Hooks are fully manag
 ## Manage hooks
 
 ```bash
-aivm hook list
-aivm hook test my-hook
-aivm hook delete my-hook
+haai hook list
+haai hook test my-hook
+haai hook delete my-hook
 ```
 
 ## Learn more

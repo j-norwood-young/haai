@@ -1,4 +1,4 @@
-import { definePlugin, t, prependSystemPrompt } from "@ai-v-models/plugin-sdk";
+import { definePlugin, t, prependSystemPrompt } from "@haai/plugin-sdk";
 
 const intensityInstructions = {
   light: "Occasionally use pirate expressions like 'Arrr', 'ahoy', or 'matey' where it feels natural. Keep it subtle.",

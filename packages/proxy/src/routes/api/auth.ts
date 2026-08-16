@@ -13,7 +13,7 @@ import {
   decrypt,
   generateAdminToken,
   hashToken,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { getLogger } from "../../logger.js";
 import {
@@ -176,14 +176,14 @@ export async function authRoutes(app: FastifyInstance, ctx: AppContext): Promise
   );
 
   app.post("/api/v1/auth/logout", async (req, reply) => {
-    const sessionToken = req.cookies["aivm_session"];
+    const sessionToken = req.cookies["haai_session"];
     if (sessionToken) {
       await ctx.db.db
         .delete(sessions)
         .where(eq(sessions.token, sessionToken))
         .run();
     }
-    reply.clearCookie("aivm_session");
+    reply.clearCookie("haai_session");
     return { success: true };
   });
 
@@ -247,7 +247,7 @@ export async function authRoutes(app: FastifyInstance, ctx: AppContext): Promise
     }
 
     const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(authUser.username, "ai-v-models", secret);
+    const otpauthUrl = authenticator.keyuri(authUser.username, "haai", secret);
 
     return { secret, otpauthUrl };
   });

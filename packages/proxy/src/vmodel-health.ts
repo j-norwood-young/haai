@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
-import type { DbClient } from "@ai-v-models/core";
+import type { DbClient } from "@haai/core";
 import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
   type MappingUnavailableReason,
   type VModelHealthStatus,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { SseEmitter } from "./sse.js";
 
 export interface MappingAvailability {

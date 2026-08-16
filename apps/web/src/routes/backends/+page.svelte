@@ -159,7 +159,7 @@
 </script>
 
 <svelte:head>
-	<title>Backends — AiVM</title>
+	<title>Backends — HAAI</title>
 </svelte:head>
 
 <div class="page">

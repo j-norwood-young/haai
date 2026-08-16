@@ -2,7 +2,7 @@
 	import Modal from './Modal.svelte';
 	import { api, type VModel } from '$lib/api.js';
 	import { getProxyBaseUrl } from '$lib/proxy-base.js';
-	import { buildAivmPromptCommand, buildChatCompletionUrl } from '$lib/connection-details.js';
+	import { buildHaaiPromptCommand, buildChatCompletionUrl } from '$lib/connection-details.js';
 	import {
 		connectableVModels,
 		eligibleVModelsForKey,
@@ -52,7 +52,7 @@
 
 	const cliExample = $derived.by(() => {
 		if (!selectedModelId || !apiKeyDisplay || !selectedHasBackends) return null;
-		return buildAivmPromptCommand(
+		return buildHaaiPromptCommand(
 			baseUrl,
 			apiKeyDisplay,
 			selectedModelId,
@@ -251,7 +251,7 @@
 			{#if cliExample}
 				<div>
 					<div class="flex items-center justify-between mb-1">
-						<span class="text-xs font-medium text-gray-400">aivm example</span>
+						<span class="text-xs font-medium text-gray-400">haai example</span>
 						<button
 							type="button"
 							onclick={() => copyField('cli', cliExample)}

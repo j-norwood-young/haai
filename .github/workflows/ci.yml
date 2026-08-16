@@ -40,7 +40,7 @@ jobs:
         run: pnpm test
 
       - name: Run e2e tests
-        run: pnpm --filter @ai-v-models/e2e test
+        run: pnpm --filter @haai/e2e test
         env:
           NODE_ENV: test
 
@@ -63,4 +63,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image
-        run: docker build -t ai-v-models:ci .
+        run: docker build -t haai:ci .

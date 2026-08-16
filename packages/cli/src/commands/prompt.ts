@@ -21,7 +21,7 @@ export function registerPromptCommands(
     .command("prompt [message...]")
     .description("Send a prompt to a model and stream the response")
     .option("-m, --model <model>", "Virtual model alias or backend model ID")
-    .option("-k, --key <key>", "API key (full aivm-sk-… or prefix)", readApiKeyFromEnv())
+    .option("-k, --key <key>", "API key (full haai-sk-… or prefix)", readApiKeyFromEnv())
     .option("--no-stream", "Wait for the full response instead of streaming")
     .option("-s, --system <prompt>", "Optional system message")
     .action(async (messageParts: string[], opts: { model?: string; key?: string; stream: boolean; system?: string }) => {
@@ -34,7 +34,7 @@ export function registerPromptCommands(
 
       if (!opts.key) {
         console.error(
-          chalk.red("Missing --key (-k). Pass an API key or set AIVM_API_KEY."),
+          chalk.red("Missing --key (-k). Pass an API key or set HAAI_API_KEY."),
         );
         process.exit(1);
       }

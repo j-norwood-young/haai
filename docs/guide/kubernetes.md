@@ -8,33 +8,33 @@ No Helm chart ships with the repo yet. Deploy using the published Docker image a
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ai-v-models
+  name: haai
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ai-v-models
+      app: haai
   template:
     metadata:
       labels:
-        app: ai-v-models
+        app: haai
     spec:
       containers:
         - name: proxy
-          image: your-registry/ai-v-models:latest
+          image: your-registry/haai:latest
           ports:
             - containerPort: 4000
           env:
-            - name: AIVM_HOST
+            - name: HAAI_HOST
               value: "0.0.0.0"
-            - name: AIVM_PORT
+            - name: HAAI_PORT
               value: "4000"
-            - name: AIVM_DATA_DIR
+            - name: HAAI_DATA_DIR
               value: "/data"
-            - name: AIVM_SESSION_SECRET
+            - name: HAAI_SESSION_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: ai-v-models-secrets
+                  name: haai-secrets
                   key: session-secret
           volumeMounts:
             - name: data
@@ -54,7 +54,7 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: ai-v-models-data
+            claimName: haai-data
 ```
 
 ## Service
@@ -63,10 +63,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ai-v-models
+  name: haai
 spec:
   selector:
-    app: ai-v-models
+    app: haai
   ports:
     - port: 4000
       targetPort: 4000
@@ -74,7 +74,7 @@ spec:
 
 ## Ingress
 
-Terminate TLS at the ingress controller and forward to the service. Set `AVM_CORS_ORIGINS` to your public admin URL.
+Terminate TLS at the ingress controller and forward to the service. Set `HAAI_CORS_ORIGINS` to your public admin URL.
 
 Example annotations for nginx ingress:
 

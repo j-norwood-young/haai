@@ -1,16 +1,19 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
-  title: "ai-v-models",
-  description: "Modern streaming reverse proxy for OpenAI-compatible LLMs",
+  title: "HAAI",
+  description: "High Availability AI — modern streaming reverse proxy for OpenAI-compatible LLMs",
   base: "/docs/",
   ignoreDeadLinks: true,
+  head: [
+    ["link", { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }],
+  ],
   themeConfig: {
     logo: "/logo.svg",
     nav: [
       { text: "Guide", link: "/guide/" },
       { text: "API Reference", link: "/api/" },
-      { text: "GitHub", link: "https://github.com/your-org/ai-v-models" },
+      { text: "GitHub", link: "https://github.com/j-norwood-young/haai" },
     ],
     sidebar: [
       {
@@ -104,7 +107,7 @@ export default defineConfig({
       },
     ],
     socialLinks: [
-      { icon: "github", link: "https://github.com/your-org/ai-v-models" },
+      { icon: "github", link: "https://github.com/j-norwood-young/haai" },
     ],
     search: {
       provider: "local",

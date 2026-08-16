@@ -1,7 +1,7 @@
 import { describe, it, beforeAll, afterAll, expect } from "vitest";
-import { BackendBalancer } from "@ai-v-models/proxy/balancer";
-import type { BackendCandidate } from "@ai-v-models/proxy/balancer";
-import type { Backend } from "@ai-v-models/core";
+import { BackendBalancer } from "@haai/proxy/balancer";
+import type { BackendCandidate } from "@haai/proxy/balancer";
+import type { Backend } from "@haai/core";
 
 function makeCandidate(id: string, overrides: Partial<Backend> = {}): BackendCandidate {
   const backendModelId = "model";

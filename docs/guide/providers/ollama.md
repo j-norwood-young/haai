@@ -11,7 +11,7 @@
 ## Add backend
 
 ```bash
-aivm backend add \
+haai backend add \
   --name ollama-gpu1 \
   --base-url http://192.168.1.50:11434 \
   --provider ollama \

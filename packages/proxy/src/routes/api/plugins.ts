@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import {
   plugins as pluginsTable,
   pluginBindings as bindingsTable,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { installPlugin } from "../../plugins/installer.js";
 

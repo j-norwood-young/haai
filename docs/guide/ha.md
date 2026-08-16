@@ -1,6 +1,6 @@
 # High Availability
 
-ai-v-models keeps traffic flowing when backends fail through health checks, model inventory, circuit breakers, and balancer failover.
+HAAI keeps traffic flowing when backends fail through health checks, model inventory, circuit breakers, and balancer failover.
 
 ## Health checks
 
@@ -43,15 +43,15 @@ Per-backend circuit breakers trip after **5 consecutive request failures**:
 2. **Open** — no traffic for 60 seconds
 3. **Half-open** — trial request; 2 successes closes the breaker
 
-State is exposed as the Prometheus metric `aivm_circuit_breaker_state`.
+State is exposed as the Prometheus metric `haai_circuit_breaker_state`.
 
 ## Multi-backend v-models
 
 Attach multiple backends to one v-model for redundancy:
 
 ```bash
-aivm vmodel add-backend smart-chat --backend-id gpu1 --backend-model llama3.2 --weight 2
-aivm vmodel add-backend smart-chat --backend-id gpu2 --backend-model llama3.2 --weight 1
+haai vmodel add-backend smart-chat --backend-id gpu1 --backend-model llama3.2 --weight 2
+haai vmodel add-backend smart-chat --backend-id gpu2 --backend-model llama3.2 --weight 1
 ```
 
 Combine with a [balancing strategy](./balancing) (`session-pin`, `round-robin`, `weighted`, etc.).
@@ -71,6 +71,6 @@ If no healthy mapping is available, the proxy returns **503** with a clear error
 - Sidebar health indicator: backends **and** v-models (degraded/down with mapping reasons)
 - Dashboard backend health badges on `/`
 - SSE `backend-health` and `vmodel-health` events on `/api/v1/events`
-- `aivm_backend_health{backend,provider}` Prometheus gauge
+- `haai_backend_health{backend,provider}` Prometheus gauge
 
 See [Monitoring](./monitoring) and [Prometheus & OTLP](./prometheus).

@@ -98,7 +98,7 @@ export interface PostCompletionHook {
   (response: ChatResponse, ctx: HookContext): void | ChatResponse | Promise<void | ChatResponse>;
 }
 
-/** The manifest declared in a hook package's package.json under "aivm-hook" key. */
+/** The manifest declared in a hook package's package.json under "haai-hook" key. */
 export interface HookManifest {
   /** Hook display name */
   name: string;

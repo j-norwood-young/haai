@@ -4,8 +4,8 @@ import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
-} from "@ai-v-models/core";
-import { buildBackendApiUrl, decrypt } from "@ai-v-models/core";
+} from "@haai/core";
+import { buildBackendApiUrl, decrypt } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { streamingProxy, type ProxyResult } from "../../streaming-proxy.js";
 import { UsageRecorder } from "../../usage-recorder.js";
@@ -13,8 +13,8 @@ import {
   filterAvailableCandidates,
   type BackendCandidate,
 } from "../../balancer.js";
-import type { Backend } from "@ai-v-models/core";
-import type { ChatRequest, ChatResponse } from "@ai-v-models/plugin-sdk";
+import type { Backend } from "@haai/core";
+import type { ChatRequest, ChatResponse } from "@haai/plugin-sdk";
 import { resolveBindings } from "../../plugins/loader.js";
 import type { PluginHostContext } from "../../plugins/runtime.js";
 
@@ -214,7 +214,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
         timestamp: Date.now(),
         aiComplete: async (opts) => {
           const { fetch: _fetch } = await import("undici");
-          const aiBody = { ...opts, __aivmInternal: true };
+          const aiBody = { ...opts, __haaiInternal: true };
           const res = await _fetch(buildBackendApiUrl(selected!.backend.baseUrl, "/v1/chat/completions"), {
             method: "POST",
             headers: {

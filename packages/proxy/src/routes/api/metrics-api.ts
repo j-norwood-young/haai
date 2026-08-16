@@ -7,7 +7,7 @@ import {
   apiKeys,
   vmodels,
   vmodelBackends,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import { registry } from "../../metrics.js";
 import type { AppContext } from "../../context.js";
 

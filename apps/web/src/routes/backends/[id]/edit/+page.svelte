@@ -166,7 +166,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit Backend — AiVM</title>
+	<title>Edit Backend — HAAI</title>
 </svelte:head>
 
 <div class="p-6 max-w-3xl mx-auto">

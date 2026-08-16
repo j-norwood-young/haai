@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/auth.svelte.js';
 	import { isPasskeySupported, passkeysAvailableForUsername } from '$lib/passkeys.js';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 
 	let username = $state('');
 	let password = $state('');
@@ -73,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign in — AiVM</title>
+	<title>Sign in — HAAI</title>
 </svelte:head>
 
 <!-- Decorative background -->
@@ -87,23 +88,11 @@
 		<!-- Logo / branding -->
 		<div class="text-center mb-8">
 			<div class="flex items-center justify-center gap-2.5 mb-3">
-				<svg
-					class="w-7 h-7 text-cyan-400"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-				>
-					<path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-				</svg>
-				<span class="text-2xl font-bold text-white tracking-tight font-mono">
-					Ai<span class="text-cyan-400">VM</span>
-				</span>
+				<BrandLogo variant="full" class="h-10 max-w-[12rem] text-cyan-400" />
 			</div>
-			<p class="text-[var(--color-text-muted)] text-sm">LLM Reverse Proxy Admin</p>
+			<p class="text-[var(--color-text-muted)] text-sm">
+				High Availability AI · LLM Reverse Proxy Admin
+			</p>
 		</div>
 
 		<!-- Card -->

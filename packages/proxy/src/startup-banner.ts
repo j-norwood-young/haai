@@ -1,17 +1,17 @@
 import { existsSync } from "node:fs";
-import type { AppConfig, DbClient } from "@ai-v-models/core";
-import { backends as backendsTable, vmodels as vmodelsTable } from "@ai-v-models/core";
+import type { AppConfig, DbClient } from "@haai/core";
+import { backends as backendsTable, vmodels as vmodelsTable } from "@haai/core";
 
 const VERSION = "0.0.1";
 const DEV_WEB_PORT = "5173";
 
 const LOGO = [
-  "   █████╗   ██╗  ██╗   ██╗  ███╗   ███╗",
-  "  ██╔══██╗  ╚═╝  ██║   ██║  ████╗ ████║",
-  "  ███████║  ██╗  ██║   ██║  ██╔████╔██║",
-  "  ██╔══██║  ██║  ╚██╗ ██╔╝  ██║╚██╔╝██║",
-  "  ██║  ██║  ██║   ╚████╔╝   ██║ ╚═╝ ██║",
-  "  ╚═╝  ╚═╝  ╚═╝    ╚═══╝    ╚═╝     ╚═╝",
+  "  ██╗  ██╗  █████╗   █████╗  ██╗",
+  "  ██║  ██║ ██╔══██╗ ██╔══██╗ ██║",
+  "  ███████║ ███████║ ███████║ ██║",
+  "  ██╔══██║ ██╔══██║ ██╔══██║ ██║",
+  "  ██║  ██║ ██║  ██║ ██║  ██║ ██║",
+  "  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝",
 ];
 
 const c = {
@@ -30,9 +30,9 @@ function displayHost(host: string): string {
   return host === "0.0.0.0" || host === "::" ? "localhost" : host;
 }
 
-/** True when running inside a Docker container (compose sets AIVM_DOCKER=1). */
+/** True when running inside a Docker container (compose sets HAAI_DOCKER=1). */
 export function isRunningInDocker(): boolean {
-  return process.env["AIVM_DOCKER"] === "1" || existsSync("/.dockerenv");
+  return process.env["HAAI_DOCKER"] === "1" || existsSync("/.dockerenv");
 }
 
 function normalizeUrl(url: string): string {
@@ -42,7 +42,7 @@ function normalizeUrl(url: string): string {
 /** Public base URL for docs, banner, and CLI output. */
 export function resolvePublicBaseUrl(config: AppConfig): string {
   if (isRunningInDocker()) {
-    const explicit = process.env["AIVM_URL"]?.trim();
+    const explicit = process.env["HAAI_URL"]?.trim();
     if (explicit) return normalizeUrl(explicit);
   }
 
@@ -53,13 +53,13 @@ export function resolvePublicBaseUrl(config: AppConfig): string {
 /** Admin UI URL — Docker external port, Vite dev server, or bundled with the proxy. */
 export function resolveWebUiUrl(baseUrl: string): string {
   if (isRunningInDocker()) {
-    const explicit = process.env["AIVM_WEB_URL"]?.trim();
+    const explicit = process.env["HAAI_WEB_URL"]?.trim();
     if (explicit) return normalizeUrl(explicit);
     return baseUrl;
   }
 
-  if (process.env["AIVM_DEV"] === "1") {
-    const port = process.env["AIVM_DEV_WEB_PORT"]?.trim() || DEV_WEB_PORT;
+  if (process.env["HAAI_DEV"] === "1") {
+    const port = process.env["HAAI_DEV_WEB_PORT"]?.trim() || DEV_WEB_PORT;
     return `http://localhost:${port}`;
   }
 
@@ -92,7 +92,7 @@ export interface StartupBannerOptions {
 }
 
 export function shouldPrintBanner(): boolean {
-  const flag = process.env["AIVM_NO_BANNER"];
+  const flag = process.env["HAAI_NO_BANNER"];
   return flag !== "1" && flag !== "true";
 }
 
@@ -118,7 +118,7 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
   }
 
   lines.push(
-    paint(c.dim, `  AI Virtual Models · OpenAI-compatible LLM proxy · v${VERSION}`),
+    paint(c.dim, `  High Availability AI · OpenAI-compatible LLM proxy · v${VERSION}`),
     "",
     paint(c.bold, "  Server"),
     paint(c.dim, "  ─────────────────────────────────────────────────────"),
@@ -150,7 +150,7 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
   if (allBackends.length === 0) {
     lines.push(
       `  ${paint(c.dim, "No backends configured")}`,
-      `  ${paint(c.dim, "→ aivm backend add --name my-backend --provider lmstudio --base-url http://localhost:1234")}`,
+      `  ${paint(c.dim, "→ haai backend add --name my-backend --provider lmstudio --base-url http://localhost:1234")}`,
     );
   } else {
     for (const backend of allBackends) {
@@ -177,7 +177,7 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
   if (allVmodels.length === 0) {
     lines.push(
       `  ${paint(c.dim, "No virtual models")}`,
-      `  ${paint(c.dim, "→ aivm vmodel create --model-id smart-chat --display-name \"Smart Chat\"")}`,
+      `  ${paint(c.dim, "→ haai vmodel create --model-id smart-chat --display-name \"Smart Chat\"")}`,
     );
   } else {
     for (const vm of allVmodels) {
@@ -200,7 +200,7 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
 
   lines.push(
     "",
-    paint(c.dim, "  Press Ctrl+C to stop · Set AIVM_NO_BANNER=1 to hide this banner"),
+    paint(c.dim, "  Press Ctrl+C to stop · Set HAAI_NO_BANNER=1 to hide this banner"),
     "",
   );
 

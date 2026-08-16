@@ -1,10 +1,12 @@
-# ai-v-models
+# HAAI
 
-Modern streaming reverse proxy for OpenAI-compatible LLMs. Built for homelab users and sysadmins who need to manage access to multiple LLM backends across different machines.
+![HAAI](assets/brand/haai.svg)
+
+High Availability AI — modern streaming reverse proxy for OpenAI-compatible LLMs. Built for homelab users and sysadmins who need to manage access to multiple LLM backends across different machines.
 
 Like HAProxy or Nginx, but purpose-built for LLMs — with virtual models, key management, load balancing, hooks, plugins, and a full admin UI.
 
-![AiVM dashboard showing 24-hour request metrics, backend health, and request volume chart](screenshots/dashboard.png)
+![HAAI dashboard showing 24-hour request metrics, backend health, and request volume chart](screenshots/dashboard.png)
 
 ## Features
 
@@ -15,12 +17,12 @@ Like HAProxy or Nginx, but purpose-built for LLMs — with virtual models, key m
 - **Plugins** — Sandboxed request/response transformers you install from npm or GitHub (e.g. system-prompt injection, vLLM compatibility fixes)
 - **Hooks** — Pre-request mutation and post-completion callbacks (internal worker threads or external webhooks)
 - **Web admin UI** — Built-in SvelteKit dashboard for everything: backends, v-models, keys, plugins, live logs, and metrics — served from the same port as the API
-- **CLI (`aivm`)** — Full management from the terminal for scripting and automation
+- **CLI (`haai`)** — Full management from the terminal for scripting and automation
 - **Observability** — Prometheus metrics, OpenTelemetry OTLP export, structured logging, and real-time SSE dashboards
 
 ## Web admin UI
 
-AiVM ships with a polished dark-mode admin interface — no separate deployment required. In production it is served at `/` on the proxy port; in development it runs on `:5173` with the API proxied behind it.
+HAAI ships with a polished dark-mode admin interface — no separate deployment required. In production it is served at `/` on the proxy port; in development it runs on `:5173` with the API proxied behind it.
 
 Log in with the default admin account on first run (`admin` / `admin` — change this immediately in **Settings**). The UI also supports TOTP 2FA, WebAuthn passkeys, and admin API tokens for automation.
 
@@ -48,7 +50,7 @@ Install sandboxed TypeScript plugins that transform requests and responses at th
 
 ![Plugins page listing installed sandboxed request transformers](screenshots/plugins.png)
 
-Author your own with the [`@ai-v-models/plugin-sdk`](packages/plugin-sdk/) — see [Plugin Authoring](docs/guide/plugin-authoring.md).
+Author your own with the [`@haai/plugin-sdk`](packages/plugin-sdk/) — see [Plugin Authoring](docs/guide/plugin-authoring.md).
 
 ### Live logs & metrics
 
@@ -60,11 +62,11 @@ Watch requests stream in real time with key, model, status, token count, and dur
 
 ## CLI
 
-Manage everything from the terminal with `aivm` — backends, virtual models, keys, plugins, and more. Ideal for scripting and automation; the same operations are available in the web UI.
+Manage everything from the terminal with `haai` — backends, virtual models, keys, plugins, and more. Ideal for scripting and automation; the same operations are available in the web UI.
 
-![AiVM startup screen with ASCII banner, endpoints, backends, and virtual model health](screenshots/cli-loading-screen.png)
+![HAAI startup screen with ASCII banner, endpoints, backends, and virtual model health](screenshots/cli-loading-screen.png)
 
-![AiVM CLI help output and virtual model list table](screenshots/cli-example.png)
+![HAAI CLI help output and virtual model list table](screenshots/cli-example.png)
 
 See [CLI reference](docs/guide/cli.md) for the full command set.
 
@@ -83,8 +85,8 @@ LM Studio, Ollama, vLLM, OpenAI, and generic OpenAI-compatible backends.
 ### Install and run
 
 ```bash
-git clone https://github.com/j-norwood-young/ai-v-models.git
-cd ai-v-models
+git clone https://github.com/j-norwood-young/haai.git
+cd haai
 pnpm install
 pnpm build
 pnpm start
@@ -96,7 +98,7 @@ This starts the proxy on **http://localhost:4000** with:
 - Management API at `/api/v1/*`
 - Admin UI at `/`
 
-Data is stored in `~/.aivm/`. On first run an admin user is created with password `admin` — **change it immediately** in Settings after logging in.
+Data is stored in `~/.haai/`. On first run an admin user is created with password `admin` — **change it immediately** in Settings after logging in.
 
 ### Docker
 
@@ -113,7 +115,7 @@ Everything below can also be done from the web admin UI.
 ### Add a backend
 
 ```bash
-pnpm aivm backend add \
+pnpm haai backend add \
   --name lmstudio-bob \
   --base-url http://192.168.1.100:1234 \
   --provider lmstudio \
@@ -123,7 +125,7 @@ pnpm aivm backend add \
 ### Create an API key
 
 ```bash
-pnpm aivm key create --name "my-app"
+pnpm haai key create --name "my-app"
 ```
 
 Save the key when shown — it is only displayed once.
@@ -132,7 +134,7 @@ Save the key when shown — it is only displayed once.
 
 ```bash
 curl http://localhost:4000/v1/chat/completions \
-  -H "Authorization: Bearer aivm-sk-YOUR_KEY" \
+  -H "Authorization: Bearer haai-sk-YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3.5-35b:bob:lmstudio",
@@ -145,13 +147,13 @@ Models are namespaced as `<model>:<hostname>:<provider>`, e.g. `qwen3.5-35b:bob:
 
 ## Configuration
 
-Environment variables (prefix `AIVM_`):
+Environment variables (prefix `HAAI_`):
 
 ```bash
-AIVM_PORT=8080 AIVM_LOG_LEVEL=info pnpm start
+HAAI_PORT=8080 HAAI_LOG_LEVEL=info pnpm start
 ```
 
-Or `~/.aivm/config.yaml`:
+Or `~/.haai/config.yaml`:
 
 ```yaml
 server:
@@ -202,7 +204,7 @@ pnpm typecheck
 apps/web/          Admin UI (SvelteKit)
 packages/proxy/    Reverse proxy server
 packages/core/     Shared config, DB, types
-packages/cli/      aivm CLI
+packages/cli/      haai CLI
 packages/hooks-sdk/  Hook authoring SDK
 packages/plugin-sdk/ Plugin authoring SDK
 docs/              VitePress documentation

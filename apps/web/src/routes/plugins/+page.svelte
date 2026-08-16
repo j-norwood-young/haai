@@ -46,7 +46,7 @@
 </script>
 
 <svelte:head>
-	<title>Plugins — AiVM</title>
+	<title>Plugins — HAAI</title>
 </svelte:head>
 
 <div class="page">

@@ -1,6 +1,6 @@
 # Systemd
 
-Run ai-v-models as a systemd service on Linux.
+Run HAAI as a systemd service on Linux.
 
 ## Build
 
@@ -11,35 +11,35 @@ pnpm build
 
 ## Service unit
 
-Create `/etc/systemd/system/ai-v-models.service`:
+Create `/etc/systemd/system/haai.service`:
 
 ```ini
 [Unit]
-Description=ai-v-models LLM reverse proxy
+Description=haai LLM reverse proxy
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=avm
-Group=avm
-WorkingDirectory=/opt/ai-v-models
+User=haai
+Group=haai
+WorkingDirectory=/opt/haai
 ExecStart=/usr/bin/node packages/proxy/dist/index.js
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
-Environment=AVM_DATA_DIR=/var/lib/ai-v-models
-Environment=AVM_HOST=0.0.0.0
-Environment=AVM_PORT=4000
-Environment=AVM_LOG_LEVEL=info
-Environment=AVM_LOG_FORMAT=json
-# Environment=AVM_SESSION_SECRET=...
+Environment=HAAI_DATA_DIR=/var/lib/haai
+Environment=HAAI_HOST=0.0.0.0
+Environment=HAAI_PORT=4000
+Environment=HAAI_LOG_LEVEL=info
+Environment=HAAI_LOG_FORMAT=json
+# Environment=HAAI_SESSION_SECRET=...
 
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/ai-v-models
+ReadWritePaths=/var/lib/haai
 PrivateTmp=true
 
 [Install]
@@ -49,22 +49,22 @@ WantedBy=multi-user.target
 ## Setup
 
 ```bash
-sudo useradd --system --home /var/lib/ai-v-models avm
-sudo mkdir -p /var/lib/ai-v-models
-sudo chown avm:avm /var/lib/ai-v-models
+sudo useradd --system --home /var/lib/haai haai
+sudo mkdir -p /var/lib/haai
+sudo chown haai:haai /var/lib/haai
 
-sudo cp -r /path/to/ai-v-models /opt/ai-v-models
-sudo chown -R avm:avm /opt/ai-v-models
+sudo cp -r /path/to/haai /opt/haai
+sudo chown -R haai:haai /opt/haai
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now ai-v-models
-sudo systemctl status ai-v-models
+sudo systemctl enable --now haai
+sudo systemctl status haai
 ```
 
 ## Logs
 
 ```bash
-journalctl -u ai-v-models -f
+journalctl -u haai -f
 ```
 
 ## Reverse proxy

@@ -1,12 +1,12 @@
 # Plugin Authoring
 
-Plugins are TypeScript packages that hook into ai-v-models' request/response pipeline. They are distributed via npm or GitHub and run in sandboxed V8 isolates with no access to the host filesystem, network, or OS.
+Plugins are TypeScript packages that hook into HAAI' request/response pipeline. They are distributed via npm or GitHub and run in sandboxed V8 isolates with no access to the host filesystem, network, or OS.
 
 ## Quick start
 
 ```bash
 # Scaffold a new plugin
-aivm plugin create my-plugin
+haai plugin create my-plugin
 
 cd my-plugin
 npm install
@@ -15,21 +15,21 @@ npm install
 npm run build
 
 # Install into the proxy
-aivm plugin install local:$(pwd)
+haai plugin install local:$(pwd)
 
 # Bind it globally
-aivm plugin bind <pluginId> --scope global
+haai plugin bind <pluginId> --scope global
 ```
 
 ## Plugin structure
 
 A plugin is a Node.js package with:
-- An `"aivm-plugin"` key in `package.json` (the manifest)
+- An `"haai-plugin"` key in `package.json` (the manifest)
 - A default ESM export from the main entry (`definePlugin(...)`)
 
 ```ts
 // src/index.ts
-import { definePlugin, t, prependSystemPrompt } from "@ai-v-models/plugin-sdk";
+import { definePlugin, t, prependSystemPrompt } from "@haai/plugin-sdk";
 
 export default definePlugin({
   name: "Talk like a Pirate",
@@ -52,7 +52,7 @@ export default definePlugin({
 
 ## Config fields
 
-The `config` object in `definePlugin` uses the `t.*` field builders from `@ai-v-models/plugin-sdk`. Each field drives a UI input in the admin panel.
+The `config` object in `definePlugin` uses the `t.*` field builders from `@haai/plugin-sdk`. Each field drives a UI input in the admin panel.
 
 | Builder | UI | Value type |
 |---------|-----|------------|
@@ -69,7 +69,7 @@ Config values are available as `ctx.config.<field>` inside your hooks, fully typ
 
 ## The `package.json` manifest
 
-The `"aivm-plugin"` key is read at install time and must stay in sync with your `definePlugin` config:
+The `"haai-plugin"` key is read at install time and must stay in sync with your `definePlugin` config:
 
 ```json
 {
@@ -77,7 +77,7 @@ The `"aivm-plugin"` key is read at install time and must stay in sync with your 
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
-  "aivm-plugin": {
+  "haai-plugin": {
     "name": "Talk like a Pirate",
     "description": "Makes responses use pirate speak",
     "version": "1.0.0",
@@ -141,7 +141,7 @@ import {
   mergeSystemPrompts,   // Collapse multiple system messages into one
   replaceInMessages,    // Find & replace across all message text
   setParam,            // Override a request parameter
-} from "@ai-v-models/plugin-sdk";
+} from "@haai/plugin-sdk";
 ```
 
 ## Scopes and bindings
@@ -155,9 +155,9 @@ A plugin can be bound to:
 Each binding can have its own config. Multiple bindings are executed in `order` (ascending).
 
 ```bash
-aivm plugin bind <pluginId> --scope global
-aivm plugin bind <pluginId> --scope vmodel --scope-id my-smart-model
-aivm plugin bind <pluginId> --scope backend --scope-id <backendId> --order 10
+haai plugin bind <pluginId> --scope global
+haai plugin bind <pluginId> --scope vmodel --scope-id my-smart-model
+haai plugin bind <pluginId> --scope backend --scope-id <backendId> --order 10
 ```
 
 ## Publishing
@@ -170,10 +170,10 @@ npm run build
 npm publish --access public
 
 # Anyone can then install via:
-aivm plugin install npm:@my-org/my-plugin
+haai plugin install npm:@my-org/my-plugin
 
 # Or from GitHub:
-aivm plugin install github:my-org/my-plugin-repo
+haai plugin install github:my-org/my-plugin-repo
 ```
 
 ## Sandboxing constraints

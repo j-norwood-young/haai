@@ -93,7 +93,7 @@
 </script>
 
 <svelte:head>
-	<title>New API Key — AiVM</title>
+	<title>New API Key — HAAI</title>
 </svelte:head>
 
 <div class="p-6 max-w-3xl mx-auto space-y-4">

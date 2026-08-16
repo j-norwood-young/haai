@@ -1,7 +1,7 @@
 import type { FastifyRequest } from "fastify";
 import type { AppContext } from "./context.js";
 
-const RP_NAME = "ai-v-models";
+const RP_NAME = "haai";
 
 export function getWebAuthnConfig(ctx: AppContext, req: FastifyRequest) {
   const hostHeader = req.headers.host ?? "localhost";

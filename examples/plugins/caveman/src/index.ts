@@ -1,4 +1,4 @@
-import { definePlugin, t, prependSystemPrompt } from "@ai-v-models/plugin-sdk";
+import { definePlugin, t, prependSystemPrompt } from "@haai/plugin-sdk";
 
 /**
  * Caveman compression skill — inspired by https://github.com/JuliusBrussee/caveman

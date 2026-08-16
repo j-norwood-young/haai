@@ -3,8 +3,8 @@ export function buildChatCompletionUrl(baseUrl: string): string {
   return `${baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
 }
 
-/** Shell command to send a test prompt via the aivm CLI. */
-export function buildAivmPromptCommand(
+/** Shell command to send a test prompt via the haai CLI. */
+export function buildHaaiPromptCommand(
   baseUrl: string,
   apiKey: string,
   modelId: string,
@@ -12,7 +12,7 @@ export function buildAivmPromptCommand(
   stream = true,
 ): string {
   const parts = [
-    "aivm prompt",
+    "haai prompt",
     JSON.stringify(message),
     `-u ${JSON.stringify(baseUrl.replace(/\/$/, ""))}`,
     `-k ${JSON.stringify(apiKey)}`,

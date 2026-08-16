@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { loadConfig } from "@ai-v-models/core";
-import { getMasterKey, encrypt, decrypt } from "@ai-v-models/core";
+import { loadConfig } from "@haai/core";
+import { getMasterKey, encrypt, decrypt } from "@haai/core";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,38 +15,38 @@ describe("Configuration loading", () => {
   });
 
   it("should respect environment variables", () => {
-    process.env["AIVM_PORT"] = "5000";
-    process.env["AIVM_LOG_LEVEL"] = "debug";
+    process.env["HAAI_PORT"] = "5000";
+    process.env["HAAI_LOG_LEVEL"] = "debug";
     const config = loadConfig({ configFile: "/nonexistent/config.yaml" });
     expect(config.server.port).toBe(5000);
     expect(config.log.level).toBe("debug");
     // Cleanup
-    delete process.env["AIVM_PORT"];
-    delete process.env["AIVM_LOG_LEVEL"];
+    delete process.env["HAAI_PORT"];
+    delete process.env["HAAI_LOG_LEVEL"];
   });
 
-  it("should use dev port when AIVM_DEV=1", () => {
-    process.env["AIVM_DEV"] = "1";
+  it("should use dev port when HAAI_DEV=1", () => {
+    process.env["HAAI_DEV"] = "1";
     const config = loadConfig({ configFile: "/nonexistent/config.yaml" });
     expect(config.server.port).toBe(4001);
-    delete process.env["AIVM_DEV"];
+    delete process.env["HAAI_DEV"];
   });
 
-  it("should allow AIVM_PORT to override dev default", () => {
-    process.env["AIVM_DEV"] = "1";
-    process.env["AIVM_PORT"] = "5000";
+  it("should allow HAAI_PORT to override dev default", () => {
+    process.env["HAAI_DEV"] = "1";
+    process.env["HAAI_PORT"] = "5000";
     const config = loadConfig({ configFile: "/nonexistent/config.yaml" });
     expect(config.server.port).toBe(5000);
-    delete process.env["AIVM_DEV"];
-    delete process.env["AIVM_PORT"];
+    delete process.env["HAAI_DEV"];
+    delete process.env["HAAI_PORT"];
   });
 
   it("should coerce string env vars to numbers", () => {
-    process.env["AIVM_PORT"] = "3999";
+    process.env["HAAI_PORT"] = "3999";
     const config = loadConfig({ configFile: "/nonexistent/config.yaml" });
     expect(typeof config.server.port).toBe("number");
     expect(config.server.port).toBe(3999);
-    delete process.env["AIVM_PORT"];
+    delete process.env["HAAI_PORT"];
   });
 });
 
@@ -54,7 +54,7 @@ describe("Crypto", () => {
   let tmpDir: string;
 
   it("should generate and persist master key", () => {
-    tmpDir = mkdtempSync(join(tmpdir(), "aivm-crypto-test-"));
+    tmpDir = mkdtempSync(join(tmpdir(), "haai-crypto-test-"));
     const key1 = getMasterKey(tmpDir);
     const key2 = getMasterKey(tmpDir); // Should load same key
     expect(key1.length).toBe(32);

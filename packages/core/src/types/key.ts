@@ -1,6 +1,6 @@
 export interface ApiKey {
   id: string;
-  /** Short prefix shown to users, e.g. "aivm-sk-abc1" */
+  /** Short prefix shown to users, e.g. "haai-sk-abc1" */
   prefix: string;
   /** Argon2 hash of the full key */
   keyHash: string;

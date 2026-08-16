@@ -80,7 +80,7 @@ export function Dashboard({ baseUrl }: DashboardProps): React.ReactElement {
     React.createElement(
       Box,
       { borderStyle: "round", borderColor: "cyan", padding: 1, marginBottom: 1 },
-      React.createElement(Text, { bold: true, color: "cyan" }, "🤖 ai-v-models proxy dashboard"),
+      React.createElement(Text, { bold: true, color: "cyan" }, "🤖 haai proxy dashboard"),
       React.createElement(Text, { dimColor: true }, `  ${baseUrl}`),
       React.createElement(Text, { dimColor: true }, `  Refreshed: ${lastRefresh.toLocaleTimeString()}`),
     ),

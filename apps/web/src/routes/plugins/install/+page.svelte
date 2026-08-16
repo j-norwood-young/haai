@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>Install Plugin — AiVM</title>
+	<title>Install Plugin — HAAI</title>
 </svelte:head>
 
 <div class="p-6 max-w-2xl mx-auto space-y-4">

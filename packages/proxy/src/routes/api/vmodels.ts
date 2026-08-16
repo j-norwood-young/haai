@@ -5,7 +5,7 @@ import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
-} from "@ai-v-models/core";
+} from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { recomputeAllVModelHealth } from "../../vmodel-health.js";
 

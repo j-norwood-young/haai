@@ -8,6 +8,7 @@
 	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 	import HealthIndicator from '$lib/components/HealthIndicator.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 
 	interface Props {
 		children: import('svelte').Snippet;
@@ -169,7 +170,7 @@
 {#if isPublicPage}
 	{@render children()}
 {:else if booting}
-	<LoadingScreen message="Connecting to AiVM…" />
+	<LoadingScreen message="Connecting to HAAI…" />
 {:else}
 	<div class="flex h-screen overflow-hidden">
 		<!-- Mobile header -->
@@ -202,21 +203,8 @@
 			</button>
 
 			<div class="flex items-center gap-2">
-				<svg
-					class="w-5 h-5 text-cyan-400"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-				>
-					<path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-				</svg>
-				<span class="font-bold text-white text-sm tracking-tight"
-					>Ai<span class="text-cyan-400">VM</span></span
-				>
+				<BrandLogo variant="fin" class="w-5 h-5 text-cyan-400" label="" />
+				<span class="font-bold text-white text-sm tracking-tight">HAAI</span>
 			</div>
 
 			<div class="ml-auto flex items-center">
@@ -247,21 +235,8 @@
 			<div
 				class="hidden md:flex items-center gap-2.5 px-4 py-4 border-b border-[var(--color-border-subtle)]"
 			>
-				<svg
-					class="w-6 h-6 text-cyan-400 shrink-0"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-				>
-					<path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-				</svg>
-				<span class="text-sm font-bold text-white tracking-tight"
-					>Ai<span class="text-cyan-400">VM</span></span
-				>
+				<BrandLogo variant="fin" class="w-6 h-6 text-cyan-400" label="" />
+				<span class="text-sm font-bold text-white tracking-tight">HAAI</span>
 				<div class="ml-auto flex items-center shrink-0">
 					<HealthIndicator
 						level={backendHealth.level}
@@ -278,18 +253,7 @@
 				class="md:hidden flex items-center justify-between px-4 py-4 border-b border-[var(--color-border-subtle)]"
 			>
 				<div class="flex items-center gap-2">
-					<svg
-						class="w-5 h-5 text-cyan-400"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-					>
-						<path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-					</svg>
+					<BrandLogo variant="fin" class="w-5 h-5 text-cyan-400" label="" />
 					<span class="text-sm font-bold text-white tracking-tight">Menu</span>
 				</div>
 				<button

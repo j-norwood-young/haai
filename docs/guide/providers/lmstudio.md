@@ -11,7 +11,7 @@
 ## Add backend
 
 ```bash
-aivm backend add \
+haai backend add \
   --name lmstudio-bob \
   --base-url http://192.168.1.100:1234 \
   --provider lmstudio \
@@ -38,5 +38,5 @@ curl http://localhost:4000/v1/models -H "Authorization: Bearer $API_KEY"
 
 ## Tips
 
-- Ensure the LM Studio server is reachable from the ai-v-models host (firewall, bind address).
+- Ensure the LM Studio server is reachable from the HAAI host (firewall, bind address).
 - Use a virtual model alias if you want a stable name like `smart-chat` instead of the namespaced ID.

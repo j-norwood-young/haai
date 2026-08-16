@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: ai-v-models
+  name: HAAI
   text: Modern LLM Reverse Proxy
   tagline: Fast, reliable, highly available streaming reverse proxy for OpenAI-compatible LLMs. Virtual models, key management, hooks, and beautiful monitoring.
   actions:

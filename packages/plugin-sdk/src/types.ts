@@ -218,7 +218,7 @@ export interface PluginDefinition<C extends ConfigSchema = ConfigSchema> {
   hooks: PluginHooks<C>;
 }
 
-/** The manifest stored in package.json under the "aivm-plugin" key. */
+/** The manifest stored in package.json under the "haai-plugin" key. */
 export interface PluginManifest {
   name: string;
   description?: string;
