@@ -4,7 +4,41 @@ import { nanoid } from "nanoid";
 import { backends as backendsTable } from "@ai-v-models/core";
 import { encrypt } from "@ai-v-models/core";
 import type { AppContext } from "../../context.js";
-import { checkBackendHealth } from "../../health.js";
+import { checkAndPersistBackendHealth } from "../../health.js";
+import { getLogger } from "../../logger.js";
+
+function scheduleBackendHealthCheck(
+  ctx: AppContext,
+  backend: {
+    id: string;
+    baseUrl: string;
+    name: string;
+    provider: string;
+    keyMode: string;
+    encryptedApiKey: string | null;
+    enabled: boolean;
+    healthCheckEnabled: boolean;
+  },
+): void {
+  if (!backend.enabled || !backend.healthCheckEnabled) return;
+
+  void checkAndPersistBackendHealth(
+    ctx.db,
+    ctx.masterKey,
+    {
+      id: backend.id,
+      baseUrl: backend.baseUrl,
+      name: backend.name,
+      provider: backend.provider,
+      keyMode: backend.keyMode,
+      encryptedApiKey: backend.encryptedApiKey,
+    },
+    ctx.config.health.timeoutMs,
+    ctx.sse,
+  ).catch((err) => {
+    getLogger().warn({ err, backendId: backend.id }, "Immediate backend health check failed");
+  });
+}
 
 export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {
   // List all backends
@@ -62,6 +96,7 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       .get();
 
     ctx.sse.broadcast("backend-health", { backendId: id, action: "created" });
+    if (created) scheduleBackendHealthCheck(ctx, created);
     return reply.status(201).send({ ...created, encryptedApiKey: undefined });
   });
 
@@ -96,6 +131,12 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
         .get();
 
       ctx.sse.broadcast("backend-health", { backendId: req.params.id, action: "updated" });
+      if (
+        updated &&
+        (body["baseUrl"] !== undefined || body["enabled"] !== undefined || body["apiKey"] !== undefined)
+      ) {
+        scheduleBackendHealthCheck(ctx, updated);
+      }
 
       return { ...updated, encryptedApiKey: undefined };
     },
@@ -129,35 +170,20 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       .get();
     if (!backend) return reply.status(404).send({ error: "Backend not found" });
 
-    const result = await checkBackendHealth(
+    const result = await checkAndPersistBackendHealth(
+      ctx.db,
+      ctx.masterKey,
       {
         id: backend.id,
         baseUrl: backend.baseUrl,
         name: backend.name,
+        provider: backend.provider,
         keyMode: backend.keyMode,
         encryptedApiKey: backend.encryptedApiKey,
       },
-      ctx.masterKey,
       10000,
+      ctx.sse,
     );
-
-    const now = Date.now();
-    await ctx.db.db
-      .update(backendsTable)
-      .set({
-        lastHealthCheck: now,
-        lastHealthStatus: result.status,
-        lastLatencyMs: result.latencyMs,
-        updatedAt: now,
-      })
-      .where(eq(backendsTable.id, backend.id))
-      .run();
-
-    ctx.sse.broadcast("backend-health", {
-      backendId: backend.id,
-      status: result.status,
-      latencyMs: result.latencyMs,
-    });
 
     return {
       success: result.status !== "unhealthy",

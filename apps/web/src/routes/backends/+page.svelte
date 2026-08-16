@@ -2,17 +2,28 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.js';
 	import type { Backend } from '$lib/api.js';
+	import { sse } from '$lib/sse.svelte.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+
+	type TestResult = {
+		success: boolean;
+		loading: boolean;
+		latency_ms?: number;
+		error?: string;
+	};
 
 	let backends = $state<Backend[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
-	let testResults = $state<Record<string, { success: boolean; latency_ms?: number; error?: string; loading: boolean }>>({});
+	let testResults = $state<Record<string, TestResult>>({});
 	let deleteConfirm = $state<string | null>(null);
+	// Non-reactive guard so writing it does not re-enter the SSE $effect
+	let lastHandledHealthAt: number | null = null;
 
 	async function load() {
 		try {
 			backends = await api.getBackends();
+			error = null;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load backends';
 		} finally {
@@ -20,26 +31,40 @@
 		}
 	}
 
+	$effect(() => {
+		const event = sse.latestEvent;
+		if (event?.type !== 'backend-health') return;
+		const ts = typeof event.timestamp === 'number' ? event.timestamp : Date.now();
+		if (lastHandledHealthAt === ts) return;
+		lastHandledHealthAt = ts;
+		void load();
+	});
+
 	async function testBackend(id: string) {
 		testResults = { ...testResults, [id]: { success: false, loading: true } };
 		try {
 			const result = await api.testBackend(id);
-			testResults = { ...testResults, [id]: { ...result, loading: false } };
+			const next: TestResult = { success: result.success, loading: false };
+			if (result.latency_ms !== undefined) next.latency_ms = result.latency_ms;
+			if (result.error !== undefined) next.error = result.error;
+			testResults = { ...testResults, [id]: next };
 			if (result.health) {
-				backends = backends.map((b) =>
-					b.id === id
-						? {
-								...b,
-								health: result.health!,
-								latency_ms: result.latency_ms ?? b.latency_ms
-							}
-						: b
-				);
+				backends = backends.map((b) => {
+					if (b.id !== id) return b;
+					const updated: Backend = { ...b, health: result.health! };
+					const latency = result.latency_ms ?? b.latency_ms;
+					if (latency !== undefined) updated.latency_ms = latency;
+					return updated;
+				});
 			}
 		} catch (err) {
 			testResults = {
 				...testResults,
-				[id]: { success: false, error: err instanceof Error ? err.message : 'Test failed', loading: false }
+				[id]: {
+					success: false,
+					loading: false,
+					error: err instanceof Error ? err.message : 'Test failed'
+				}
 			};
 		}
 	}
@@ -131,7 +156,7 @@
 									{#if testResults[backend.id]?.loading}
 										<span class="text-xs text-gray-500">Testing…</span>
 									{:else if testResults[backend.id]}
-										{@const r = testResults[backend.id]}
+										{@const r = testResults[backend.id]!}
 										{#if r.success}
 											<span class="text-xs text-green-400">{r.latency_ms}ms ✓</span>
 										{:else}

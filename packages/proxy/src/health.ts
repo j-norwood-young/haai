@@ -53,6 +53,47 @@ export async function checkBackendHealth(
   }
 }
 
+/** Run a health check, persist the result, and optionally broadcast SSE. */
+export async function checkAndPersistBackendHealth(
+  db: DbClient,
+  masterKey: Buffer,
+  backend: {
+    id: string;
+    baseUrl: string;
+    name: string;
+    provider: string;
+    keyMode: string;
+    encryptedApiKey: string | null;
+  },
+  timeoutMs: number,
+  sse?: SseEmitter,
+): Promise<HealthCheckResult> {
+  const result = await checkBackendHealth(backend, masterKey, timeoutMs);
+  const now = Date.now();
+
+  await db.db
+    .update(backendsTable)
+    .set({
+      lastHealthCheck: now,
+      lastHealthStatus: result.status,
+      lastLatencyMs: result.latencyMs,
+      updatedAt: now,
+    })
+    .where(eq(backendsTable.id, backend.id))
+    .run();
+
+  const healthScore = result.status === "healthy" ? 1 : result.status === "degraded" ? 0.5 : 0;
+  backendHealthGauge.set({ backend: backend.name, provider: backend.provider }, healthScore);
+
+  sse?.broadcast("backend-health", {
+    backendId: backend.id,
+    status: result.status,
+    latencyMs: result.latencyMs,
+  });
+
+  return result;
+}
+
 export class HealthMonitor {
   private timer: NodeJS.Timeout | null = null;
 
@@ -92,15 +133,17 @@ export class HealthMonitor {
 
       const results = await Promise.allSettled(
         allBackends.map((b) =>
-          checkBackendHealth(
+          checkAndPersistBackendHealth(
+            this.db,
+            this.masterKey,
             {
               id: b.id,
               baseUrl: b.baseUrl,
               name: b.name,
+              provider: b.provider,
               keyMode: b.keyMode,
               encryptedApiKey: b.encryptedApiKey,
             },
-            this.masterKey,
             this.timeoutMs,
           ),
         ),
@@ -109,23 +152,6 @@ export class HealthMonitor {
       for (const result of results) {
         if (result.status === "fulfilled") {
           const { backendId, status, latencyMs } = result.value;
-          const backend = allBackends.find((b) => b.id === backendId);
-          if (!backend) continue;
-
-          await this.db.db
-            .update(backendsTable)
-            .set({
-              lastHealthCheck: Date.now(),
-              lastHealthStatus: status,
-              lastLatencyMs: latencyMs,
-              updatedAt: Date.now(),
-            })
-            .where(eq(backendsTable.id, backendId))
-            .run();
-
-          const healthScore = status === "healthy" ? 1 : status === "degraded" ? 0.5 : 0;
-          backendHealthGauge.set({ backend: backend.name, provider: backend.provider }, healthScore);
-
           if (status !== "healthy") {
             log.warn({ backendId, status, latencyMs }, "Backend health check issue");
           }
