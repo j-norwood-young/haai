@@ -118,6 +118,15 @@
 	{/if}
 
 	{#snippet footer()}
+		{#if backend}
+			<a
+				href="/backends/{backend.id}/edit"
+				class="btn btn-sm btn-secondary"
+				onclick={onclose}
+			>
+				Edit backend
+			</a>
+		{/if}
 		<button type="button" class="btn btn-sm btn-secondary" onclick={onclose}>Close</button>
 		<button
 			type="button"

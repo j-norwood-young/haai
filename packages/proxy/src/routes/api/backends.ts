@@ -61,6 +61,22 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
   // Create backend
   app.post<{ Body: Record<string, unknown> }>("/api/v1/backends", async (req, reply) => {
     const body = req.body;
+    const name = typeof body["name"] === "string" ? body["name"].trim() : "";
+    if (!name) {
+      return reply.status(400).send({ error: "name is required" });
+    }
+
+    const existing = await ctx.db.db
+      .select({ id: backendsTable.id })
+      .from(backendsTable)
+      .where(eq(backendsTable.name, name))
+      .get();
+    if (existing) {
+      return reply.status(409).send({
+        error: `A backend with name '${name}' already exists`,
+      });
+    }
+
     const now = Date.now();
     const id = `backend-${nanoid(8)}`;
 
@@ -75,25 +91,35 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       encryptedApiKey = encrypt(apiKey, ctx.masterKey);
     }
 
-    await ctx.db.db
-      .insert(backendsTable)
-      .values({
-        id,
-        name: body["name"] as string,
-        displayName: (body["displayName"] as string) ?? (body["name"] as string),
-        hostName: body["hostName"] as string,
-        provider: body["provider"] as string,
-        baseUrl: body["baseUrl"] as string,
-        keyMode,
-        encryptedApiKey,
-        enabled: (body["enabled"] as boolean) ?? true,
-        weight: (body["weight"] as number) ?? 1,
-        maxConcurrency: (body["maxConcurrency"] as number) ?? 10,
-        healthCheckEnabled: (body["healthCheckEnabled"] as boolean) ?? true,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .run();
+    try {
+      await ctx.db.db
+        .insert(backendsTable)
+        .values({
+          id,
+          name,
+          displayName: (body["displayName"] as string) ?? name,
+          hostName: body["hostName"] as string,
+          provider: body["provider"] as string,
+          baseUrl: body["baseUrl"] as string,
+          keyMode,
+          encryptedApiKey,
+          enabled: (body["enabled"] as boolean) ?? true,
+          weight: (body["weight"] as number) ?? 1,
+          maxConcurrency: (body["maxConcurrency"] as number) ?? 10,
+          healthCheckEnabled: (body["healthCheckEnabled"] as boolean) ?? true,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .run();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("UNIQUE") || message.includes("unique")) {
+        return reply.status(409).send({
+          error: `A backend with name '${name}' already exists`,
+        });
+      }
+      throw err;
+    }
 
     const created = await ctx.db.db
       .select()

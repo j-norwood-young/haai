@@ -5,6 +5,7 @@
 	import { sse } from '$lib/sse.svelte.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import BackendHealthDetailsModal from '$lib/components/BackendHealthDetailsModal.svelte';
+	import BackendModelsModal from '$lib/components/BackendModelsModal.svelte';
 	import {
 		hasHealthDetails,
 		healthBadgeClass,
@@ -25,6 +26,7 @@
 	let testResults = $state<Record<string, TestResult>>({});
 	let deleteConfirm = $state<string | null>(null);
 	let healthDetails = $state<BackendHealthDetails | null>(null);
+	let modelsBackend = $state<Backend | null>(null);
 	// Non-reactive guard so writing it does not re-enter the SSE $effect
 	let lastHandledHealthAt: number | null = null;
 
@@ -64,6 +66,14 @@
 
 	function closeHealthDetails() {
 		healthDetails = null;
+	}
+
+	function openModels(backend: Backend) {
+		modelsBackend = backend;
+	}
+
+	function closeModels() {
+		modelsBackend = null;
 	}
 
 	function onHealthUpdated(result: {
@@ -232,6 +242,12 @@
 										{/if}
 									{/if}
 									<button
+										onclick={() => openModels(backend)}
+										class="btn btn-sm btn-secondary"
+									>
+										Models
+									</button>
+									<button
 										onclick={() => testBackend(backend.id)}
 										class="btn btn-sm btn-secondary"
 									>
@@ -279,4 +295,10 @@
 	backend={healthDetails}
 	onclose={closeHealthDetails}
 	onupdated={onHealthUpdated}
+/>
+
+<BackendModelsModal
+	open={modelsBackend != null}
+	backend={modelsBackend}
+	onclose={closeModels}
 />

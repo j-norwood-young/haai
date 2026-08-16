@@ -91,4 +91,13 @@
 			</div>
 		</div>
 	{/if}
+
+	{#snippet footer()}
+		{#if vmodel}
+			<a href="/vmodels/{vmodel.id}/edit" class="btn btn-sm btn-secondary" onclick={onclose}>
+				Edit v-model
+			</a>
+		{/if}
+		<button type="button" class="btn btn-sm btn-secondary" onclick={onclose}>Close</button>
+	{/snippet}
 </Modal>

@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { api } from '$lib/api.js';
 	import type { Backend, VModel } from '$lib/api.js';
+	import { rawBackendModelId } from '$lib/model-ids.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 
 	const id = $derived(page.params.id!);
@@ -35,25 +36,29 @@
 		error = null;
 		try {
 			[vmodel, backends] = await Promise.all([api.getVModel(id), api.getBackends()]);
-			
+
 			// Fetch available models from all backends
 			const result = await api.getAvailableModels();
-			
-			// Group models by backend ID
-			availableModelsByBackend = {};
+
+			// Group models by backend ID using raw upstream model IDs
+			const grouped: Record<string, Array<{ id: string; name: string }>> = {};
+			const backendsById = new Map(backends.map((b) => [b.id, b]));
 			for (const model of result.models ?? []) {
 				if (model.type === 'backend-model' && model.backendId) {
 					const backendId = model.backendId;
-					if (!availableModelsByBackend[backendId]) {
-						availableModelsByBackend[backendId] = [];
+					const backend = backendsById.get(backendId);
+					const rawId = rawBackendModelId(model.id, backend);
+					if (!grouped[backendId]) {
+						grouped[backendId] = [];
 					}
-					availableModelsByBackend[backendId].push({
-						id: model.id,
-						name: `${model.id} (${model.backendName || model.ownedBy})`
+					grouped[backendId].push({
+						id: rawId,
+						name: `${rawId} (${model.backendName || model.ownedBy})`
 					});
 				}
 			}
-			
+			availableModelsByBackend = grouped;
+
 			displayName = vmodel.display_name;
 			strategy = vmodel.strategy;
 			streaming = vmodel.streaming;
@@ -80,12 +85,12 @@
 	}
 
 	async function handleAddBackend() {
-		if (!addBackendId || !vmodel) return;
+		if (!addBackendId || !newBackendModelId || !vmodel) return;
 		addBackendLoading = true;
 		try {
 			await api.addVModelBackend(id, {
 				backend_id: addBackendId,
-				backend_model_id: newBackendModelId || vmodel.model_id,
+				backend_model_id: newBackendModelId,
 				weight: parseInt(addBackendWeight, 10)
 			});
 			vmodel = await api.getVModel(id);
@@ -306,7 +311,13 @@
 				<div
 					class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_5rem_auto] gap-2 items-center"
 				>
-					<select bind:value={addBackendId} class="input !w-full min-w-0 text-xs">
+					<select
+						bind:value={addBackendId}
+						onchange={() => {
+							newBackendModelId = '';
+						}}
+						class="input !w-full min-w-0 text-xs"
+					>
 						<option value="">Select backend…</option>
 						{#each backends as b (b.id)}
 							<option value={b.id}>{b.name}</option>
@@ -317,7 +328,7 @@
 						class="input !w-full min-w-0 text-xs"
 						disabled={!addBackendId}
 					>
-						<option value="">Use default</option>
+						<option value="" disabled>Select model…</option>
 						{#if addBackendId && ((availableModelsByBackend[addBackendId] ?? [])?.length ?? 0) > 0}
 							{#each (availableModelsByBackend[addBackendId] ?? []) as m (m.id)}
 								<option value={m.id}>{m.name}</option>
@@ -328,7 +339,7 @@
 							</optgroup>
 						{:else}
 							<optgroup label="No models discovered">
-								<option value="">— No models found —</option>
+								<option value="" disabled>— No models found —</option>
 							</optgroup>
 						{/if}
 					</select>
@@ -344,7 +355,7 @@
 					<button
 						type="button"
 						onclick={handleAddBackend}
-						disabled={!addBackendId || addBackendLoading}
+						disabled={!addBackendId || !newBackendModelId || addBackendLoading}
 						class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-800 text-white rounded-md transition-colors shrink-0 justify-self-start sm:justify-self-auto"
 					>
 						Add

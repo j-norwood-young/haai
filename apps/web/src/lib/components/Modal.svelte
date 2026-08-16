@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { portal } from '$lib/portal.js';
 
 	interface Props {
 		open: boolean;
@@ -35,17 +36,18 @@
 
 {#if open}
 	<div
+		use:portal
 		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
 		onclick={handleBackdropClick}
 		role="presentation"
 	>
 		<div
-			class="w-full max-w-lg bg-gray-900 border border-gray-700 rounded-xl shadow-2xl"
+			class="flex max-h-full w-full max-w-lg flex-col overflow-hidden bg-gray-900 border border-gray-700 rounded-xl shadow-2xl"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="modal-title"
 		>
-			<div class="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+			<div class="flex shrink-0 items-center justify-between px-5 py-4 border-b border-gray-800">
 				<h2 id="modal-title" class="text-sm font-semibold text-gray-100">{title}</h2>
 				<button
 					type="button"
@@ -59,14 +61,14 @@
 				</button>
 			</div>
 
-			<div class="px-5 py-4">
+			<div class="min-h-0 overflow-y-auto px-5 py-4">
 				{#if children}
 					{@render children()}
 				{/if}
 			</div>
 
 			{#if footer}
-				<div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-800">
+				<div class="flex shrink-0 items-center justify-end gap-2 px-5 py-4 border-t border-gray-800">
 					{@render footer()}
 				</div>
 			{/if}

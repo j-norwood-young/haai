@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { portal } from '$lib/portal.js';
+
 	interface Props {
 		text: string;
 		label?: string;
@@ -25,15 +27,6 @@
 
 	function hide() {
 		open = false;
-	}
-
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				node.remove();
-			}
-		};
 	}
 </script>
 

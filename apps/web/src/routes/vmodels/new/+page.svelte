@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api, type AvailableModel } from '$lib/api.js';
+	import { api } from '$lib/api.js';
 	import type { Backend, VModel, VModelCreateInput } from '$lib/api.js';
+	import { rawBackendModelId } from '$lib/model-ids.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 
 	let backends = $state<Backend[]>([]);
@@ -16,38 +17,49 @@
 	let strategy = $state<VModel['strategy']>('session-pin');
 	let streaming = $state(true);
 	let selectedBackendIds = $state<string[]>([]);
-	let backendModels: Record<string, string> = {}; // Maps backendId -> backendModelId
+	let backendModels = $state<Record<string, string>>({}); // Maps backendId -> backendModelId
 
 	// Available models grouped by backend for dropdowns
-	let availableModelsByBackend: Record<string, Array<{ id: string; name: string }>> = {};
+	let availableModelsByBackend = $state<Record<string, Array<{ id: string; name: string }>>>({});
+
+	const allSelectedBackendsHaveModels = $derived(
+		selectedBackendIds.length > 0 &&
+			selectedBackendIds.every((backendId) => Boolean(backendModels[backendId]))
+	);
 
 	async function load() {
 		try {
 			backends = await api.getBackends();
 			selectedBackendIds = backends.map((b) => b.id);
-			
+
 			// Fetch available models from all backends
 			const result = await api.getAvailableModels();
-			
-			// Group models by backend ID
-			availableModelsByBackend = {};
+
+			// Group models by backend ID using raw upstream model IDs
+			const grouped: Record<string, Array<{ id: string; name: string }>> = {};
+			const backendsById = new Map(backends.map((b) => [b.id, b]));
 			for (const model of result.models ?? []) {
 				if (model.type === 'backend-model' && model.backendId) {
 					const backendId = model.backendId;
-					if (!availableModelsByBackend[backendId]) {
-						availableModelsByBackend[backendId] = [];
+					const backend = backendsById.get(backendId);
+					const rawId = rawBackendModelId(model.id, backend);
+					if (!grouped[backendId]) {
+						grouped[backendId] = [];
 					}
-					availableModelsByBackend[backendId].push({
-						id: model.id,
-						name: `${model.id} (${model.backendName || model.ownedBy})`
+					grouped[backendId].push({
+						id: rawId,
+						name: `${rawId} (${model.backendName || model.ownedBy})`
 					});
 				}
 			}
-			
-			// Initialize backend models with modelId as default
+			availableModelsByBackend = grouped;
+
+			// Initialize backend model selections as unset
+			const nextModels: Record<string, string> = {};
 			for (const b of backends) {
-				backendModels[b.id] = modelId || '';
+				nextModels[b.id] = '';
 			}
+			backendModels = nextModels;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load backends';
 		} finally {
@@ -59,9 +71,8 @@
 		if (selected) {
 			if (!selectedBackendIds.includes(backendId)) {
 				selectedBackendIds = [...selectedBackendIds, backendId];
-				// Initialize with modelId as default if not already set
 				if (!(backendId in backendModels)) {
-					backendModels[backendId] = modelId || '';
+					backendModels[backendId] = '';
 				}
 			}
 		} else {
@@ -79,15 +90,31 @@
 		createLoading = true;
 		createError = null;
 		try {
+			if (
+				selectedBackendIds.length === 0 ||
+				selectedBackendIds.some((backendId) => !backendModels[backendId])
+			) {
+				createError = 'Select a backend model for each selected backend';
+				return;
+			}
+			const mappedBackends: NonNullable<VModelCreateInput['backends']> = [];
+			for (const backendId of selectedBackendIds) {
+				const backendModelId = backendModels[backendId];
+				if (!backendModelId) {
+					createError = 'Select a backend model for each selected backend';
+					return;
+				}
+				mappedBackends.push({
+					backend_id: backendId,
+					backend_model_id: backendModelId
+				});
+			}
 			const payload: VModelCreateInput = {
 				model_id: modelId,
 				display_name: displayName,
 				strategy,
 				streaming,
-				backends: selectedBackendIds.map((backendId) => ({
-					backend_id: backendId,
-					backend_model_id: backendModels[backendId] || modelId
-				}))
+				backends: mappedBackends
 			};
 			await api.createVModel(payload);
 			goto('/vmodels');
@@ -123,16 +150,16 @@
 		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
 			<form onsubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Model ID *</label>
-					<input bind:value={modelId} required placeholder="gpt-4o" class="input w-full" />
+					<label for="new-model-id" class="block text-xs font-medium text-gray-400 mb-1">Model ID *</label>
+					<input id="new-model-id" bind:value={modelId} required placeholder="gpt-4o" class="input w-full" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Display Name *</label>
-					<input bind:value={displayName} required placeholder="GPT-4o" class="input w-full" />
+					<label for="new-display-name" class="block text-xs font-medium text-gray-400 mb-1">Display Name *</label>
+					<input id="new-display-name" bind:value={displayName} required placeholder="GPT-4o" class="input w-full" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Strategy</label>
-					<select bind:value={strategy} class="input w-full">
+					<label for="new-strategy" class="block text-xs font-medium text-gray-400 mb-1">Strategy</label>
+					<select id="new-strategy" bind:value={strategy} class="input w-full">
 						<option value="session-pin">Session Pin</option>
 						<option value="round-robin">Round Robin</option>
 						<option value="weighted">Weighted</option>
@@ -149,6 +176,7 @@
 						class:bg-gray-700={!streaming}
 						role="switch"
 						aria-checked={streaming}
+						aria-label="Enable Streaming"
 					>
 						<span
 							class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -190,14 +218,14 @@
 												oninput={(e) => updateBackendModel(b.id, e.currentTarget.value)}
 												class="mt-1 w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-300"
 											>
-												<option value="">Use default</option>
+												<option value="" disabled>Select model…</option>
 												{#if ((availableModelsByBackend[b.id] ?? [])?.length ?? 0) > 0}
-													{#each (availableModelsByBackend[b.id] ?? []) as m}
+													{#each (availableModelsByBackend[b.id] ?? []) as m (m.id)}
 														<option value={m.id}>{m.name}</option>
 													{/each}
 												{:else}
 													<optgroup label="No models discovered">
-														<option value="">— No models found —</option>
+														<option value="" disabled>— No models found —</option>
 													</optgroup>
 												{/if}
 											</select>
@@ -218,7 +246,7 @@
 				<div class="sm:col-span-2 flex gap-3">
 					<button
 						type="submit"
-						disabled={createLoading || backends.length === 0}
+						disabled={createLoading || backends.length === 0 || !allSelectedBackendsHaveModels}
 						class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-800 text-white font-medium rounded-lg text-sm transition-colors"
 					>
 						{createLoading ? 'Creating…' : 'Create'}
