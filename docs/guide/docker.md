@@ -81,3 +81,4 @@ Back up the Docker volume or `/data` contents:
 - [Installation](./installation)
 - [Kubernetes](./kubernetes)
 - [Environment Variables](./env-vars)
+- [Migrating from ai-v-models](./migrating-from-aivm)
