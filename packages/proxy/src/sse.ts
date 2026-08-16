@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 
 export type SseEventType =
   | "backend-health"
+  | "vmodel-health"
   | "usage-event"
   | "key-event"
   | "log"

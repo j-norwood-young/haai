@@ -5,6 +5,14 @@ export type BalancingStrategy =
   | "least-connections"
   | "least-latency";
 
+export type VModelHealthStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
+
+export type MappingUnavailableReason =
+  | "backend_disabled"
+  | "backend_unhealthy"
+  | "model_missing"
+  | "inventory_unknown";
+
 export interface VModel {
   id: string;
   /** The alias exposed to users, e.g. "smart-chat" */
@@ -18,11 +26,17 @@ export interface VModel {
   allowVision: boolean;
   allowEmbeddings: boolean;
   enabled: boolean;
+  lastHealthStatus: VModelHealthStatus | null;
+  lastHealthError: string | null;
+  lastHealthCheck: number | null;
   createdAt: number;
   updatedAt: number;
 }
 
-export type VModelInsert = Omit<VModel, "id" | "createdAt" | "updatedAt">;
+export type VModelInsert = Omit<
+  VModel,
+  "id" | "createdAt" | "updatedAt" | "lastHealthStatus" | "lastHealthError" | "lastHealthCheck"
+>;
 
 export interface VModelBackend {
   id: string;
@@ -32,5 +46,7 @@ export interface VModelBackend {
   backendModelId: string;
   weight: number;
   enabled: boolean;
+  lastAvailable: boolean | null;
+  unavailableReason: MappingUnavailableReason | string | null;
   createdAt: number;
 }

@@ -112,6 +112,9 @@ export interface VModel {
 	strategy: VModelStrategy;
 	streaming: boolean;
 	enabled: boolean;
+	health?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+	health_error?: string;
+	health_checked_at?: number;
 	backends: VModelBackend[];
 	created_at: string;
 }
@@ -122,6 +125,8 @@ export interface VModelBackend {
 	backend_model_id: string;
 	backend_name?: string;
 	weight?: number;
+	available?: boolean | null;
+	unavailable_reason?: string;
 }
 
 interface VModelApiRow {
@@ -131,6 +136,9 @@ interface VModelApiRow {
 	balancingStrategy: string;
 	streaming: boolean;
 	enabled: boolean;
+	lastHealthStatus?: string | null;
+	lastHealthError?: string | null;
+	lastHealthCheck?: number | null;
 	backends?: VModelBackendApiRow[];
 	createdAt: number;
 }
@@ -139,20 +147,27 @@ interface VModelBackendApiRow {
 	id: string;
 	backendId: string;
 	backendModelId: string;
+	backendName?: string;
 	weight: number;
+	lastAvailable?: boolean | null;
+	unavailableReason?: string | null;
 }
 
 function mapVModelBackend(row: VModelBackendApiRow): VModelBackend {
-	return {
+	const mapped: VModelBackend = {
 		id: row.id,
 		backend_id: row.backendId,
 		backend_model_id: row.backendModelId,
 		weight: row.weight
 	};
+	if (row.backendName) mapped.backend_name = row.backendName;
+	if (row.lastAvailable !== undefined) mapped.available = row.lastAvailable;
+	if (row.unavailableReason) mapped.unavailable_reason = row.unavailableReason;
+	return mapped;
 }
 
 function mapVModel(row: VModelApiRow): VModel {
-	return {
+	const mapped: VModel = {
 		id: row.id,
 		model_id: row.modelId,
 		display_name: row.displayName,
@@ -162,6 +177,18 @@ function mapVModel(row: VModelApiRow): VModel {
 		backends: (row.backends ?? []).map(mapVModelBackend),
 		created_at: new Date(row.createdAt).toISOString()
 	};
+	const status = row.lastHealthStatus;
+	if (
+		status === 'healthy' ||
+		status === 'degraded' ||
+		status === 'unhealthy' ||
+		status === 'unknown'
+	) {
+		mapped.health = status;
+	}
+	if (row.lastHealthError) mapped.health_error = row.lastHealthError;
+	if (row.lastHealthCheck != null) mapped.health_checked_at = row.lastHealthCheck;
+	return mapped;
 }
 
 export interface VModelCreateInput {
@@ -467,6 +494,7 @@ export interface MetricsSummary {
 	avg_ttft_ms?: number;
 	avg_tps?: number;
 	backends: BackendHealth[];
+	vmodels?: VModelHealthSummary[];
 }
 
 export interface BackendHealth {
@@ -477,6 +505,26 @@ export interface BackendHealth {
 	error?: string;
 	checked_at?: number;
 	enabled?: boolean;
+}
+
+export interface VModelHealthMapping {
+	id: string;
+	backendId: string;
+	backendName: string;
+	backendModelId: string;
+	available: boolean | null;
+	reason?: string;
+}
+
+export interface VModelHealthSummary {
+	id: string;
+	name: string;
+	modelId: string;
+	health: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+	enabled?: boolean;
+	error?: string;
+	checked_at?: number;
+	mappings?: VModelHealthMapping[];
 }
 
 export interface MetricsRollup {

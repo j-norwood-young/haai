@@ -7,13 +7,30 @@ import {
 } from "@ai-v-models/core";
 import { buildBackendApiUrl, decrypt } from "@ai-v-models/core";
 import type { AppContext } from "../../context.js";
-import { streamingProxy } from "../../streaming-proxy.js";
+import { streamingProxy, type ProxyResult } from "../../streaming-proxy.js";
 import { UsageRecorder } from "../../usage-recorder.js";
-import type { BackendCandidate } from "../../balancer.js";
+import {
+  filterAvailableCandidates,
+  type BackendCandidate,
+} from "../../balancer.js";
 import type { Backend } from "@ai-v-models/core";
 import type { ChatRequest } from "@ai-v-models/plugin-sdk";
 import { resolveBindings } from "../../plugins/loader.js";
 import type { PluginHostContext } from "../../plugins/runtime.js";
+
+function isRetryableUpstreamFailure(result: ProxyResult): boolean {
+  if (result.statusCode === 404) return true;
+  if (result.statusCode >= 500) return true;
+  const err = (result.error ?? "").toLowerCase();
+  if (err.includes("model") && (err.includes("not found") || err.includes("does not exist"))) {
+    return true;
+  }
+  return false;
+}
+
+function mapBackendRow(row: typeof backendsTable.$inferSelect): Backend {
+  return row as unknown as Backend;
+}
 
 export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {
   const recorder = new UsageRecorder(ctx.db, ctx.sse);
@@ -66,7 +83,6 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
     let candidates: BackendCandidate[] = [];
 
     if (vmodel) {
-      // Get v-model backends
       const vmBackends = await ctx.db.db
         .select()
         .from(vmodelBackendsTable)
@@ -87,7 +103,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
         if (backend) {
           candidates.push({
             backendId: backend.id,
-            backend: backend as unknown as Backend,
+            backend: mapBackendRow(backend),
             backendModelId: vmb.backendModelId,
             weight: vmb.weight,
           });
@@ -116,7 +132,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
         if (backend) {
           candidates.push({
             backendId: backend.id,
-            backend: backend as unknown as Backend,
+            backend: mapBackendRow(backend),
             backendModelId: modelId,
             weight: backend.weight,
           });
@@ -138,141 +154,196 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
       return reply.status(403).send({ error: { message: modelAccess.error, type: "permission_error" } });
     }
 
-    // Select backend via balancer
-    const sessionKey = key.id; // Use key ID for session pinning
-    const strategy = (vmodel?.balancingStrategy ?? "session-pin") as "session-pin" | "round-robin" | "weighted" | "least-connections" | "least-latency";
-    const selected = ctx.balancer.select(candidates, strategy, sessionKey);
-
-    if (!selected) {
-      return reply.status(503).send({ error: { message: "No backends available", type: "server_error" } });
+    const availableCandidates = filterAvailableCandidates(candidates);
+    if (availableCandidates.length === 0) {
+      const detail =
+        vmodel?.lastHealthError ??
+        "All configured backends are unhealthy or missing the required model";
+      return reply.status(503).send({
+        error: {
+          message: `No available backends for model '${requestedModel}': ${detail}`,
+          type: "server_error",
+        },
+      });
     }
 
-    const cb = ctx.balancer.getCircuitBreaker(selected.backendId, selected.backend.name);
-    if (cb.isOpen) {
-      // Try next available candidate
-      const fallback = candidates.find((c) => c.backendId !== selected.backendId);
-      if (!fallback) {
-        return reply.status(503).send({ error: { message: "All backends unavailable", type: "server_error" } });
+    const sessionKey = key.id;
+    const strategy = (vmodel?.balancingStrategy ?? "session-pin") as
+      | "session-pin"
+      | "round-robin"
+      | "weighted"
+      | "least-connections"
+      | "least-latency";
+
+    const spentKeys = new Set<string>();
+    const candidateKey = (c: BackendCandidate) => `${c.backendId}::${c.backendModelId}`;
+
+    let selected: BackendCandidate | null = null;
+    let proxyResult: ProxyResult | null = null;
+    let lastErrorBody: string | undefined;
+
+    while (true) {
+      const remaining = availableCandidates.filter((c) => !spentKeys.has(candidateKey(c)));
+      selected = ctx.balancer.select(remaining, strategy, sessionKey);
+      if (!selected) {
+        break;
       }
-    }
 
-    // Determine upstream API key
-    let upstreamApiKey: string | null = null;
-    if (selected.backend.keyMode === "abstraction" && selected.backend.encryptedApiKey) {
-      upstreamApiKey = decrypt(selected.backend.encryptedApiKey, ctx.masterKey);
-    } else if (selected.backend.keyMode === "passthrough") {
-      upstreamApiKey = rawKey;
-    }
+      spentKeys.add(candidateKey(selected));
 
-    // ── Plugin: collect bindings for this request ─────────────────────────
-    const bindings = await resolveBindings(ctx.db, {
-      vmodelId: vmodel?.id ?? null,
-      backendId: selected.backendId,
-      keyId: key.id,
-    });
-
-    const needsBuffer = bindings.some((b) => b.needsResponseBuffer);
-
-    // Build the host context for plugin execution
-    const pluginHostCtx: PluginHostContext = {
-      vmodelId: vmodel?.id ?? "",
-      backendId: selected.backendId,
-      backendModelId: selected.backendModelId,
-      keyPrefix: key.prefix,
-      timestamp: Date.now(),
-      // ctx.ai.complete: re-enter the proxy's backend logic without running plugins again
-      aiComplete: async (opts) => {
-        const { fetch: _fetch } = await import("undici");
-        const aiBody = { ...opts, __aivmInternal: true };
-        const res = await _fetch(buildBackendApiUrl(selected.backend.baseUrl, "/v1/chat/completions"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(upstreamApiKey ? { Authorization: `Bearer ${upstreamApiKey}` } : {}),
-          },
-          body: JSON.stringify(aiBody),
-        });
-        if (!res.ok) throw new Error(`ai.complete upstream error: ${res.status}`);
-        return res.json() as Promise<import("@ai-v-models/plugin-sdk").ChatResponse>;
-      },
-    };
-
-    // ── Plugin: run onRequest hooks ────────────────────────────────────────
-    let mutatedBody: ChatRequest = { ...body } as ChatRequest;
-    for (const binding of bindings) {
-      mutatedBody = await ctx.pluginRuntime.runOnRequest(binding, mutatedBody, pluginHostCtx);
-    }
-
-    // Ensure model is always the backend model ID (plugins may not touch it)
-    const upstreamBody = { ...mutatedBody, model: selected.backendModelId };
-
-    ctx.balancer.incrementConcurrency(selected.backendId);
-
-    const proxyResult = await streamingProxy(reply, {
-      upstreamUrl: buildBackendApiUrl(selected.backend.baseUrl, "/v1/chat/completions"),
-      upstreamApiKey,
-      requestBody: upstreamBody,
-      vmodelId: vmodel?.id ?? "direct",
-      backendId: selected.backendId,
-      backendName: selected.backend.name,
-      modelId: selected.backendModelId,
-      keyPrefix: key.prefix,
-      bufferResponse: needsBuffer,
-    });
-
-    // ── Plugin: run onResponse hooks (only when buffered) ─────────────────
-    if (needsBuffer && proxyResult.bufferedResponse && !reply.sent) {
-      let transformedResponse = proxyResult.bufferedResponse;
-      const responseBindings = bindings.filter((b) => b.needsResponseBuffer);
-      for (const binding of responseBindings) {
-        transformedResponse = await ctx.pluginRuntime.runOnResponse(
-          binding,
-          transformedResponse,
-          pluginHostCtx,
-        );
+      let upstreamApiKey: string | null = null;
+      if (selected.backend.keyMode === "abstraction" && selected.backend.encryptedApiKey) {
+        upstreamApiKey = decrypt(selected.backend.encryptedApiKey, ctx.masterKey);
+      } else if (selected.backend.keyMode === "passthrough") {
+        upstreamApiKey = rawKey;
       }
-      // Send the transformed response to the client
-      if (body["stream"] !== false) {
-        // Re-emit as SSE for streaming clients
-        reply.raw.writeHead(200, {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        });
-        reply.raw.write(`data: ${JSON.stringify(transformedResponse)}\n\n`);
-        reply.raw.write("data: [DONE]\n\n");
-        reply.raw.end();
-      } else {
-        reply.status(200).header("Content-Type", "application/json").send(JSON.stringify(transformedResponse));
+
+      const bindings = await resolveBindings(ctx.db, {
+        vmodelId: vmodel?.id ?? null,
+        backendId: selected.backendId,
+        keyId: key.id,
+      });
+
+      const needsBuffer = bindings.some((b) => b.needsResponseBuffer);
+
+      const pluginHostCtx: PluginHostContext = {
+        vmodelId: vmodel?.id ?? "",
+        backendId: selected.backendId,
+        backendModelId: selected.backendModelId,
+        keyPrefix: key.prefix,
+        timestamp: Date.now(),
+        aiComplete: async (opts) => {
+          const { fetch: _fetch } = await import("undici");
+          const aiBody = { ...opts, __aivmInternal: true };
+          const res = await _fetch(buildBackendApiUrl(selected!.backend.baseUrl, "/v1/chat/completions"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(upstreamApiKey ? { Authorization: `Bearer ${upstreamApiKey}` } : {}),
+            },
+            body: JSON.stringify(aiBody),
+          });
+          if (!res.ok) throw new Error(`ai.complete upstream error: ${res.status}`);
+          return res.json() as Promise<import("@ai-v-models/plugin-sdk").ChatResponse>;
+        },
+      };
+
+      let mutatedBody: ChatRequest = { ...body } as ChatRequest;
+      for (const binding of bindings) {
+        mutatedBody = await ctx.pluginRuntime.runOnRequest(binding, mutatedBody, pluginHostCtx);
       }
+
+      const upstreamBody = { ...mutatedBody, model: selected.backendModelId };
+      const hasMoreCandidates = remaining.length > 1;
+
+      ctx.balancer.incrementConcurrency(selected.backendId);
+
+      proxyResult = await streamingProxy(reply, {
+        upstreamUrl: buildBackendApiUrl(selected.backend.baseUrl, "/v1/chat/completions"),
+        upstreamApiKey,
+        requestBody: upstreamBody,
+        vmodelId: vmodel?.id ?? "direct",
+        backendId: selected.backendId,
+        backendName: selected.backend.name,
+        modelId: selected.backendModelId,
+        keyPrefix: key.prefix,
+        bufferResponse: needsBuffer,
+        suppressClientError: hasMoreCandidates,
+      });
+
+      ctx.balancer.decrementConcurrency(selected.backendId);
+
+      const cb = ctx.balancer.getCircuitBreaker(selected.backendId, selected.backend.name);
+      if (proxyResult.statusCode >= 500) {
+        cb.recordFailure();
+      } else if (proxyResult.statusCode < 400) {
+        cb.recordSuccess();
+      }
+
+      // Successful path already wrote to the client (or buffered for plugins).
+      if (proxyResult.statusCode < 400 || reply.sent) {
+        if (needsBuffer && proxyResult.bufferedResponse && !reply.sent) {
+          let transformedResponse = proxyResult.bufferedResponse;
+          const responseBindings = bindings.filter((b) => b.needsResponseBuffer);
+          for (const binding of responseBindings) {
+            transformedResponse = await ctx.pluginRuntime.runOnResponse(
+              binding,
+              transformedResponse,
+              pluginHostCtx,
+            );
+          }
+          if (body["stream"] !== false) {
+            reply.raw.writeHead(200, {
+              "Content-Type": "text/event-stream",
+              "Cache-Control": "no-cache",
+              Connection: "keep-alive",
+            });
+            reply.raw.write(`data: ${JSON.stringify(transformedResponse)}\n\n`);
+            reply.raw.write("data: [DONE]\n\n");
+            reply.raw.end();
+          } else {
+            reply.status(200).header("Content-Type", "application/json").send(JSON.stringify(transformedResponse));
+          }
+        }
+
+        recorder.record({
+          ...proxyResult,
+          keyId: key.id,
+          keyPrefix: key.prefix,
+          vmodelId: vmodel?.id ?? null,
+          vmodelModelId: requestedModel,
+          backendId: selected.backendId,
+          backendModelId: selected.backendModelId,
+          endpoint: "/v1/chat/completions",
+          shouldLogRequest: key.logRequests,
+          requestSize: JSON.stringify(body).length,
+          responseSize: proxyResult.responseBody?.length ?? 0,
+        }).catch(() => {});
+
+        if (proxyResult.totalTokens > 0) {
+          ctx.keyAuth.consumeTokenBudget(key.id, proxyResult.totalTokens).catch(() => {});
+        }
+
+        return reply;
+      }
+
+      // Pre-stream failure — record and maybe retry another mapping.
+      lastErrorBody = proxyResult.error;
+      recorder.record({
+        ...proxyResult,
+        keyId: key.id,
+        keyPrefix: key.prefix,
+        vmodelId: vmodel?.id ?? null,
+        vmodelModelId: requestedModel,
+        backendId: selected.backendId,
+        backendModelId: selected.backendModelId,
+        endpoint: "/v1/chat/completions",
+        shouldLogRequest: key.logRequests,
+        requestSize: JSON.stringify(body).length,
+        responseSize: 0,
+      }).catch(() => {});
+
+      if (!isRetryableUpstreamFailure(proxyResult)) {
+        break;
+      }
+      // else continue loop with remaining candidates
     }
 
-    ctx.balancer.decrementConcurrency(selected.backendId);
-
-    if (proxyResult.statusCode >= 500) {
-      cb.recordFailure();
-    } else {
-      cb.recordSuccess();
-    }
-
-    // Record usage (async, don't await)
-    recorder.record({
-      ...proxyResult,
-      keyId: key.id,
-      keyPrefix: key.prefix,
-      vmodelId: vmodel?.id ?? null,
-      vmodelModelId: requestedModel,
-      backendId: selected.backendId,
-      backendModelId: selected.backendModelId,
-      endpoint: "/v1/chat/completions",
-      shouldLogRequest: key.logRequests,
-      requestSize: JSON.stringify(body).length,
-      responseSize: proxyResult.responseBody?.length ?? 0,
-    }).catch(() => {});
-
-    // Consume token budget (async)
-    if (proxyResult.totalTokens > 0) {
-      ctx.keyAuth.consumeTokenBudget(key.id, proxyResult.totalTokens).catch(() => {});
+    if (!reply.sent) {
+      const status = proxyResult?.statusCode && proxyResult.statusCode >= 400 ? proxyResult.statusCode : 503;
+      let message = `No available backends for model '${requestedModel}'`;
+      if (lastErrorBody) {
+        try {
+          const parsed = JSON.parse(lastErrorBody) as { error?: { message?: string } | string };
+          if (typeof parsed.error === "string") message = parsed.error;
+          else if (parsed.error?.message) message = parsed.error.message;
+        } catch {
+          if (lastErrorBody.length < 300) message = lastErrorBody;
+        }
+      }
+      return reply.status(status >= 400 && status < 600 ? status : 503).send({
+        error: { message, type: "server_error" },
+      });
     }
 
     return reply;

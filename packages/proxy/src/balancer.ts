@@ -3,12 +3,32 @@ import type { Backend } from "@ai-v-models/core";
 import type { BalancingStrategy } from "@ai-v-models/core";
 import { CircuitBreaker } from "./circuit-breaker.js";
 import { backendConcurrencyGauge } from "./metrics.js";
+import {
+  evaluateMappingAvailability,
+  parseAvailableModelsJson,
+} from "./vmodel-health.js";
 
 export interface BackendCandidate {
   backendId: string;
   backend: Backend;
   backendModelId: string;
   weight: number;
+}
+
+export function isCandidateAvailable(candidate: BackendCandidate): boolean {
+  return evaluateMappingAvailability({
+    backendEnabled: candidate.backend.enabled,
+    backendHealth: candidate.backend.lastHealthStatus,
+    backendModelId: candidate.backendModelId,
+    availableModels: parseAvailableModelsJson(candidate.backend.availableModels),
+  }).available;
+}
+
+export function filterAvailableCandidates(candidates: BackendCandidate[]): BackendCandidate[] {
+  return candidates.filter((c) => {
+    if (!isCandidateAvailable(c)) return false;
+    return true;
+  });
 }
 
 export class BackendBalancer {
@@ -52,22 +72,23 @@ export class BackendBalancer {
     strategy: BalancingStrategy,
     sessionKey?: string,
   ): BackendCandidate | null {
-    // Filter out unhealthy (circuit breaker open) and disabled backends
+    // Exclude disabled, unhealthy, model-missing, and open-circuit backends.
     const available = candidates.filter((c) => {
-      if (!c.backend.enabled) return false;
-      if (c.backend.lastHealthStatus === "unhealthy") {
-        const cb = this.circuitBreakers.get(c.backendId);
-        if (cb && cb.isOpen) return false;
-      }
+      if (!isCandidateAvailable(c)) return false;
+      const cb = this.circuitBreakers.get(c.backendId);
+      if (cb?.isOpen) return false;
       return true;
     });
 
     if (available.length === 0) {
-      // All unavailable — try degraded as fallback
-      const degraded = candidates.filter(
-        (c) => c.backend.enabled && c.backend.lastHealthStatus !== "unhealthy",
-      );
-      return degraded[0] ?? candidates[0] ?? null;
+      // Soft fallback: available mappings whose circuit is open (half-open trial),
+      // otherwise null — never fall back to unhealthy / missing-model hosts.
+      const withOpenCircuit = candidates.filter((c) => {
+        if (!isCandidateAvailable(c)) return false;
+        return this.circuitBreakers.get(c.backendId)?.isOpen === true;
+      });
+      if (withOpenCircuit.length === 0) return null;
+      return withOpenCircuit[0] ?? null;
     }
 
     switch (strategy) {

@@ -27,6 +27,8 @@ export const backends = sqliteTable(
     lastHealthStatus: text("last_health_status"), // healthy|degraded|unhealthy
     lastLatencyMs: integer("last_latency_ms"),
     lastHealthError: text("last_health_error"),
+    /** JSON array of model ids from last successful GET /v1/models; null when unknown/cleared */
+    availableModels: text("available_models"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
@@ -47,6 +49,9 @@ export const vmodels = sqliteTable(
     allowVision: integer("allow_vision", { mode: "boolean" }).notNull().default(false),
     allowEmbeddings: integer("allow_embeddings", { mode: "boolean" }).notNull().default(false),
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    lastHealthStatus: text("last_health_status"), // healthy|degraded|unhealthy|unknown
+    lastHealthError: text("last_health_error"),
+    lastHealthCheck: integer("last_health_check"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
@@ -69,6 +74,9 @@ export const vmodelBackends = sqliteTable(
     backendModelId: text("backend_model_id").notNull(),
     weight: integer("weight").notNull().default(1),
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    /** Soft availability from last health poll; null until first evaluation */
+    lastAvailable: integer("last_available", { mode: "boolean" }),
+    unavailableReason: text("unavailable_reason"),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [

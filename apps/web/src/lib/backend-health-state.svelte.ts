@@ -1,20 +1,22 @@
 import { api } from './api.js';
 import {
-	computeBackendHealth,
-	type BackendHealthSnapshot
+	computeSystemHealth,
+	type SystemHealthSnapshot
 } from './backend-health.js';
 
-const unavailable: BackendHealthSnapshot = {
+const unavailable: SystemHealthSnapshot = {
 	level: 'gray',
-	summary: 'Backend health unavailable',
-	backends: []
+	summary: 'Health unavailable',
+	backends: [],
+	vmodels: []
 };
 
 function createBackendHealthState() {
-	let snapshot = $state<BackendHealthSnapshot>({
+	let snapshot = $state<SystemHealthSnapshot>({
 		level: 'gray',
-		summary: 'Loading backend health',
-		backends: []
+		summary: 'Loading health',
+		backends: [],
+		vmodels: []
 	});
 	let seq = 0;
 
@@ -23,7 +25,7 @@ function createBackendHealthState() {
 		try {
 			const summary = await api.getMetricsSummary();
 			if (my !== seq) return;
-			snapshot = computeBackendHealth(summary.backends);
+			snapshot = computeSystemHealth(summary.backends, summary.vmodels ?? []);
 		} catch {
 			if (my !== seq) return;
 			snapshot = unavailable;
@@ -33,8 +35,9 @@ function createBackendHealthState() {
 	function reset() {
 		snapshot = {
 			level: 'gray',
-			summary: 'Loading backend health',
-			backends: []
+			summary: 'Loading health',
+			backends: [],
+			vmodels: []
 		};
 	}
 
@@ -47,5 +50,5 @@ function createBackendHealthState() {
 	};
 }
 
-/** Shared sidebar/dashboard backend health — refresh after backend mutations and on SSE. */
+/** Shared sidebar health — backends + v-models; refresh on mutations and SSE. */
 export const backendHealthState = createBackendHealthState();

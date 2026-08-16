@@ -160,7 +160,7 @@
 	$effect(() => {
 		if (isPublicPage || !auth.user) return;
 		const event = sse.latestEvent;
-		if (event?.type === 'backend-health') {
+		if (event?.type === 'backend-health' || event?.type === 'vmodel-health') {
 			void backendHealthState.refresh();
 		}
 	});
@@ -224,6 +224,7 @@
 					level={backendHealth.level}
 					summary={backendHealth.summary}
 					backends={backendHealth.backends}
+					vmodels={backendHealth.vmodels}
 				/>
 			</div>
 		</header>
@@ -266,6 +267,7 @@
 						level={backendHealth.level}
 						summary={backendHealth.summary}
 						backends={backendHealth.backends}
+						vmodels={backendHealth.vmodels}
 						align="left"
 					/>
 				</div>

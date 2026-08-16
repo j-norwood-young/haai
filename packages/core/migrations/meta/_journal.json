@@ -57,6 +57,13 @@
       "when": 1781955000000,
       "tag": "0007_backend_key_mode_repair",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1781956000000,
+      "tag": "0008_vmodel_model_health",
+      "breakpoints": true
     }
   ]
 }

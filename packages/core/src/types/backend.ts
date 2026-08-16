@@ -21,6 +21,8 @@ export interface Backend {
   lastHealthStatus: "healthy" | "degraded" | "unhealthy" | null;
   lastLatencyMs: number | null;
   lastHealthError: string | null;
+  /** JSON-encoded string[] of model ids, or null when unknown/cleared */
+  availableModels: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -34,4 +36,5 @@ export type BackendInsert = Omit<
   | "lastHealthStatus"
   | "lastLatencyMs"
   | "lastHealthError"
+  | "availableModels"
 >;

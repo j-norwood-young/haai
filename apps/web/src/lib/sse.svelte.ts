@@ -3,6 +3,7 @@ import { getApiBaseUrl } from './api-base.js';
 
 const SSE_EVENT_TYPES = new Set([
 	'backend-health',
+	'vmodel-health',
 	'usage-event',
 	'key-event',
 	'log',

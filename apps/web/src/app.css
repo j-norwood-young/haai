@@ -414,6 +414,17 @@ body {
 	font-weight: 600;
 	font-size: 0.8125rem;
 }
+.health-tooltip__section-label {
+	margin: 0.5rem 0.75rem 0.25rem;
+	font-size: 0.625rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-text-subtle);
+}
+.health-tooltip__section-label:first-of-type {
+	margin-top: 0.25rem;
+}
 .health-tooltip--green .health-tooltip__title {
 	color: #3fb950;
 }

@@ -3,10 +3,17 @@
 	import { api } from '$lib/api.js';
 	import type { VModel } from '$lib/api.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import VModelHealthDetailsModal from '$lib/components/VModelHealthDetailsModal.svelte';
+	import {
+		hasHealthDetails,
+		healthBadgeClass,
+		type VModelHealthDetails
+	} from '$lib/backend-health.js';
 
 	let vmodels = $state<VModel[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let healthDetails = $state<VModelHealthDetails | null>(null);
 
 	async function load() {
 		try {
@@ -26,6 +33,36 @@
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete virtual model';
 		}
+	}
+
+	function openHealthDetails(vm: VModel) {
+		const health = vm.health ?? 'unknown';
+		if (!hasHealthDetails(health)) return;
+
+		const details: VModelHealthDetails = {
+			id: vm.id,
+			name: vm.display_name,
+			modelId: vm.model_id,
+			health,
+			mappings: vm.backends.map((b) => {
+				const mapping: VModelHealthDetails['mappings'][number] = {
+					id: b.id,
+					backendId: b.backend_id,
+					backendName: b.backend_name || b.backend_id,
+					backendModelId: b.backend_model_id,
+					available: b.available ?? null
+				};
+				if (b.unavailable_reason) mapping.reason = b.unavailable_reason;
+				return mapping;
+			})
+		};
+		if (vm.health_error) details.error = vm.health_error;
+		if (vm.health_checked_at != null) details.checked_at = vm.health_checked_at;
+		healthDetails = details;
+	}
+
+	function closeHealthDetails() {
+		healthDetails = null;
 	}
 
 	onMount(load);
@@ -66,6 +103,7 @@
 						<th>Model ID</th>
 						<th>Display Name</th>
 						<th>Strategy</th>
+						<th>Health</th>
 						<th>Streaming</th>
 						<th>Backends</th>
 						<th>Enabled</th>
@@ -78,6 +116,22 @@
 							<td><span class="font-mono text-cyan-400 text-xs">{vm.model_id}</span></td>
 							<td class="text-gray-200">{vm.display_name}</td>
 							<td class="text-gray-400 capitalize">{vm.strategy.replace(/-/g, ' ')}</td>
+							<td>
+								{#if hasHealthDetails(vm.health ?? 'unknown')}
+									<button
+										type="button"
+										class="{healthBadgeClass(vm.health ?? 'unknown')} health-tooltip__status-btn"
+										title="View health details"
+										onclick={() => openHealthDetails(vm)}
+									>
+										{vm.health}
+									</button>
+								{:else}
+									<span class={healthBadgeClass(vm.health ?? 'unknown')}>
+										{vm.health ?? 'unknown'}
+									</span>
+								{/if}
+							</td>
 							<td>
 								<span class={vm.streaming ? 'badge badge-green' : 'badge badge-gray'}>
 									{vm.streaming ? 'Yes' : 'No'}
@@ -109,3 +163,9 @@
 		</div>
 	{/if}
 </div>
+
+<VModelHealthDetailsModal
+	open={healthDetails != null}
+	vmodel={healthDetails}
+	onclose={closeHealthDetails}
+/>

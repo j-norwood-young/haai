@@ -74,6 +74,8 @@ function healthSymbol(status: string | null | undefined): { glyph: string; color
       return { glyph: "◐", color: c.yellow };
     case "unhealthy":
       return { glyph: "○", color: c.red };
+    case "disabled":
+      return { glyph: "○", color: c.dim };
     default:
       return { glyph: "?", color: c.dim };
   }
@@ -106,7 +108,8 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
 
   const allBackends = await db.db.select().from(backendsTable).all();
   const enabledBackends = allBackends.filter((b) => b.enabled);
-  const vmodelCount = (await db.db.select().from(vmodelsTable).all()).length;
+  const allVmodels = await db.db.select().from(vmodelsTable).all();
+  const enabledVmodels = allVmodels.filter((v) => v.enabled);
 
   const lines: string[] = [""];
 
@@ -167,17 +170,32 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
 
   lines.push(
     "",
-    paint(c.bold, "  Virtual models"),
+    paint(c.bold, `  Virtual models (${enabledVmodels.length} enabled · ${allVmodels.length} total)`),
     paint(c.dim, "  ─────────────────────────────────────────────────────"),
   );
 
-  if (vmodelCount === 0) {
+  if (allVmodels.length === 0) {
     lines.push(
       `  ${paint(c.dim, "No virtual models")}`,
       `  ${paint(c.dim, "→ aivm vmodel create --model-id smart-chat --display-name \"Smart Chat\"")}`,
     );
   } else {
-    lines.push(`  ${vmodelCount} configured · GET ${baseUrl}/v1/models to list`);
+    for (const vm of allVmodels) {
+      const health = vm.enabled ? (vm.lastHealthStatus ?? "unknown") : "disabled";
+      const { glyph, color } = healthSymbol(health === "disabled" ? "disabled" : vm.lastHealthStatus);
+      const modelId = padEnd(vm.modelId, 20);
+      const strategy = padEnd(vm.balancingStrategy, 14);
+      const detail = !vm.enabled
+        ? "—"
+        : vm.lastHealthError
+          ? truncate(vm.lastHealthError, 42)
+          : vm.displayName !== vm.modelId
+            ? vm.displayName
+            : "—";
+      lines.push(
+        `  ${paint(color, glyph)} ${modelId} ${paint(c.dim, strategy)} ${padEnd(health, 12)} ${paint(c.dim, detail)}`,
+      );
+    }
   }
 
   lines.push(
@@ -187,4 +205,9 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
   );
 
   process.stdout.write(lines.join("\n") + "\n");
+}
+
+function truncate(str: string, max: number): string {
+  if (str.length <= max) return str;
+  return `${str.slice(0, max - 1)}…`;
 }

@@ -4,6 +4,7 @@ import type { BackendCandidate } from "@ai-v-models/proxy/balancer";
 import type { Backend } from "@ai-v-models/core";
 
 function makeCandidate(id: string, overrides: Partial<Backend> = {}): BackendCandidate {
+  const backendModelId = "model";
   return {
     backendId: id,
     backend: {
@@ -23,11 +24,12 @@ function makeCandidate(id: string, overrides: Partial<Backend> = {}): BackendCan
       lastHealthStatus: "healthy",
       lastLatencyMs: 100,
       lastHealthError: null,
+      availableModels: JSON.stringify([backendModelId]),
       createdAt: Date.now(),
       updatedAt: Date.now(),
       ...overrides,
     } as Backend,
-    backendModelId: "model",
+    backendModelId,
     weight: 1,
   };
 }
@@ -131,22 +133,39 @@ describe("BackendBalancer", () => {
     }
   });
 
-  it("skips unhealthy backends", () => {
+  it("skips unhealthy backends without requiring an open circuit", () => {
     const balancer = new BackendBalancer();
     const candidates = [
       makeCandidate("healthy", { lastHealthStatus: "healthy" }),
       makeCandidate("unhealthy", { lastHealthStatus: "unhealthy" }),
     ];
 
-    // Open circuit breaker on unhealthy
-    const cb = balancer.getCircuitBreaker("unhealthy", "unhealthy");
-    for (let i = 0; i < 5; i++) cb.recordFailure();
-    expect(cb.isOpen).toBe(true);
-
     for (let i = 0; i < 10; i++) {
       const result = balancer.select(candidates, "round-robin");
       expect(result?.backendId).toBe("healthy");
     }
+  });
+
+  it("skips mappings whose model is missing from inventory", () => {
+    const balancer = new BackendBalancer();
+    const candidates = [
+      makeCandidate("has-model"),
+      makeCandidate("missing-model", { availableModels: JSON.stringify(["other-model"]) }),
+    ];
+
+    for (let i = 0; i < 5; i++) {
+      const result = balancer.select(candidates, "round-robin");
+      expect(result?.backendId).toBe("has-model");
+    }
+  });
+
+  it("returns null when all mappings are unavailable", () => {
+    const balancer = new BackendBalancer();
+    const candidates = [
+      makeCandidate("a", { lastHealthStatus: "unhealthy" }),
+      makeCandidate("b", { availableModels: JSON.stringify([]) }),
+    ];
+    expect(balancer.select(candidates, "round-robin")).toBeNull();
   });
 
   it("concurrency tracking", () => {

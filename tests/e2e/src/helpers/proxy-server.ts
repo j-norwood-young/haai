@@ -47,7 +47,7 @@ export async function startTestProxy(): Promise<TestProxy> {
       enabled INTEGER NOT NULL DEFAULT 1, weight INTEGER NOT NULL DEFAULT 1,
       max_concurrency INTEGER NOT NULL DEFAULT 10, health_check_enabled INTEGER NOT NULL DEFAULT 1,
       last_health_check INTEGER, last_health_status TEXT, last_latency_ms INTEGER,
-      last_health_error TEXT,
+      last_health_error TEXT, available_models TEXT,
       created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS vmodels (
@@ -55,12 +55,16 @@ export async function startTestProxy(): Promise<TestProxy> {
       description TEXT, balancing_strategy TEXT NOT NULL DEFAULT 'session-pin',
       streaming INTEGER NOT NULL DEFAULT 1, allow_tool_calling INTEGER NOT NULL DEFAULT 1,
       allow_vision INTEGER NOT NULL DEFAULT 0, allow_embeddings INTEGER NOT NULL DEFAULT 0,
-      enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+      enabled INTEGER NOT NULL DEFAULT 1,
+      last_health_status TEXT, last_health_error TEXT, last_health_check INTEGER,
+      created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS vmodel_backends (
       id TEXT PRIMARY KEY, vmodel_id TEXT NOT NULL, backend_id TEXT NOT NULL,
       backend_model_id TEXT NOT NULL, weight INTEGER NOT NULL DEFAULT 1,
-      enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL
+      enabled INTEGER NOT NULL DEFAULT 1,
+      last_available INTEGER, unavailable_reason TEXT,
+      created_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS vmodel_hooks (
       id TEXT PRIMARY KEY, vmodel_id TEXT NOT NULL, hook_id TEXT NOT NULL,

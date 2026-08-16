@@ -1,6 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { eq, desc, gte, and, isNull } from "drizzle-orm";
-import { usageRollups, usageEvents, backends as backendsTable, apiKeys, vmodels } from "@ai-v-models/core";
+import {
+  usageRollups,
+  usageEvents,
+  backends as backendsTable,
+  apiKeys,
+  vmodels,
+  vmodelBackends,
+} from "@ai-v-models/core";
 import { registry } from "../../metrics.js";
 import type { AppContext } from "../../context.js";
 
@@ -35,6 +42,18 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
       tpsEvents.length > 0 ? tpsEvents.reduce((s, e) => s + (e.tps ?? 0), 0) / tpsEvents.length : undefined;
 
     const backendRows = await ctx.db.db.select().from(backendsTable).all();
+    const backendNameById = new Map(
+      backendRows.map((b) => [b.id, b.displayName || b.name] as const),
+    );
+
+    const vmodelRows = await ctx.db.db.select().from(vmodels).all();
+    const mappingRows = await ctx.db.db.select().from(vmodelBackends).all();
+    const mappingsByVmodel = new Map<string, typeof mappingRows>();
+    for (const m of mappingRows) {
+      const list = mappingsByVmodel.get(m.vmodelId) ?? [];
+      list.push(m);
+      mappingsByVmodel.set(m.vmodelId, list);
+    }
 
     return {
       total_requests_24h: totalRequests,
@@ -60,6 +79,53 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
         if (b.lastLatencyMs != null) entry.latency_ms = b.lastLatencyMs;
         if (b.lastHealthError) entry.error = b.lastHealthError;
         if (b.lastHealthCheck != null) entry.checked_at = b.lastHealthCheck;
+        return entry;
+      }),
+      vmodels: vmodelRows.map((vm) => {
+        const mappings = (mappingsByVmodel.get(vm.id) ?? [])
+          .filter((m) => m.enabled)
+          .map((m) => {
+            const mapping: {
+              id: string;
+              backendId: string;
+              backendName: string;
+              backendModelId: string;
+              available: boolean | null;
+              reason?: string;
+            } = {
+              id: m.id,
+              backendId: m.backendId,
+              backendName: backendNameById.get(m.backendId) ?? m.backendId,
+              backendModelId: m.backendModelId,
+              available: m.lastAvailable,
+            };
+            if (m.unavailableReason) mapping.reason = m.unavailableReason;
+            return mapping;
+          });
+
+        const entry: {
+          id: string;
+          name: string;
+          modelId: string;
+          health: "healthy" | "degraded" | "unhealthy" | "unknown";
+          enabled: boolean;
+          error?: string;
+          checked_at?: number;
+          mappings: typeof mappings;
+        } = {
+          id: vm.id,
+          name: vm.displayName || vm.modelId,
+          modelId: vm.modelId,
+          health: (vm.lastHealthStatus ?? "unknown") as
+            | "healthy"
+            | "degraded"
+            | "unhealthy"
+            | "unknown",
+          enabled: vm.enabled,
+          mappings,
+        };
+        if (vm.lastHealthError) entry.error = vm.lastHealthError;
+        if (vm.lastHealthCheck != null) entry.checked_at = vm.lastHealthCheck;
         return entry;
       }),
     };

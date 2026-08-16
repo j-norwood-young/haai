@@ -1,11 +1,14 @@
 <script lang="ts">
 	import BackendHealthDetailsModal from './BackendHealthDetailsModal.svelte';
+	import VModelHealthDetailsModal from './VModelHealthDetailsModal.svelte';
 	import {
 		hasHealthDetails,
 		healthBadgeClass,
 		type BackendHealthDetails,
 		type BackendHealthEntry,
-		type BackendHealthLevel
+		type BackendHealthLevel,
+		type VModelHealthDetails,
+		type VModelHealthEntry
 	} from '$lib/backend-health.js';
 	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 
@@ -13,13 +16,15 @@
 		level: BackendHealthLevel;
 		summary: string;
 		backends: BackendHealthEntry[];
+		vmodels?: VModelHealthEntry[];
 		align?: 'left' | 'right';
 	}
 
-	let { level, summary, backends, align = 'right' }: Props = $props();
+	let { level, summary, backends, vmodels = [], align = 'right' }: Props = $props();
 
 	let open = $state(false);
 	let healthDetails = $state<BackendHealthDetails | null>(null);
+	let vmodelDetails = $state<VModelHealthDetails | null>(null);
 
 	function toggleTooltip() {
 		open = !open;
@@ -33,6 +38,7 @@
 		event.stopPropagation();
 		if (!hasHealthDetails(backend.health)) return;
 		open = false;
+		vmodelDetails = null;
 		const details: BackendHealthDetails = {
 			id: backend.id,
 			name: backend.name,
@@ -44,8 +50,29 @@
 		healthDetails = details;
 	}
 
+	function openVModelDetails(vm: VModelHealthEntry, event: MouseEvent) {
+		event.stopPropagation();
+		if (!hasHealthDetails(vm.health)) return;
+		open = false;
+		healthDetails = null;
+		const details: VModelHealthDetails = {
+			id: vm.id,
+			name: vm.name,
+			modelId: vm.modelId,
+			health: vm.health,
+			mappings: vm.mappings
+		};
+		if (vm.error) details.error = vm.error;
+		if (vm.checked_at != null) details.checked_at = vm.checked_at;
+		vmodelDetails = details;
+	}
+
 	function closeHealthDetails() {
 		healthDetails = null;
+	}
+
+	function closeVModelDetails() {
+		vmodelDetails = null;
 	}
 
 	function onHealthUpdated(result: {
@@ -74,7 +101,7 @@
 
 <svelte:window
 	onclick={() => {
-		if (!healthDetails) closeTooltip();
+		if (!healthDetails && !vmodelDetails) closeTooltip();
 	}}
 />
 
@@ -97,6 +124,7 @@
 				<span class="health-tooltip__title">{summary}</span>
 			</div>
 
+			<p class="health-tooltip__section-label">Backends</p>
 			{#if backends.length > 0}
 				<ul class="health-tooltip__list">
 					{#each backends as backend (backend.id)}
@@ -118,7 +146,32 @@
 					{/each}
 				</ul>
 			{:else}
-				<p class="health-tooltip__empty">No enabled backends configured</p>
+				<p class="health-tooltip__empty">No enabled backends</p>
+			{/if}
+
+			<p class="health-tooltip__section-label">V-Models</p>
+			{#if vmodels.length > 0}
+				<ul class="health-tooltip__list">
+					{#each vmodels as vm (vm.id)}
+						<li class="health-tooltip__row">
+							<span class="health-tooltip__name" title={vm.modelId}>{vm.name}</span>
+							{#if hasHealthDetails(vm.health)}
+								<button
+									type="button"
+									class="{healthBadgeClass(vm.health)} health-tooltip__status-btn"
+									onclick={(event) => openVModelDetails(vm, event)}
+									title="View v-model health details"
+								>
+									{vm.label}
+								</button>
+							{:else}
+								<span class={healthBadgeClass(vm.health)}>{vm.label}</span>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="health-tooltip__empty">No enabled v-models</p>
 			{/if}
 		</div>
 	{/if}
@@ -129,4 +182,10 @@
 	backend={healthDetails}
 	onclose={closeHealthDetails}
 	onupdated={onHealthUpdated}
+/>
+
+<VModelHealthDetailsModal
+	open={vmodelDetails != null}
+	vmodel={vmodelDetails}
+	onclose={closeVModelDetails}
 />

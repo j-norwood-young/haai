@@ -21,6 +21,11 @@ export interface ProxyRequestOptions {
   keyPrefix?: string;
   /** When true, buffer the full response (for response-transform plugins) */
   bufferResponse?: boolean;
+  /**
+   * When true, do not write error responses to the client reply.
+   * Used for pre-stream failover retries — the caller sends the final error.
+   */
+  suppressClientError?: boolean;
 }
 
 export interface ProxyResult {
@@ -230,7 +235,7 @@ export async function streamingProxy(
     error = err instanceof Error ? err.message : String(err);
     log.error({ err, backend: opts.backendName }, "Upstream request failed");
 
-    if (!reply.sent) {
+    if (!opts.suppressClientError && !reply.sent) {
       reply.status(502).send({ error: { message: "Upstream error", type: "proxy_error" } });
     }
   }
