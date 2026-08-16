@@ -13,7 +13,7 @@
 ```bash
 aivm backend add \
   --name ollama-gpu1 \
-  --url http://192.168.1.50:11434 \
+  --base-url http://192.168.1.50:11434 \
   --provider ollama \
   --hostname gpu1
 ```

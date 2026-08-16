@@ -1,13 +1,13 @@
 import { browser } from '$app/environment';
 import { getApiBaseUrl } from './api-base.js';
 
-const SSE_EVENT_TYPES = [
+const SSE_EVENT_TYPES = new Set([
 	'backend-health',
 	'usage-event',
 	'key-event',
 	'log',
 	'system'
-] as const;
+]);
 
 export interface SseEvent {
 	type: string;
@@ -18,44 +18,114 @@ export interface SseEvent {
 function createSseStore() {
 	let latestEvent = $state<SseEvent | null>(null);
 	let connected = $state(false);
-	let es: EventSource | null = null;
+	let abort: AbortController | null = null;
+	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	let generation = 0;
 
-	function handleEvent(event: MessageEvent) {
+	function clearReconnect() {
+		if (reconnectTimer != null) {
+			clearTimeout(reconnectTimer);
+			reconnectTimer = null;
+		}
+	}
+
+	function scheduleReconnect() {
+		clearReconnect();
+		reconnectTimer = setTimeout(() => {
+			reconnectTimer = null;
+			void connect();
+		}, 5000);
+	}
+
+	function dispatchParsed(raw: string) {
 		try {
-			latestEvent = JSON.parse(event.data as string) as SseEvent;
+			latestEvent = JSON.parse(raw) as SseEvent;
 		} catch {
 			latestEvent = {
 				type: 'raw',
-				data: event.data,
+				data: raw,
 				timestamp: Date.now()
 			};
 		}
 	}
 
-	function connect() {
-		if (!browser || es) return;
+	function handleBlock(block: string) {
+		let eventType = 'message';
+		const dataLines: string[] = [];
 
-		es = new EventSource(`${getApiBaseUrl()}/api/v1/events`);
-
-		es.onopen = () => {
-			connected = true;
-		};
-
-		for (const type of SSE_EVENT_TYPES) {
-			es.addEventListener(type, handleEvent);
+		for (const line of block.split('\n')) {
+			if (line.startsWith('event:')) {
+				eventType = line.slice(6).trim();
+			} else if (line.startsWith('data:')) {
+				dataLines.push(line.slice(5).trimStart());
+			}
 		}
 
-		es.onerror = () => {
+		if (dataLines.length === 0) return;
+		if (eventType !== 'message' && !SSE_EVENT_TYPES.has(eventType)) return;
+
+		dispatchParsed(dataLines.join('\n'));
+	}
+
+	async function readStream(body: ReadableStream<Uint8Array>) {
+		const reader = body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+			buffer = buffer.replace(/\r\n/g, '\n');
+
+			let sep: number;
+			while ((sep = buffer.indexOf('\n\n')) !== -1) {
+				const block = buffer.slice(0, sep).trim();
+				buffer = buffer.slice(sep + 2);
+				if (block) handleBlock(block);
+			}
+		}
+	}
+
+	async function connect() {
+		if (!browser || abort) return;
+
+		clearReconnect();
+		const myGen = ++generation;
+		const controller = new AbortController();
+		abort = controller;
+
+		try {
+			const res = await fetch(`${getApiBaseUrl()}/api/v1/events`, {
+				method: 'GET',
+				credentials: 'include',
+				headers: { Accept: 'text/event-stream' },
+				signal: controller.signal
+			});
+
+			if (!res.ok || !res.body) {
+				throw new Error(`SSE connection failed (${res.status})`);
+			}
+
+			if (myGen === generation) connected = true;
+			await readStream(res.body);
+		} catch (err) {
+			if ((err as Error)?.name === 'AbortError') return;
+		} finally {
+			if (abort === controller) abort = null;
+			if (myGen !== generation) return;
 			connected = false;
-			es?.close();
-			es = null;
-			setTimeout(() => connect(), 5000);
-		};
+			// Network/auth failures and server-closed streams should retry.
+			scheduleReconnect();
+		}
 	}
 
 	function disconnect() {
-		es?.close();
-		es = null;
+		generation++;
+		clearReconnect();
+		abort?.abort();
+		abort = null;
 		connected = false;
 	}
 

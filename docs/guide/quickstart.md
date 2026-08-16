@@ -56,7 +56,7 @@ See [Configuration](./configuration.md) for all options.
 ```bash
 pnpm aivm backend add \
   --name lmstudio-bob \
-  --url http://192.168.1.100:1234 \
+  --base-url http://192.168.1.100:1234 \
   --provider lmstudio \
   --hostname bob
 ```

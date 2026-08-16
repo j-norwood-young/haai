@@ -27,7 +27,7 @@ HTTP POST to your URL with optional HMAC signature (`X-AVM-Signature`).
 ```bash
 aivm hook add-webhook \
   --name my-webhook \
-  --url https://example.com/avm-hook \
+  --webhook-url https://example.com/avm-hook \
   --trigger pre-request \
   --secret my-secret \
   --timeout 5000

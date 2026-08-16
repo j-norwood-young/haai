@@ -452,6 +452,12 @@ body {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+.health-tooltip__status-btn {
+	cursor: pointer;
+}
+.health-tooltip__status-btn:hover {
+	opacity: 0.9;
+}
 .health-tooltip__empty {
 	margin: 0;
 	padding: 0.625rem 0.75rem 0.75rem;

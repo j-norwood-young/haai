@@ -5,11 +5,7 @@
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/auth.svelte.js';
 	import { sse } from '$lib/sse.svelte.js';
-	import { api } from '$lib/api.js';
-	import {
-		computeBackendHealth,
-		type BackendHealthSnapshot
-	} from '$lib/backend-health.js';
+	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 	import HealthIndicator from '$lib/components/HealthIndicator.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
 
@@ -24,11 +20,7 @@
 
 	let booting = $state(true);
 	let sidebarOpen = $state(false);
-		let backendHealth = $state<BackendHealthSnapshot>({
-		level: 'gray',
-		summary: 'Loading backend health',
-		backends: []
-	});
+	const backendHealth = $derived(backendHealthState.snapshot);
 
 	type NavItem = { href: string; label: string; paths: string[]; external?: boolean };
 
@@ -116,20 +108,9 @@
 		sidebarOpen = !sidebarOpen;
 	}
 
-	async function loadBackendHealth() {
-		try {
-			const summary = await api.getMetricsSummary();
-			backendHealth = computeBackendHealth(summary.backends);
-		} catch {
-			backendHealth = {
-				level: 'gray',
-				summary: 'Backend health unavailable',
-				backends: []
-			};
-		}
-	}
-
 	async function handleLogout() {
+		sse.disconnect();
+		backendHealthState.reset();
 		await auth.logout();
 		goto('/login');
 	}
@@ -150,7 +131,6 @@
 				return;
 			}
 			sidebarOpen = false;
-			sse.connect();
 		} finally {
 			booting = false;
 		}
@@ -162,15 +142,26 @@
 	});
 
 	$effect(() => {
-		if (isPublicPage || booting || !auth.user) return;
-		void loadBackendHealth();
+		if (isPublicPage || booting || !auth.user) {
+			sse.disconnect();
+			return;
+		}
+		sse.connect();
 	});
 
 	$effect(() => {
-		if (isPublicPage) return;
+		if (isPublicPage || booting || !auth.user) return;
+		// Re-fetch when navigating so create/edit redirects refresh the sidebar
+		// even if an SSE event was missed.
+		void page.url.pathname;
+		void backendHealthState.refresh();
+	});
+
+	$effect(() => {
+		if (isPublicPage || !auth.user) return;
 		const event = sse.latestEvent;
 		if (event?.type === 'backend-health') {
-			void loadBackendHealth();
+			void backendHealthState.refresh();
 		}
 	});
 </script>

@@ -22,6 +22,7 @@ function makeCandidate(id: string, overrides: Partial<Backend> = {}): BackendCan
       lastHealthCheck: null,
       lastHealthStatus: "healthy",
       lastLatencyMs: 100,
+      lastHealthError: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       ...overrides,

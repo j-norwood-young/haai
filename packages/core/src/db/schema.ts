@@ -26,6 +26,7 @@ export const backends = sqliteTable(
     lastHealthCheck: integer("last_health_check"),
     lastHealthStatus: text("last_health_status"), // healthy|degraded|unhealthy
     lastLatencyMs: integer("last_latency_ms"),
+    lastHealthError: text("last_health_error"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },

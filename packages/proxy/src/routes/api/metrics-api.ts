@@ -42,13 +42,26 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
       error_rate_24h: errorRate,
       avg_ttft_ms: avgTtft,
       avg_tps: avgTps,
-      backends: backendRows.map((b) => ({
-        id: b.id,
-        name: b.displayName || b.name,
-        health: (b.lastHealthStatus ?? "unknown") as "healthy" | "degraded" | "unhealthy" | "unknown",
-        latency_ms: b.lastLatencyMs ?? undefined,
-        enabled: b.enabled,
-      })),
+      backends: backendRows.map((b) => {
+        const entry: {
+          id: string;
+          name: string;
+          health: "healthy" | "degraded" | "unhealthy" | "unknown";
+          enabled: boolean;
+          latency_ms?: number;
+          error?: string;
+          checked_at?: number;
+        } = {
+          id: b.id,
+          name: b.displayName || b.name,
+          health: (b.lastHealthStatus ?? "unknown") as "healthy" | "degraded" | "unhealthy" | "unknown",
+          enabled: b.enabled,
+        };
+        if (b.lastLatencyMs != null) entry.latency_ms = b.lastLatencyMs;
+        if (b.lastHealthError) entry.error = b.lastHealthError;
+        if (b.lastHealthCheck != null) entry.checked_at = b.lastHealthCheck;
+        return entry;
+      }),
     };
   });
 

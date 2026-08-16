@@ -114,7 +114,7 @@ function verifySignature(body: string, signature: string, secret: string): boole
 ```bash
 aivm hook add-webhook \
   --name my-webhook \
-  --url https://my-server.example.com/aivm-hook \
+  --webhook-url https://my-server.example.com/aivm-hook \
   --trigger pre-request \
   --secret my-signing-secret \
   --timeout 5000

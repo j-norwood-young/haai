@@ -20,8 +20,18 @@ export interface Backend {
   lastHealthCheck: number | null;
   lastHealthStatus: "healthy" | "degraded" | "unhealthy" | null;
   lastLatencyMs: number | null;
+  lastHealthError: string | null;
   createdAt: number;
   updatedAt: number;
 }
 
-export type BackendInsert = Omit<Backend, "id" | "createdAt" | "updatedAt" | "lastHealthCheck" | "lastHealthStatus" | "lastLatencyMs">;
+export type BackendInsert = Omit<
+  Backend,
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "lastHealthCheck"
+  | "lastHealthStatus"
+  | "lastLatencyMs"
+  | "lastHealthError"
+>;

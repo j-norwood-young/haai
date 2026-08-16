@@ -1,9 +1,13 @@
 <script lang="ts">
+	import BackendHealthDetailsModal from './BackendHealthDetailsModal.svelte';
 	import {
+		hasHealthDetails,
 		healthBadgeClass,
+		type BackendHealthDetails,
 		type BackendHealthEntry,
 		type BackendHealthLevel
 	} from '$lib/backend-health.js';
+	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 
 	interface Props {
 		level: BackendHealthLevel;
@@ -15,6 +19,7 @@
 	let { level, summary, backends, align = 'right' }: Props = $props();
 
 	let open = $state(false);
+	let healthDetails = $state<BackendHealthDetails | null>(null);
 
 	function toggleTooltip() {
 		open = !open;
@@ -23,9 +28,55 @@
 	function closeTooltip() {
 		open = false;
 	}
+
+	function openHealthDetails(backend: BackendHealthEntry, event: MouseEvent) {
+		event.stopPropagation();
+		if (!hasHealthDetails(backend.health)) return;
+		open = false;
+		const details: BackendHealthDetails = {
+			id: backend.id,
+			name: backend.name,
+			health: backend.health
+		};
+		if (backend.latency_ms != null) details.latency_ms = backend.latency_ms;
+		if (backend.error) details.error = backend.error;
+		if (backend.checked_at != null) details.checked_at = backend.checked_at;
+		healthDetails = details;
+	}
+
+	function closeHealthDetails() {
+		healthDetails = null;
+	}
+
+	function onHealthUpdated(result: {
+		id: string;
+		health: 'healthy' | 'degraded' | 'unhealthy';
+		latency_ms?: number;
+		error?: string;
+	}) {
+		void backendHealthState.refresh();
+		if (healthDetails?.id !== result.id) return;
+		if (!hasHealthDetails(result.health)) {
+			healthDetails = null;
+			return;
+		}
+		const details: BackendHealthDetails = {
+			id: result.id,
+			name: healthDetails.name,
+			health: result.health,
+			checked_at: Date.now()
+		};
+		if (result.latency_ms !== undefined) details.latency_ms = result.latency_ms;
+		if (result.error) details.error = result.error;
+		healthDetails = details;
+	}
 </script>
 
-<svelte:window onclick={closeTooltip} />
+<svelte:window
+	onclick={() => {
+		if (!healthDetails) closeTooltip();
+	}}
+/>
 
 <div class="relative inline-flex items-center">
 	<button
@@ -48,10 +99,21 @@
 
 			{#if backends.length > 0}
 				<ul class="health-tooltip__list">
-					{#each backends as backend (backend.name)}
+					{#each backends as backend (backend.id)}
 						<li class="health-tooltip__row">
 							<span class="health-tooltip__name">{backend.name}</span>
-							<span class={healthBadgeClass(backend.health)}>{backend.label}</span>
+							{#if hasHealthDetails(backend.health)}
+								<button
+									type="button"
+									class="{healthBadgeClass(backend.health)} health-tooltip__status-btn"
+									onclick={(event) => openHealthDetails(backend, event)}
+									title="View health details"
+								>
+									{backend.label}
+								</button>
+							{:else}
+								<span class={healthBadgeClass(backend.health)}>{backend.label}</span>
+							{/if}
 						</li>
 					{/each}
 				</ul>
@@ -61,3 +123,10 @@
 		</div>
 	{/if}
 </div>
+
+<BackendHealthDetailsModal
+	open={healthDetails != null}
+	backend={healthDetails}
+	onclose={closeHealthDetails}
+	onupdated={onHealthUpdated}
+/>

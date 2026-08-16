@@ -44,7 +44,7 @@ aivm hook add-internal --name audit-log --module ./audit-hook.js --trigger post-
 
 aivm hook add-webhook \
   --name completion-webhook \
-  --url https://example.com/avm-complete \
+  --webhook-url https://example.com/avm-complete \
   --trigger post-completion
 ```
 

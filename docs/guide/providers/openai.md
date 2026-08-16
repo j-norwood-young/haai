@@ -7,7 +7,7 @@ Use the `openai` or `generic` provider label for any OpenAI-compatible HTTP API 
 ```bash
 aivm backend add \
   --name openai-main \
-  --url https://api.openai.com/v1 \
+  --base-url https://api.openai.com/v1 \
   --provider openai \
   --hostname cloud \
   --mode abstraction \
@@ -23,7 +23,7 @@ Use `generic` when the upstream is OpenAI-compatible but not one of the named pr
 ```bash
 aivm backend add \
   --name litellm-gateway \
-  --url https://gateway.internal/v1 \
+  --base-url https://gateway.internal/v1 \
   --provider generic \
   --hostname gateway \
   --mode abstraction \

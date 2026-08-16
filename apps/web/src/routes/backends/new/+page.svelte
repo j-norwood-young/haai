@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api.js';
+	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 	import InfoTip from '$lib/components/InfoTip.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -63,6 +64,7 @@
 			url,
 			...(apiKey ? { api_key: apiKey } : {})
 		});
+		void backendHealthState.refresh();
 		goto('/backends');
 	}
 

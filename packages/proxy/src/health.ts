@@ -40,15 +40,40 @@ export async function checkBackendHealth(
     clearTimeout(timer);
 
     const latencyMs = Date.now() - start;
-    const status = res.ok ? (latencyMs < 2000 ? "healthy" : "degraded") : "unhealthy";
 
-    return { backendId: backend.id, status, latencyMs };
+    if (!res.ok) {
+      const statusText = res.statusText?.trim();
+      return {
+        backendId: backend.id,
+        status: "unhealthy",
+        latencyMs,
+        error: statusText ? `HTTP ${res.status} ${statusText}` : `HTTP ${res.status}`,
+      };
+    }
+
+    if (latencyMs >= 2000) {
+      return {
+        backendId: backend.id,
+        status: "degraded",
+        latencyMs,
+        error: `High latency (${latencyMs}ms)`,
+      };
+    }
+
+    return { backendId: backend.id, status: "healthy", latencyMs };
   } catch (err) {
+    const error =
+      err instanceof Error && err.name === "AbortError"
+        ? `Health check timed out after ${timeoutMs}ms`
+        : err instanceof Error
+          ? err.message
+          : String(err);
+
     return {
       backendId: backend.id,
       status: "unhealthy",
       latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
+      error,
     };
   }
 }
@@ -77,6 +102,7 @@ export async function checkAndPersistBackendHealth(
       lastHealthCheck: now,
       lastHealthStatus: result.status,
       lastLatencyMs: result.latencyMs,
+      lastHealthError: result.error ?? null,
       updatedAt: now,
     })
     .where(eq(backendsTable.id, backend.id))
@@ -85,11 +111,18 @@ export async function checkAndPersistBackendHealth(
   const healthScore = result.status === "healthy" ? 1 : result.status === "degraded" ? 0.5 : 0;
   backendHealthGauge.set({ backend: backend.name, provider: backend.provider }, healthScore);
 
-  sse?.broadcast("backend-health", {
+  const payload: {
+    backendId: string;
+    status: HealthCheckResult["status"];
+    latencyMs: number;
+    error?: string;
+  } = {
     backendId: backend.id,
     status: result.status,
     latencyMs: result.latencyMs,
-  });
+  };
+  if (result.error) payload.error = result.error;
+  sse?.broadcast("backend-health", payload);
 
   return result;
 }
@@ -151,9 +184,9 @@ export class HealthMonitor {
 
       for (const result of results) {
         if (result.status === "fulfilled") {
-          const { backendId, status, latencyMs } = result.value;
+          const { backendId, status, latencyMs, error } = result.value;
           if (status !== "healthy") {
-            log.warn({ backendId, status, latencyMs }, "Backend health check issue");
+            log.warn({ backendId, status, latencyMs, error }, "Backend health check issue");
           }
         }
       }

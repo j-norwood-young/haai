@@ -23,7 +23,7 @@ Use when:
 ```bash
 aivm backend add \
   --name openai-main \
-  --url https://api.openai.com/v1 \
+  --base-url https://api.openai.com/v1 \
   --provider openai \
   --hostname cloud \
   --mode abstraction \

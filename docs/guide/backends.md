@@ -16,7 +16,7 @@ A **backend** is an upstream OpenAI-compatible LLM server. ai-v-models proxies `
 ```bash
 aivm backend add \
   --name lmstudio-bob \
-  --url http://192.168.1.100:1234 \
+  --base-url http://192.168.1.100:1234 \
   --provider lmstudio \
   --hostname bob \
   --mode passthrough
@@ -27,7 +27,7 @@ For backends that require their own API key, use abstraction mode:
 ```bash
 aivm backend add \
   --name openai-main \
-  --url https://api.openai.com/v1 \
+  --base-url https://api.openai.com/v1 \
   --provider openai \
   --hostname cloud \
   --mode abstraction \

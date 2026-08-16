@@ -4,6 +4,13 @@
 	import type { Backend } from '$lib/api.js';
 	import { sse } from '$lib/sse.svelte.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import BackendHealthDetailsModal from '$lib/components/BackendHealthDetailsModal.svelte';
+	import {
+		hasHealthDetails,
+		healthBadgeClass,
+		type BackendHealthDetails
+	} from '$lib/backend-health.js';
+	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 
 	type TestResult = {
 		success: boolean;
@@ -17,6 +24,7 @@
 	let error = $state<string | null>(null);
 	let testResults = $state<Record<string, TestResult>>({});
 	let deleteConfirm = $state<string | null>(null);
+	let healthDetails = $state<BackendHealthDetails | null>(null);
 	// Non-reactive guard so writing it does not re-enter the SSE $effect
 	let lastHandledHealthAt: number | null = null;
 
@@ -40,6 +48,60 @@
 		void load();
 	});
 
+	function openHealthDetails(backend: Backend) {
+		if (!hasHealthDetails(backend.health)) return;
+		const details: BackendHealthDetails = {
+			id: backend.id,
+			name: backend.name,
+			health: backend.health,
+			url: backend.url
+		};
+		if (backend.latency_ms != null) details.latency_ms = backend.latency_ms;
+		if (backend.health_error) details.error = backend.health_error;
+		if (backend.checked_at) details.checked_at = backend.checked_at;
+		healthDetails = details;
+	}
+
+	function closeHealthDetails() {
+		healthDetails = null;
+	}
+
+	function onHealthUpdated(result: {
+		id: string;
+		health: 'healthy' | 'degraded' | 'unhealthy';
+		latency_ms?: number;
+		error?: string;
+	}) {
+		backends = backends.map((b) => {
+			if (b.id !== result.id) return b;
+			const updated: Backend = { ...b, health: result.health };
+			if (result.latency_ms !== undefined) updated.latency_ms = result.latency_ms;
+			else delete updated.latency_ms;
+			if (result.error) updated.health_error = result.error;
+			else delete updated.health_error;
+			updated.checked_at = new Date().toISOString();
+			return updated;
+		});
+		void backendHealthState.refresh();
+
+		if (healthDetails?.id === result.id) {
+			if (!hasHealthDetails(result.health)) {
+				healthDetails = null;
+				return;
+			}
+			const details: BackendHealthDetails = {
+				id: result.id,
+				name: healthDetails.name,
+				health: result.health,
+				checked_at: new Date().toISOString()
+			};
+			if (healthDetails.url) details.url = healthDetails.url;
+			if (result.latency_ms !== undefined) details.latency_ms = result.latency_ms;
+			if (result.error) details.error = result.error;
+			healthDetails = details;
+		}
+	}
+
 	async function testBackend(id: string) {
 		testResults = { ...testResults, [id]: { success: false, loading: true } };
 		try {
@@ -54,6 +116,9 @@
 					const updated: Backend = { ...b, health: result.health! };
 					const latency = result.latency_ms ?? b.latency_ms;
 					if (latency !== undefined) updated.latency_ms = latency;
+					if (result.error) updated.health_error = result.error;
+					else delete updated.health_error;
+					updated.checked_at = new Date().toISOString();
 					return updated;
 				});
 			}
@@ -74,17 +139,9 @@
 			await api.deleteBackend(id);
 			backends = backends.filter((b) => b.id !== id);
 			deleteConfirm = null;
+			void backendHealthState.refresh();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete backend';
-		}
-	}
-
-	function healthBadge(health: string): string {
-		switch (health) {
-			case 'healthy': return 'badge badge-green';
-			case 'degraded': return 'badge badge-yellow';
-			case 'unhealthy': return 'badge badge-red';
-			default: return 'badge badge-gray';
 		}
 	}
 
@@ -139,9 +196,20 @@
 							<td class="text-[var(--color-text-muted)] capitalize">{backend.provider}</td>
 							<td class="text-[var(--color-text-muted)] hidden md:table-cell font-mono text-xs truncate max-w-[200px]">{backend.url}</td>
 							<td>
-								<span class="capitalize {healthBadge(backend.health)}">
-									{backend.health}
-								</span>
+								{#if hasHealthDetails(backend.health)}
+									<button
+										type="button"
+										class="capitalize {healthBadgeClass(backend.health)} cursor-pointer hover:opacity-90"
+										onclick={() => openHealthDetails(backend)}
+										title="View health details"
+									>
+										{backend.health}
+									</button>
+								{:else}
+									<span class="capitalize {healthBadgeClass(backend.health)}">
+										{backend.health}
+									</span>
+								{/if}
 							</td>
 							<td class="text-[var(--color-text-muted)] hidden lg:table-cell">
 								{backend.latency_ms != null ? `${backend.latency_ms}ms` : '—'}
@@ -205,3 +273,10 @@
 		</div>
 	{/if}
 </div>
+
+<BackendHealthDetailsModal
+	open={healthDetails != null}
+	backend={healthDetails}
+	onclose={closeHealthDetails}
+	onupdated={onHealthUpdated}
+/>

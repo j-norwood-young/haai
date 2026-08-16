@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { api } from '$lib/api.js';
 	import type { Backend } from '$lib/api.js';
+	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 
@@ -94,6 +95,7 @@
 			enabled,
 			...(apiKey ? { api_key: apiKey } : {})
 		});
+		void backendHealthState.refresh();
 		goto('/backends');
 	}
 
