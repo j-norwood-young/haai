@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { backends as backendsTable } from "@ai-v-models/core";
 import { encrypt } from "@ai-v-models/core";
 import type { AppContext } from "../../context.js";
-import { checkAndPersistBackendHealth } from "../../health.js";
+import { checkAndPersistBackendHealth, checkBackendHealth } from "../../health.js";
 import { getLogger } from "../../logger.js";
 
 function scheduleBackendHealthCheck(
@@ -64,9 +64,15 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
     const now = Date.now();
     const id = `backend-${nanoid(8)}`;
 
+    const apiKey = typeof body["apiKey"] === "string" ? body["apiKey"] : "";
+    // Providing an API key implies abstraction unless the client sets a mode explicitly.
+    const keyMode =
+      (typeof body["keyMode"] === "string" ? body["keyMode"] : undefined) ??
+      (apiKey ? "abstraction" : "passthrough");
+
     let encryptedApiKey: string | null = null;
-    if (body["apiKey"] && body["keyMode"] === "abstraction") {
-      encryptedApiKey = encrypt(body["apiKey"] as string, ctx.masterKey);
+    if (apiKey && keyMode === "abstraction") {
+      encryptedApiKey = encrypt(apiKey, ctx.masterKey);
     }
 
     await ctx.db.db
@@ -78,7 +84,7 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
         hostName: body["hostName"] as string,
         provider: body["provider"] as string,
         baseUrl: body["baseUrl"] as string,
-        keyMode: (body["keyMode"] as string) ?? "passthrough",
+        keyMode,
         encryptedApiKey,
         enabled: (body["enabled"] as boolean) ?? true,
         weight: (body["weight"] as number) ?? 1,
@@ -118,8 +124,17 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       if (body["baseUrl"] !== undefined) updates.baseUrl = body["baseUrl"] as string;
       if (body["enabled"] !== undefined) updates.enabled = body["enabled"] as boolean;
       if (body["weight"] !== undefined) updates.weight = body["weight"] as number;
+      if (body["keyMode"] !== undefined) updates.keyMode = body["keyMode"] as string;
       if (body["apiKey"] !== undefined) {
-        updates.encryptedApiKey = encrypt(body["apiKey"] as string, ctx.masterKey);
+        const apiKey = typeof body["apiKey"] === "string" ? body["apiKey"] : "";
+        if (apiKey) {
+          updates.encryptedApiKey = encrypt(apiKey, ctx.masterKey);
+          // Saving a key without an explicit mode switches to abstraction so the
+          // stored key is actually used (passthrough ignores encryptedApiKey).
+          if (body["keyMode"] === undefined) updates.keyMode = "abstraction";
+        } else {
+          updates.encryptedApiKey = null;
+        }
       }
 
       await ctx.db.db.update(backendsTable).set(updates).where(eq(backendsTable.id, req.params.id)).run();
@@ -161,8 +176,45 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
     return reply.status(204).send();
   });
 
-  // Test backend connectivity
-  app.post<{ Params: { id: string } }>("/api/v1/backends/:id/test", async (req, reply) => {
+  // Probe connectivity for unsaved/draft backend settings (no persist).
+  app.post<{ Body: { baseUrl?: string; apiKey?: string } | undefined }>(
+    "/api/v1/backends/test",
+    async (req, reply) => {
+      const body = req.body ?? {};
+      const baseUrl = typeof body.baseUrl === "string" ? body.baseUrl.trim() : "";
+      if (!baseUrl) {
+        return reply.status(400).send({ error: "baseUrl is required" });
+      }
+
+      const apiKey = typeof body.apiKey === "string" ? body.apiKey : "";
+      const result = await checkBackendHealth(
+        {
+          id: "draft",
+          baseUrl,
+          name: "draft",
+          keyMode: apiKey ? "abstraction" : "passthrough",
+          encryptedApiKey: apiKey ? encrypt(apiKey, ctx.masterKey) : null,
+        },
+        ctx.masterKey,
+        10000,
+      );
+
+      return {
+        success: result.status !== "unhealthy",
+        statusCode: result.status === "unhealthy" ? 0 : 200,
+        latencyMs: result.latencyMs,
+        health: result.status,
+        error: result.error,
+      };
+    },
+  );
+
+  // Test backend connectivity. Optional body overrides (baseUrl, apiKey) probe
+  // draft/unsaved form values. Health is only persisted when probing saved config.
+  app.post<{
+    Params: { id: string };
+    Body: { baseUrl?: string; apiKey?: string } | undefined;
+  }>("/api/v1/backends/:id/test", async (req, reply) => {
     const backend = await ctx.db.db
       .select()
       .from(backendsTable)
@@ -170,20 +222,36 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       .get();
     if (!backend) return reply.status(404).send({ error: "Backend not found" });
 
-    const result = await checkAndPersistBackendHealth(
-      ctx.db,
-      ctx.masterKey,
-      {
-        id: backend.id,
-        baseUrl: backend.baseUrl,
-        name: backend.name,
-        provider: backend.provider,
-        keyMode: backend.keyMode,
-        encryptedApiKey: backend.encryptedApiKey,
-      },
-      10000,
-      ctx.sse,
-    );
+    const body = req.body ?? {};
+    const draftBaseUrl =
+      typeof body.baseUrl === "string" && body.baseUrl.trim()
+        ? body.baseUrl.trim()
+        : backend.baseUrl;
+    const draftApiKey = typeof body.apiKey === "string" ? body.apiKey : "";
+    const usingDraftKey = draftApiKey.length > 0;
+    const urlUnchanged = draftBaseUrl === backend.baseUrl;
+
+    const probe = {
+      id: backend.id,
+      baseUrl: draftBaseUrl,
+      name: backend.name,
+      provider: backend.provider,
+      keyMode: usingDraftKey ? "abstraction" : backend.keyMode,
+      encryptedApiKey: usingDraftKey
+        ? encrypt(draftApiKey, ctx.masterKey)
+        : backend.encryptedApiKey,
+    };
+
+    const result =
+      usingDraftKey || !urlUnchanged
+        ? await checkBackendHealth(probe, ctx.masterKey, 10000)
+        : await checkAndPersistBackendHealth(
+            ctx.db,
+            ctx.masterKey,
+            probe,
+            10000,
+            ctx.sse,
+          );
 
     return {
       success: result.status !== "unhealthy",

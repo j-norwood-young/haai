@@ -12,6 +12,8 @@ interface BackendApiRow {
 	enabled: boolean;
 	lastHealthStatus: 'healthy' | 'degraded' | 'unhealthy' | null;
 	lastLatencyMs: number | null;
+	lastHealthError: string | null;
+	lastHealthCheck: number | null;
 	createdAt: number;
 	updatedAt: number;
 }
@@ -25,6 +27,8 @@ export interface Backend {
 	api_key?: string;
 	health: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 	latency_ms?: number;
+	health_error?: string;
+	checked_at?: string;
 	enabled: boolean;
 	created_at: string;
 	updated_at: string;
@@ -39,18 +43,21 @@ export interface BackendInput {
 }
 
 function mapBackend(row: BackendApiRow): Backend {
-	return {
+	const backend: Backend = {
 		id: row.id,
 		name: row.displayName || row.name,
 		provider: row.provider,
 		host: row.hostName,
 		url: row.baseUrl,
 		health: row.lastHealthStatus ?? 'unknown',
-		latency_ms: row.lastLatencyMs ?? undefined,
 		enabled: row.enabled,
 		created_at: new Date(row.createdAt).toISOString(),
 		updated_at: new Date(row.updatedAt).toISOString()
 	};
+	if (row.lastLatencyMs != null) backend.latency_ms = row.lastLatencyMs;
+	if (row.lastHealthError) backend.health_error = row.lastHealthError;
+	if (row.lastHealthCheck != null) backend.checked_at = new Date(row.lastHealthCheck).toISOString();
+	return backend;
 }
 
 function toCreatePayload(data: BackendInput): Record<string, unknown> {
@@ -66,6 +73,29 @@ function toCreatePayload(data: BackendInput): Record<string, unknown> {
 		payload.keyMode = 'abstraction';
 	}
 	return payload;
+}
+
+function mapBackendTestResult(result: {
+	success: boolean;
+	latencyMs?: number;
+	health?: 'healthy' | 'degraded' | 'unhealthy';
+	error?: string;
+}): {
+	success: boolean;
+	latency_ms?: number;
+	health?: 'healthy' | 'degraded' | 'unhealthy';
+	error?: string;
+} {
+	const mapped: {
+		success: boolean;
+		latency_ms?: number;
+		health?: 'healthy' | 'degraded' | 'unhealthy';
+		error?: string;
+	} = { success: result.success };
+	if (result.latencyMs !== undefined) mapped.latency_ms = result.latencyMs;
+	if (result.health !== undefined) mapped.health = result.health;
+	if (result.error !== undefined) mapped.error = result.error;
+	return mapped;
 }
 
 export type VModelStrategy =
@@ -222,22 +252,23 @@ function mapApiKey(row: ApiKeyApiRow): ApiKey {
 		}
 	}
 
-	return {
+	const key: ApiKey = {
 		id: row.id,
 		key_prefix: row.prefix,
 		name: row.name,
 		enabled: row.enabled,
 		suspended: row.suspended,
-		suspended_reason: row.suspendedReason ?? undefined,
-		rpm_limit: row.rateLimitRpm ?? undefined,
-		day_budget: row.tokenBudgetDay ?? undefined,
-		allowed_vmodels: allowedModels,
-		allowed_backends: allowedBackends,
-		expires_at: row.expiresAt != null ? new Date(row.expiresAt).toISOString() : undefined,
-		last_used_at: row.lastUsedAt != null ? new Date(row.lastUsedAt).toISOString() : undefined,
 		created_at: new Date(row.createdAt).toISOString(),
 		retrievable: row.retrievable ?? false
 	};
+	if (row.suspendedReason) key.suspended_reason = row.suspendedReason;
+	if (row.rateLimitRpm != null) key.rpm_limit = row.rateLimitRpm;
+	if (row.tokenBudgetDay != null) key.day_budget = row.tokenBudgetDay;
+	if (allowedModels) key.allowed_vmodels = allowedModels;
+	if (allowedBackends) key.allowed_backends = allowedBackends;
+	if (row.expiresAt != null) key.expires_at = new Date(row.expiresAt).toISOString();
+	if (row.lastUsedAt != null) key.last_used_at = new Date(row.lastUsedAt).toISOString();
+	return key;
 }
 
 function toCreateKeyPayload(data: Partial<ApiKey>): Record<string, unknown> {
@@ -295,7 +326,7 @@ export interface KeyLog {
 }
 
 function mapKeyLog(row: KeyLogApiRow): KeyLog {
-	return {
+	const log: KeyLog = {
 		id: row.id,
 		key_id: row.keyId,
 		endpoint: row.endpoint,
@@ -303,10 +334,11 @@ function mapKeyLog(row: KeyLogApiRow): KeyLog {
 		tokens_in: row.promptTokens,
 		tokens_out: row.completionTokens,
 		duration_ms: row.durationMs,
-		tps: row.tps ?? undefined,
-		error: row.error ?? undefined,
 		created_at: new Date(row.timestamp).toISOString()
 	};
+	if (row.tps != null) log.tps = row.tps;
+	if (row.error) log.error = row.error;
+	return log;
 }
 
 export function parseKeyLog(data: unknown): KeyLog | null {
@@ -328,18 +360,19 @@ interface MetricsEventApiRow {
 }
 
 function mapMetricsEvent(row: MetricsEventApiRow): MetricsEvent {
-	return {
+	const event: MetricsEvent = {
 		id: row.id,
 		key_prefix: row.keyPrefix ?? 'unknown',
 		vmodel: row.vmodel ?? 'unknown',
 		endpoint: row.endpoint,
 		status_code: row.statusCode,
-		tokens: row.totalTokens,
-		duration_ms: row.durationMs,
-		tps: row.tps ?? undefined,
-		error: row.error ?? undefined,
 		created_at: new Date(row.timestamp).toISOString()
 	};
+	if (row.totalTokens !== undefined) event.tokens = row.totalTokens;
+	if (row.durationMs !== undefined) event.duration_ms = row.durationMs;
+	if (row.tps != null) event.tps = row.tps;
+	if (row.error) event.error = row.error;
+	return event;
 }
 
 export function parseMetricsEvent(data: unknown): MetricsEvent | null {
@@ -441,6 +474,8 @@ export interface BackendHealth {
 	name: string;
 	health: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 	latency_ms?: number;
+	error?: string;
+	checked_at?: number;
 	enabled?: boolean;
 }
 
@@ -528,7 +563,10 @@ export const api = {
 		if (data.name !== undefined) payload.displayName = data.name;
 		if (data.url !== undefined) payload.baseUrl = data.url;
 		if (data.enabled !== undefined) payload.enabled = data.enabled;
-		if (data.api_key) payload.apiKey = data.api_key;
+		if (data.api_key) {
+			payload.apiKey = data.api_key;
+			payload.keyMode = 'abstraction';
+		}
 		const row = await request<BackendApiRow>(`/backends/${id}`, {
 			method: 'PATCH',
 			json: payload
@@ -540,19 +578,37 @@ export const api = {
 		return mapBackend(row);
 	},
 	deleteBackend: (id: string) => request<void>(`/backends/${id}`, { method: 'DELETE' }),
-	testBackend: async (id: string) => {
-		const result = await request<{
-			success: boolean;
-			latencyMs?: number;
-			health?: 'healthy' | 'degraded' | 'unhealthy';
-			error?: string;
-		}>(`/backends/${id}/test`, { method: 'POST' });
-		return {
-			success: result.success,
-			latency_ms: result.latencyMs,
-			health: result.health,
-			error: result.error
-		};
+	testBackend: async (
+		id: string,
+		overrides?: { url?: string; api_key?: string }
+	) => {
+		const json: Record<string, unknown> = {};
+		if (overrides?.url) json.baseUrl = overrides.url;
+		if (overrides?.api_key) json.apiKey = overrides.api_key;
+		return mapBackendTestResult(
+			await request<{
+				success: boolean;
+				latencyMs?: number;
+				health?: 'healthy' | 'degraded' | 'unhealthy';
+				error?: string;
+			}>(`/backends/${id}/test`, {
+				method: 'POST',
+				...(Object.keys(json).length > 0 ? { json } : {})
+			})
+		);
+	},
+	/** Probe connectivity for unsaved backend form values (no backend id). */
+	testBackendDraft: async (data: { url: string; api_key?: string }) => {
+		const json: Record<string, unknown> = { baseUrl: data.url };
+		if (data.api_key) json.apiKey = data.api_key;
+		return mapBackendTestResult(
+			await request<{
+				success: boolean;
+				latencyMs?: number;
+				health?: 'healthy' | 'degraded' | 'unhealthy';
+				error?: string;
+			}>('/backends/test', { method: 'POST', json })
+		);
 	},
 
 	// Virtual Models
