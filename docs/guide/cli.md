@@ -32,7 +32,7 @@ aivm config
 
 ```bash
 aivm backend list
-aivm backend add --name ... --url ... --provider ... --hostname ...
+aivm backend add --name ... --base-url ... --provider ... --hostname ...
 aivm backend test <name>
 aivm backend remove <name>
 ```
@@ -62,7 +62,7 @@ aivm key delete <id>
 ```bash
 aivm hook list
 aivm hook add-internal --name ... --module ... --trigger pre-request
-aivm hook add-webhook --name ... --url ... --trigger ...
+aivm hook add-webhook --name ... --webhook-url ... --trigger ...
 aivm hook test <name>
 aivm hook delete <name>
 ```

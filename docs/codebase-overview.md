@@ -89,7 +89,7 @@ ai-v-models/
 ### 3. **packages/cli/** - Command Line Interface
 Built with Commander.js, provides full management via terminal:
 ```bash
-aivm backend add --name my-backend --url http://... --provider ollama
+aivm backend add --name my-backend --base-url http://... --provider ollama
 aivm key create --name "my-app"
 aivm vmodel list
 aivm plugin install npm:@ai-v-models/pirate-speak

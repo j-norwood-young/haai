@@ -44,7 +44,8 @@ export function registerHookCommands(program: Command, getClient: () => ApiClien
     .command("add-webhook")
     .description("Register an external webhook hook")
     .requiredOption("--name <name>", "Hook name")
-    .requiredOption("--url <url>", "Webhook URL")
+    // Named --webhook-url (not --url) to avoid clashing with global aivm --url (proxy URL).
+    .requiredOption("--webhook-url <url>", "Webhook URL")
     .requiredOption("--trigger <trigger>", "pre-request|post-completion")
     .option("--secret <secret>", "Signing secret")
     .option("--timeout <ms>", "Timeout in ms", "5000")
@@ -54,7 +55,7 @@ export function registerHookCommands(program: Command, getClient: () => ApiClien
         name: opts.name,
         type: "external",
         trigger: opts.trigger,
-        webhookUrl: opts.url,
+        webhookUrl: opts.webhookUrl,
         webhookSecret: opts.secret,
         timeoutMs: parseInt(opts.timeout, 10),
       });

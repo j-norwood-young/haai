@@ -55,7 +55,8 @@ export function registerBackendCommands(
     .command("add")
     .description("Add a backend")
     .requiredOption("--name <name>", "Unique backend name")
-    .requiredOption("--url <url>", "Backend base URL")
+    // Named --base-url (not --url) to avoid clashing with global aivm --url (proxy URL).
+    .requiredOption("--base-url <url>", "Backend base URL")
     .requiredOption("--provider <provider>", "Provider: lmstudio|ollama|vllm|openai|generic")
     .requiredOption("--hostname <hostname>", "Hostname label (e.g. bob)")
     .option("--api-key <key>", "API key for abstraction mode")
@@ -70,7 +71,7 @@ export function registerBackendCommands(
           displayName: opts.name,
           hostName: opts.hostname,
           provider: opts.provider,
-          baseUrl: opts.url,
+          baseUrl: opts.baseUrl,
           keyMode: opts.mode,
           apiKey: opts.apiKey,
           weight: parseInt(opts.weight, 10),

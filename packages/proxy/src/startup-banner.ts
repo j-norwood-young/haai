@@ -147,7 +147,7 @@ export async function printStartupBanner(opts: StartupBannerOptions): Promise<vo
   if (allBackends.length === 0) {
     lines.push(
       `  ${paint(c.dim, "No backends configured")}`,
-      `  ${paint(c.dim, "→ aivm backend add --name my-backend --provider lmstudio --url http://localhost:1234")}`,
+      `  ${paint(c.dim, "→ aivm backend add --name my-backend --provider lmstudio --base-url http://localhost:1234")}`,
     );
   } else {
     for (const backend of allBackends) {
