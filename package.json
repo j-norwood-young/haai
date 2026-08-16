@@ -1,6 +1,6 @@
 {
   "name": "ai-v-models",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Modern streaming reverse proxy for OpenAI-compatible LLMs",
   "license": "MIT",
