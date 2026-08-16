@@ -1,6 +1,6 @@
 {
   "name": "@haai/web",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "build": "vite build",
@@ -11,10 +11,10 @@
     "clean": "rm -rf build .svelte-kit"
   },
   "dependencies": {
-    "@haai/core": "workspace:*",
-    "@simplewebauthn/browser": "^13.3.0"
+    "@haai/core": "workspace:*"
   },
   "devDependencies": {
+    "@simplewebauthn/browser": "^13.3.0",
     "@sveltejs/adapter-node": "^5.2.12",
     "@sveltejs/kit": "^2.21.3",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
