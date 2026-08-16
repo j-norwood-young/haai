@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import React from "react";
 import { render } from "ink";
+import { loadHaaiDotenv } from "@haai/core/config";
+import { resolveDefaultProxyUrl } from "@haai/core/http";
 import { Dashboard } from "./components/Dashboard.js";
 
-const baseUrl = process.env["HAAI_URL"] ?? "http://localhost:4000";
+loadHaaiDotenv();
+const baseUrl = await resolveDefaultProxyUrl();
 
 render(React.createElement(Dashboard, { baseUrl }));

@@ -2,7 +2,7 @@
 
 Environment variables override values from `config.yaml`. See [Configuration](./configuration) for full precedence rules.
 
-Variables can be set in the shell or in a `.env` file in the working directory when starting the proxy.
+Variables can be set in the shell or in a `.env` file in the working directory (loaded by the proxy, CLI, MCP server, and TUI).
 
 ## Server
 

@@ -16,8 +16,8 @@ node packages/cli/dist/index.js --help
 
 | Flag | Env | Default | Description |
 |------|-----|---------|-------------|
-| `-u, --url` | `HAAI_URL` | `http://localhost:4000` | Proxy base URL |
-| `-t, --token` | `HAAI_ADMIN_TOKEN` | — | Admin Bearer token |
+| `-u, --url` | `HAAI_URL` | auto (`:4000` / `:4001`) | Proxy base URL. When unset, probes `http://localhost:4000` then `:4001` (`pnpm start` vs `pnpm dev`) |
+| `-t, --token` | `HAAI_ADMIN_TOKEN` | — | Admin Bearer token (also read from `.env` in the working directory) |
 
 ## Commands
 

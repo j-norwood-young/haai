@@ -7,3 +7,7 @@ export {
   hasJsonRequestBody,
   type JsonRequestInit,
 } from "./client.js";
+export {
+  defaultProxyCandidateUrls,
+  resolveDefaultProxyUrl,
+} from "./proxy-url.js";

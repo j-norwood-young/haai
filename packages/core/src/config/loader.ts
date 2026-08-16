@@ -11,6 +11,16 @@ export function defaultDataDir(): string {
   return join(homedir(), ".haai");
 }
 
+/**
+ * Load `.env` from the working directory (if present).
+ * Does not override variables already set in the process environment.
+ */
+export function loadHaaiDotenv(dotenvFile = ".env"): boolean {
+  if (!existsSync(dotenvFile)) return false;
+  loadDotenv({ path: dotenvFile });
+  return true;
+}
+
 /** Ensure the data directory exists with correct structure. */
 export function ensureDataDir(dataDir: string): void {
   for (const sub of ["", "logs", "hooks"]) {
@@ -84,10 +94,7 @@ export interface LoadConfigOptions {
  */
 export function loadConfig(opts: LoadConfigOptions = {}): AppConfig {
   // 1. Load .env file if present
-  const dotenvPath = opts.dotenvFile ?? ".env";
-  if (existsSync(dotenvPath)) {
-    loadDotenv({ path: dotenvPath });
-  }
+  loadHaaiDotenv(opts.dotenvFile ?? ".env");
 
   // 2. Determine data dir (needed to find default config.yaml)
   const dataDir = process.env["HAAI_DATA_DIR"] ?? defaultDataDir();

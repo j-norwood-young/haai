@@ -1,22 +1,31 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { apiFetch } from "@haai/core/http";
+import { loadHaaiDotenv } from "@haai/core/config";
+import { apiFetch, resolveDefaultProxyUrl } from "@haai/core/http";
 import { z } from "zod";
 
-const BASE_URL = process.env["HAAI_URL"] ?? "http://localhost:4000";
+loadHaaiDotenv();
+
 const TOKEN = process.env["HAAI_ADMIN_TOKEN"];
+let baseUrlPromise: Promise<string> | undefined;
+
+function getBaseUrl(): Promise<string> {
+  baseUrlPromise ??= resolveDefaultProxyUrl();
+  return baseUrlPromise;
+}
 
 async function apiRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
   if (TOKEN) headers["Authorization"] = `Bearer ${TOKEN}`;
 
-  return apiFetch<T>(`${BASE_URL}${path}`, { method, headers, body });
+  const baseUrl = await getBaseUrl();
+  return apiFetch<T>(`${baseUrl}${path}`, { method, headers, body });
 }
 
 const server = new McpServer({
   name: "haai",
-  version: "0.0.1",
+  version: "0.2.1",
 });
 
 // ── Backend tools ─────────────────────────────────────────────────────────────

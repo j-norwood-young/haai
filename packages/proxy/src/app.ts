@@ -92,7 +92,7 @@ export async function createApp(ctx: AppContext) {
   app.get("/health", async () => ({
     status: "ok",
     timestamp: new Date().toISOString(),
-    version: "0.0.1",
+    version: "0.2.1",
   }));
 
   // Readiness (checks DB)

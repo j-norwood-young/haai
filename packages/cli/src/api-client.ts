@@ -42,9 +42,13 @@ export class ApiClient {
   }
 }
 
-export function createApiClient(baseUrl: string): ApiClient {
-  const token = process.env["HAAI_ADMIN_TOKEN"];
-  return new ApiClient({ baseUrl, token, sessionCookie: undefined });
+export function createApiClient(baseUrl: string, token = process.env["HAAI_ADMIN_TOKEN"]): ApiClient {
+  const trimmed = token?.trim();
+  return new ApiClient({
+    baseUrl,
+    ...(trimmed ? { token: trimmed } : { token: undefined }),
+    sessionCookie: undefined,
+  });
 }
 
 export { ApiHttpError };
