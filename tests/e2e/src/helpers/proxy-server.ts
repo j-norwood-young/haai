@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { nanoid } from "nanoid";
@@ -17,6 +17,7 @@ import { createApp } from "@ai-v-models/proxy/app";
 import { KeyAuthenticator } from "@ai-v-models/proxy/key-auth";
 import { BackendBalancer } from "@ai-v-models/proxy/balancer";
 import { SseEmitter } from "@ai-v-models/proxy/sse";
+import { PluginRuntime } from "@ai-v-models/proxy/plugins/runtime";
 import { getPort } from "./ports.js";
 
 export interface TestProxy {
@@ -158,6 +159,21 @@ export async function startTestProxy(): Promise<TestProxy> {
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS plugins (
+      id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT,
+      source TEXT NOT NULL, version TEXT, manifest TEXT NOT NULL,
+      config_schema TEXT, bundle_path TEXT,
+      needs_response_buffer INTEGER NOT NULL DEFAULT 0,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS plugin_bindings (
+      id TEXT PRIMARY KEY, plugin_id TEXT NOT NULL,
+      scope_type TEXT NOT NULL, scope_id TEXT, config TEXT,
+      "order" INTEGER NOT NULL DEFAULT 0, enabled INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (plugin_id) REFERENCES plugins(id) ON DELETE CASCADE
+    );
   `);
 
   const now = Date.now();
@@ -191,6 +207,9 @@ export async function startTestProxy(): Promise<TestProxy> {
   const config = loadConfig({ configFile: join(dataDir, "config.yaml") });
   config.server.port = port;
 
+  const pluginsDir = join(dataDir, "plugins");
+  mkdirSync(pluginsDir, { recursive: true });
+
   const ctx = {
     db,
     config,
@@ -198,6 +217,8 @@ export async function startTestProxy(): Promise<TestProxy> {
     keyAuth: new KeyAuthenticator(db),
     balancer: new BackendBalancer(),
     sse: new SseEmitter(),
+    pluginRuntime: new PluginRuntime(),
+    pluginsDir,
   };
 
   const app = await createApp(ctx);

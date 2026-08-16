@@ -16,7 +16,9 @@ async function insertBackend(proxy: TestProxy, mockUrl: string): Promise<string>
     id, name: `backend-${id}`, displayName: "Test", hostName: "test",
     provider: "generic", baseUrl: mockUrl, keyMode: "passthrough",
     encryptedApiKey: null, enabled: true, weight: 1, maxConcurrency: 10,
-    healthCheckEnabled: false, createdAt: now, updatedAt: now,
+    healthCheckEnabled: false,
+    availableModels: JSON.stringify(["test-model"]),
+    createdAt: now, updatedAt: now,
   }).run();
   return id;
 }

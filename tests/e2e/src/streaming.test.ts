@@ -41,6 +41,7 @@ describe("Streaming proxy", () => {
       weight: 1,
       maxConcurrency: 10,
       healthCheckEnabled: false,
+      availableModels: JSON.stringify(["test-model"]),
       createdAt: now,
       updatedAt: now,
     }).run();
@@ -201,6 +202,7 @@ describe("V-model routing", () => {
       weight: 1,
       maxConcurrency: 10,
       healthCheckEnabled: false,
+      availableModels: JSON.stringify(["underlying-model"]),
       createdAt: now,
       updatedAt: now,
     }).run();

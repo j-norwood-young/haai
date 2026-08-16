@@ -24,6 +24,10 @@
     "./sse": {
       "import": "./dist/sse.js",
       "types": "./dist/sse.d.ts"
+    },
+    "./plugins/runtime": {
+      "import": "./dist/plugins/runtime.js",
+      "types": "./dist/plugins/runtime.d.ts"
     }
   },
   "bin": {
