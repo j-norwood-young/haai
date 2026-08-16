@@ -211,6 +211,10 @@ docs/              VitePress documentation
 examples/plugins/  Example sandboxed plugins
 ```
 
+## Migrating from ai-v-models
+
+If you still have an older **AiVM** / **ai-v-models** data directory or Docker volume, see [Migrating from ai-v-models](docs/guide/migrating-from-aivm.md).
+
 ## License
 
 [MIT](LICENSE)

@@ -103,6 +103,7 @@ export default defineConfig({
           { text: "Reverse Proxy (nginx)", link: "/guide/reverse-proxy" },
           { text: "Kubernetes", link: "/guide/kubernetes" },
           { text: "Systemd", link: "/guide/systemd" },
+          { text: "Migrating from ai-v-models", link: "/guide/migrating-from-aivm" },
         ],
       },
     ],
