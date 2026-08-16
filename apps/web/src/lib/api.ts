@@ -548,6 +548,22 @@ export interface MetricsEvent {
 	created_at: string;
 }
 
+export interface MetricsFilters {
+	keyId?: string;
+	vmodelId?: string;
+	backendId?: string;
+	backendModelId?: string;
+}
+
+function metricsFiltersQuery(params?: MetricsFilters): string {
+	if (!params) return '';
+	return new URLSearchParams(
+		Object.entries(params)
+			.filter(([, v]) => v !== undefined && v !== '')
+			.map(([k, v]) => [k, String(v)])
+	).toString();
+}
+
 export interface User {
 	id: string;
 	username: string;
@@ -749,19 +765,28 @@ export const api = {
 		request<{ success: boolean; error?: string }>(`/hooks/${id}/test`, { method: 'POST' }),
 
 	// Metrics
-	getMetricsSummary: () => request<MetricsSummary>('/metrics/summary'),
-	getMetricsRollups: (params: { period?: string; limit?: number; since?: string }) => {
+	getMetricsSummary: (params?: MetricsFilters) => {
+		const qs = metricsFiltersQuery(params);
+		return request<MetricsSummary>(`/metrics/summary${qs ? `?${qs}` : ''}`);
+	},
+	getMetricsRollups: (params: {
+		period?: string;
+		limit?: number;
+		since?: string;
+	} & MetricsFilters) => {
 		const qs = new URLSearchParams(
 			Object.entries(params)
-				.filter(([, v]) => v !== undefined)
+				.filter(([, v]) => v !== undefined && v !== '')
 				.map(([k, v]) => [k, String(v)])
 		).toString();
 		return request<MetricsRollup[]>(`/metrics/rollups${qs ? `?${qs}` : ''}`);
 	},
-	getMetricsEvents: async (params: { limit?: number; before?: string }) => {
+	getMetricsEvents: async (
+		params: { limit?: number; since?: string } & MetricsFilters = {}
+	) => {
 		const qs = new URLSearchParams(
 			Object.entries(params)
-				.filter(([, v]) => v !== undefined)
+				.filter(([, v]) => v !== undefined && v !== '')
 				.map(([k, v]) => [k, String(v)])
 		).toString();
 		const rows = await request<MetricsEventApiRow[]>(`/metrics/events${qs ? `?${qs}` : ''}`);

@@ -1,13 +1,50 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { api } from '$lib/api.js';
 	import { sse } from '$lib/sse.svelte.js';
-	import type { MetricsSummary, MetricsRollup } from '$lib/api.js';
+	import type { ApiKey, Backend, MetricsSummary, MetricsRollup, VModel } from '$lib/api.js';
 
 	let summary = $state<MetricsSummary | null>(null);
 	let rollups = $state<MetricsRollup[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let period = $state<'hour' | 'day' | 'week' | 'month'>('hour');
+
+	let backends = $state<Backend[]>([]);
+	let vmodels = $state<VModel[]>([]);
+	let keys = $state<ApiKey[]>([]);
+
+	let filterBackendId = $state('');
+	let filterVmodelId = $state('');
+	let filterModelId = $state('');
+	let filterKeyId = $state('');
+
+	const hasFilters = $derived(
+		Boolean(filterBackendId || filterVmodelId || filterModelId || filterKeyId)
+	);
+
+	const modelOptions = $derived(
+		[
+			...new Set(
+				vmodels.flatMap((v) => v.backends.map((b) => b.backend_model_id).filter(Boolean))
+			)
+		].sort((a, b) => a.localeCompare(b))
+	);
+
+	async function loadFilterOptions() {
+		try {
+			const [nextBackends, nextVmodels, nextKeys] = await Promise.all([
+				api.getBackends(),
+				api.getVModels(),
+				api.getKeys()
+			]);
+			backends = nextBackends;
+			vmodels = nextVmodels;
+			keys = nextKeys;
+		} catch {
+			// Dropdowns stay empty; metrics still load
+		}
+	}
 
 	async function load() {
 		loading = true;
@@ -22,9 +59,15 @@
 							? 48 * 7 * 86400 * 1000
 							: 48 * 30 * 86400 * 1000;
 			const since = new Date(Date.now() - windowMs).toISOString();
+			const filters = {
+				...(filterBackendId ? { backendId: filterBackendId } : {}),
+				...(filterVmodelId ? { vmodelId: filterVmodelId } : {}),
+				...(filterModelId ? { backendModelId: filterModelId } : {}),
+				...(filterKeyId ? { keyId: filterKeyId } : {})
+			};
 			const [nextSummary, nextRollups] = await Promise.all([
-				api.getMetricsSummary(),
-				api.getMetricsRollups({ period, limit: 48, since })
+				api.getMetricsSummary(filters),
+				api.getMetricsRollups({ period, limit: 48, since, ...filters })
 			]);
 			summary = nextSummary;
 			rollups = nextRollups;
@@ -35,8 +78,23 @@
 		}
 	}
 
+	function clearFilters() {
+		filterBackendId = '';
+		filterVmodelId = '';
+		filterModelId = '';
+		filterKeyId = '';
+	}
+
+	onMount(() => {
+		void loadFilterOptions();
+	});
+
 	$effect(() => {
 		void period;
+		void filterBackendId;
+		void filterVmodelId;
+		void filterModelId;
+		void filterKeyId;
 		void sse.latestEvent;
 		load();
 	});
@@ -87,6 +145,54 @@
 				</button>
 			{/each}
 		</div>
+	</div>
+
+	<div class="flex flex-wrap items-end gap-3 mb-6">
+		<div class="min-w-[140px] flex-1">
+			<label for="filter-backend" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Backend</label>
+			<select id="filter-backend" class="input" bind:value={filterBackendId}>
+				<option value="">All</option>
+				{#each backends as b (b.id)}
+					<option value={b.id}>{b.name}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="min-w-[140px] flex-1">
+			<label for="filter-vmodel" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Virtual model</label>
+			<select id="filter-vmodel" class="input" bind:value={filterVmodelId}>
+				<option value="">All</option>
+				{#each vmodels as v (v.id)}
+					<option value={v.id}>{v.display_name || v.model_id}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="min-w-[140px] flex-1">
+			<label for="filter-model" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Model</label>
+			<select id="filter-model" class="input" bind:value={filterModelId}>
+				<option value="">All</option>
+				{#each modelOptions as mid (mid)}
+					<option value={mid}>{mid}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="min-w-[140px] flex-1">
+			<label for="filter-key" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">API key</label>
+			<select id="filter-key" class="input" bind:value={filterKeyId}>
+				<option value="">All</option>
+				{#each keys as k (k.id)}
+					<option value={k.id}>{k.name} ({k.key_prefix}…)</option>
+				{/each}
+			</select>
+		</div>
+		{#if hasFilters}
+			<button
+				type="button"
+				class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors pb-2"
+				onclick={clearFilters}
+			>
+				Clear filters
+			</button>
+		{/if}
 	</div>
 
 	{#if error}
