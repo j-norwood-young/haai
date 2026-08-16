@@ -140,16 +140,18 @@ export class UsageRecorder {
 
   private async updateRollups(opts: RecordUsageOptions, _now: number): Promise<void> {
     const periods = ["hour", "day", "week", "month"];
-    const dimensions = [
-      { keyId: opts.keyId, vmodelId: null, backendId: null },
-      { keyId: null, vmodelId: opts.vmodelId, backendId: null },
-      { keyId: null, vmodelId: null, backendId: opts.backendId },
+    // Global rollup (all dims null) is what the dashboard/analytics charts use.
+    // Per-dimension rollups support filtered queries by key / v-model / backend.
+    const dimensions: Array<{ keyId: string | null; vmodelId: string | null; backendId: string | null }> = [
+      { keyId: null, vmodelId: null, backendId: null },
     ];
+    if (opts.keyId) dimensions.push({ keyId: opts.keyId, vmodelId: null, backendId: null });
+    if (opts.vmodelId) dimensions.push({ keyId: null, vmodelId: opts.vmodelId, backendId: null });
+    if (opts.backendId) dimensions.push({ keyId: null, vmodelId: null, backendId: opts.backendId });
 
     for (const period of periods) {
       const bucket = getPeriodBucket(period);
       for (const dim of dimensions) {
-        if (!dim.keyId && !dim.vmodelId && !dim.backendId) continue;
         await this.upsertRollup(period, bucket, dim, opts);
       }
     }

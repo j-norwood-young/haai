@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { eq, desc, gte, and } from "drizzle-orm";
+import { eq, desc, gte, and, isNull } from "drizzle-orm";
 import { usageRollups, usageEvents, backends as backendsTable, apiKeys, vmodels } from "@ai-v-models/core";
 import { registry } from "../../metrics.js";
 import type { AppContext } from "../../context.js";
@@ -79,9 +79,24 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
     const { period = "hour", keyId, vmodelId, backendId, since, limit = "48" } = req.query;
 
     const conditions = [eq(usageRollups.period, period)];
-    if (keyId) conditions.push(eq(usageRollups.keyId, keyId));
-    if (vmodelId) conditions.push(eq(usageRollups.vmodelId, vmodelId));
-    if (backendId) conditions.push(eq(usageRollups.backendId, backendId));
+    if (keyId) {
+      conditions.push(eq(usageRollups.keyId, keyId));
+    } else if (vmodelId) {
+      conditions.push(eq(usageRollups.vmodelId, vmodelId));
+    } else if (backendId) {
+      conditions.push(eq(usageRollups.backendId, backendId));
+    } else {
+      // Unfiltered charts use the global (undimensioned) rollup series only.
+      // Per-key/vmodel/backend rows would otherwise appear as separate bars and inflate volume.
+      conditions.push(isNull(usageRollups.keyId));
+      conditions.push(isNull(usageRollups.vmodelId));
+      conditions.push(isNull(usageRollups.backendId));
+    }
+
+    if (since) {
+      const sinceBucket = /^\d+$/.test(since) ? new Date(parseInt(since, 10)).toISOString() : since;
+      conditions.push(gte(usageRollups.bucket, sinceBucket));
+    }
 
     const rows = await ctx.db.db
       .select()
@@ -99,7 +114,6 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
       avg_latency_ms: row.avgDurationMs ?? undefined,
     }));
   });
-
   // Recent events
   app.get<{ Querystring: { limit?: string; since?: string; keyId?: string; vmodelId?: string } }>(
     "/api/v1/metrics/events",

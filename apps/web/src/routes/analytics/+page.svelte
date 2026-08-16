@@ -13,9 +13,18 @@
 		loading = true;
 		error = null;
 		try {
+			const windowMs =
+				period === 'hour'
+					? 48 * 3600 * 1000
+					: period === 'day'
+						? 48 * 86400 * 1000
+						: period === 'week'
+							? 48 * 7 * 86400 * 1000
+							: 48 * 30 * 86400 * 1000;
+			const since = new Date(Date.now() - windowMs).toISOString();
 			const [nextSummary, nextRollups] = await Promise.all([
 				api.getMetricsSummary(),
-				api.getMetricsRollups({ period, limit: 48 })
+				api.getMetricsRollups({ period, limit: 48, since })
 			]);
 			summary = nextSummary;
 			rollups = nextRollups;

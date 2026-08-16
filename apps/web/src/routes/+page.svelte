@@ -10,9 +10,10 @@
 
 	async function load() {
 		try {
+			const since = new Date(Date.now() - 86400 * 1000).toISOString();
 			const [nextSummary, nextRollups] = await Promise.all([
 				api.getMetricsSummary(),
-				api.getMetricsRollups({ period: 'hour', limit: 24 })
+				api.getMetricsRollups({ period: 'hour', limit: 24, since })
 			]);
 			summary = nextSummary;
 			rollups = nextRollups;

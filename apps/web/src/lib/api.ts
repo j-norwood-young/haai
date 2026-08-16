@@ -702,7 +702,7 @@ export const api = {
 
 	// Metrics
 	getMetricsSummary: () => request<MetricsSummary>('/metrics/summary'),
-	getMetricsRollups: (params: { period?: string; limit?: number }) => {
+	getMetricsRollups: (params: { period?: string; limit?: number; since?: string }) => {
 		const qs = new URLSearchParams(
 			Object.entries(params)
 				.filter(([, v]) => v !== undefined)
