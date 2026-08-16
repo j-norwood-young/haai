@@ -1,5 +1,7 @@
-import { fetch, RequestInit } from "undici";
+import { fetch } from "undici";
+import type { RequestInit } from "undici";
 import type { FastifyReply } from "fastify";
+import type { ChatResponse } from "@ai-v-models/plugin-sdk";
 import {
   httpRequestsTotal,
   httpRequestDurationMs,
@@ -40,7 +42,7 @@ export interface ProxyResult {
   error: string | undefined;
   responseBody: string | undefined;
   /** Populated only when bufferResponse=true; the parsed ChatResponse for plugin transforms */
-  bufferedResponse: import("@ai-v-models/plugin-sdk").ChatResponse | null;
+  bufferedResponse: ChatResponse | null;
 }
 
 export async function streamingProxy(
@@ -114,13 +116,13 @@ export async function streamingProxy(
       const durationMs = Date.now() - start;
       ttft = durationMs;
 
-      let bufferedResponse: import("@ai-v-models/plugin-sdk").ChatResponse | null = null;
+      let bufferedResponse: ChatResponse | null = null;
       try {
         // If streaming, reconstruct a ChatResponse from SSE chunks
         if (isStreaming) {
           bufferedResponse = reconstructResponseFromSse(rawBody);
         } else {
-          bufferedResponse = JSON.parse(rawBody) as import("@ai-v-models/plugin-sdk").ChatResponse;
+          bufferedResponse = JSON.parse(rawBody) as ChatResponse;
         }
         const usage = bufferedResponse?.usage;
         if (usage) {
@@ -271,7 +273,7 @@ export async function streamingProxy(
  * Reconstruct a single ChatResponse object by concatenating SSE delta chunks.
  * Used when bufferResponse=true for streaming upstreams.
  */
-function reconstructResponseFromSse(raw: string): import("@ai-v-models/plugin-sdk").ChatResponse {
+function reconstructResponseFromSse(raw: string): ChatResponse {
   const lines = raw.split("\n");
   let id = "";
   let model = "";
@@ -300,7 +302,7 @@ function reconstructResponseFromSse(raw: string): import("@ai-v-models/plugin-sd
     }
   }
 
-  const result: import("@ai-v-models/plugin-sdk").ChatResponse = {
+  const result: ChatResponse = {
     id: id || `aivm-reconstructed-${Date.now()}`,
     object: "chat.completion",
     created,

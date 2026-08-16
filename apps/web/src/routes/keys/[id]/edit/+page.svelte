@@ -78,15 +78,24 @@
 		saving = true;
 		saveError = null;
 		try {
-			await api.updateKey(id, {
-				name,
-				enabled,
-				rpm_limit: rpmLimit ? parseInt(rpmLimit) : undefined,
-				day_budget: dayBudget ? parseFloat(dayBudget) : undefined,
-				expires_at: expires || undefined,
-				allowed_vmodels: allowedVModelsPayload(restrictVModels, selectedVModelIds, 'update'),
-				allowed_backends: allowedBackendsPayload(restrictBackends, selectedBackendIds, 'update')
-			});
+			const update: Partial<ApiKey> = { name, enabled };
+			if (rpmLimit) update.rpm_limit = parseInt(rpmLimit);
+			if (dayBudget) update.day_budget = parseFloat(dayBudget);
+			if (expires) update.expires_at = expires;
+			const allowed_vmodels = allowedVModelsPayload(
+				restrictVModels,
+				selectedVModelIds,
+				'update'
+			);
+			const allowed_backends = allowedBackendsPayload(
+				restrictBackends,
+				selectedBackendIds,
+				'update'
+			);
+			if (allowed_vmodels !== undefined) update.allowed_vmodels = allowed_vmodels;
+			if (allowed_backends !== undefined) update.allowed_backends = allowed_backends;
+
+			await api.updateKey(id, update);
 			goto('/keys');
 		} catch (err) {
 			saveError = err instanceof Error ? err.message : 'Failed to update key';

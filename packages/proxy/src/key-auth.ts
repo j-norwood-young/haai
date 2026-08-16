@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { DbClient } from "@ai-v-models/core";
 import { apiKeys, tokenBudgetCounters } from "@ai-v-models/core";
 import type { ApiKey } from "@ai-v-models/core";

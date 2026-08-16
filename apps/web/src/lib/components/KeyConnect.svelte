@@ -13,7 +13,7 @@
 		keyPrefix: string;
 		retrievable: boolean;
 		fetchSecret: () => Promise<string>;
-		allowedVModels?: string[];
+		allowedVModels?: string[] | null | undefined;
 		initialSecret?: string | null;
 		class?: string;
 	}

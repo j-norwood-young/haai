@@ -269,7 +269,7 @@ export async function keysRoutes(app: FastifyInstance, ctx: AppContext): Promise
   // Get key usage logs
   app.get<{ Params: { id: string }; Querystring: { limit?: string; since?: string } }>(
     "/api/v1/keys/:id/logs",
-    async (req, reply) => {
+    async (req, _reply) => {
       const limit = Math.min(parseInt(req.query.limit ?? "100", 10), 500);
       const since = req.query.since ? parseInt(req.query.since, 10) : undefined;
 

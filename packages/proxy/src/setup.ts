@@ -1,7 +1,5 @@
-import { join } from "node:path";
 import { hash } from "@node-rs/argon2";
 import { nanoid } from "nanoid";
-import { eq } from "drizzle-orm";
 import { users } from "@ai-v-models/core";
 import type { DbClient } from "@ai-v-models/core";
 import { getLogger } from "./logger.js";

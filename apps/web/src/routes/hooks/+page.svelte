@@ -113,7 +113,7 @@
 									{#if testResults[hook.id]?.loading}
 										<span class="text-xs text-gray-500">Testing…</span>
 									{:else if testResults[hook.id]}
-										{@const r = testResults[hook.id]}
+										{@const r = testResults[hook.id]!}
 										{#if r.success}
 											<span class="text-xs text-green-400">✓ OK</span>
 										{:else}

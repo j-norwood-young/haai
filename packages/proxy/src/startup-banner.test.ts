@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { AppConfig } from "@ai-v-models/core";
 import { isRunningInDocker, resolvePublicBaseUrl, resolveWebUiUrl } from "./startup-banner.js";
 

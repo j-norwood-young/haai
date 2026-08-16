@@ -3,7 +3,7 @@ import type { LogConfig } from "@ai-v-models/core";
 
 let logger: pino.Logger;
 
-export function createLogger(config: LogConfig, dataDir: string): pino.Logger {
+export function createLogger(config: LogConfig, _dataDir: string): pino.Logger {
   const streams: pino.DestinationStream[] = [];
 
   const stdoutStream = pino.destination(1);

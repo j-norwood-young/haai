@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.js';
+	import type { ApiKey } from '$lib/api.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SecretReveal from '$lib/components/SecretReveal.svelte';
 	import KeyConnect from '$lib/components/KeyConnect.svelte';
@@ -62,14 +63,24 @@
 		loading = true;
 		error = null;
 		try {
-			const result = await api.createKey({
-				name,
-				rpm_limit: rpmLimit ? parseInt(rpmLimit) : undefined,
-				day_budget: dayBudget ? parseFloat(dayBudget) : undefined,
-				expires_at: expires || undefined,
-				allowed_vmodels: allowedVModelsPayload(restrictVModels, selectedVModelIds, 'create'),
-				allowed_backends: allowedBackendsPayload(restrictBackends, selectedBackendIds, 'create')
-			});
+			const data: Partial<ApiKey> = { name };
+			if (rpmLimit) data.rpm_limit = parseInt(rpmLimit);
+			if (dayBudget) data.day_budget = parseFloat(dayBudget);
+			if (expires) data.expires_at = expires;
+			const allowed_vmodels = allowedVModelsPayload(
+				restrictVModels,
+				selectedVModelIds,
+				'create'
+			);
+			const allowed_backends = allowedBackendsPayload(
+				restrictBackends,
+				selectedBackendIds,
+				'create'
+			);
+			if (allowed_vmodels !== undefined) data.allowed_vmodels = allowed_vmodels;
+			if (allowed_backends !== undefined) data.allowed_backends = allowed_backends;
+
+			const result = await api.createKey(data);
 			newKeyValue = result.key;
 			newKeyPrefix = result.key_prefix;
 			showOnce = result.showOnce;

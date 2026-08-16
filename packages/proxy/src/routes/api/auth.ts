@@ -7,7 +7,6 @@ import { authenticator } from "otplib";
 import {
   users,
   sessions,
-  auditLog,
   pendingTotpLogins,
   apiTokens,
   encrypt,

@@ -14,7 +14,7 @@ import {
   type BackendCandidate,
 } from "../../balancer.js";
 import type { Backend } from "@ai-v-models/core";
-import type { ChatRequest } from "@ai-v-models/plugin-sdk";
+import type { ChatRequest, ChatResponse } from "@ai-v-models/plugin-sdk";
 import { resolveBindings } from "../../plugins/loader.js";
 import type { PluginHostContext } from "../../plugins/runtime.js";
 
@@ -224,7 +224,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
             body: JSON.stringify(aiBody),
           });
           if (!res.ok) throw new Error(`ai.complete upstream error: ${res.status}`);
-          return res.json() as Promise<import("@ai-v-models/plugin-sdk").ChatResponse>;
+          return res.json() as Promise<ChatResponse>;
         },
       };
 

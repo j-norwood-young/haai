@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import ivm from "isolated-vm";
-import type { ChatRequest, ChatResponse, PluginDefinition } from "@ai-v-models/plugin-sdk";
+import type { ChatRequest, ChatResponse } from "@ai-v-models/plugin-sdk";
 import type { ResolvedBinding } from "@ai-v-models/core";
 import { getLogger } from "../logger.js";
 

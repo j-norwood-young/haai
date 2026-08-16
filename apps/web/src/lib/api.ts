@@ -1,5 +1,9 @@
 import { getApiBaseUrl } from './api-base.js';
 import { ApiHttpError, apiFetch } from '@ai-v-models/core/http';
+import type {
+	PublicKeyCredentialCreationOptionsJSON,
+	PublicKeyCredentialRequestOptionsJSON
+} from '@simplewebauthn/browser';
 
 interface BackendApiRow {
 	id: string;
@@ -235,8 +239,8 @@ export interface ApiKey {
 	suspended_reason?: string;
 	rpm_limit?: number;
 	day_budget?: number;
-	allowed_vmodels?: string[];
-	allowed_backends?: string[];
+	allowed_vmodels?: string[] | null | undefined;
+	allowed_backends?: string[] | null | undefined;
 	expires_at?: string;
 	last_used_at?: string;
 	created_at: string;
