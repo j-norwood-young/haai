@@ -135,7 +135,7 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
 
   // Global stats summary
   app.get<{
-    Querystring: MetricsFilters;
+    Querystring: MetricsFilters & { since?: string };
   }>("/api/v1/metrics/summary", async (req) => {
     const filters: MetricsFilters = {
       ...(req.query.keyId ? { keyId: req.query.keyId } : {}),
@@ -144,7 +144,7 @@ export async function metricsApiRoutes(app: FastifyInstance, ctx: AppContext): P
       ...(req.query.backendModelId ? { backendModelId: req.query.backendModelId } : {}),
     };
 
-    const since = Date.now() - 86400 * 1000; // last 24h
+    const since = parseSinceMs(req.query.since) ?? Date.now() - 86400 * 1000;
     const eventConditions = [gte(usageEvents.timestamp, since), ...usageEventFilterConditions(filters)];
     const events = await ctx.db.db
       .select()

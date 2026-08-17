@@ -98,7 +98,7 @@ export async function modelsRoutes(app: FastifyInstance, ctx: AppContext): Promi
       .all();
 
     for (const vm of allVModels) {
-      if (!isVModelAllowed(allowedVModels, vm.modelId)) continue;
+      if (!isVModelAllowed(allowedVModels, vm.modelId, vm.id)) continue;
       models.push({
         id: vm.modelId,
         object: "model",

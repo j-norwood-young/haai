@@ -148,7 +148,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
 
     const capabilities = { tools: hasTools, vision: hasVision };
     const modelAccess = vmodel
-      ? await ctx.keyAuth.checkVModelAccess(key, requestedModel, capabilities)
+      ? await ctx.keyAuth.checkVModelAccess(key, requestedModel, capabilities, vmodel.id)
       : await ctx.keyAuth.checkBackendAccess(key, candidates[0]!.backendId, capabilities);
     if (!modelAccess.allowed) {
       return reply.status(403).send({ error: { message: modelAccess.error, type: "permission_error" } });

@@ -70,7 +70,7 @@
 				...(filterKeyId ? { keyId: filterKeyId } : {})
 			};
 			const [nextSummary, nextRollups] = await Promise.all([
-				api.getMetricsSummary(filters),
+				api.getMetricsSummary({ ...filters, since }),
 				api.getMetricsRollups({ period, limit: 48, since, ...filters })
 			]);
 			if (my !== loadSeq) return;
@@ -113,6 +113,15 @@
 		void load();
 	});
 
+	const windowLabel = $derived(
+		period === 'hour'
+			? '48 hours'
+			: period === 'day'
+				? '48 days'
+				: period === 'week'
+					? '48 weeks'
+					: '48 months'
+	);
 	const maxRequests = $derived(
 		rollups.length > 0 ? Math.max(...rollups.map((r) => r.requests), 1) : 1
 	);
@@ -153,6 +162,7 @@
 			{#each (['hour', 'day', 'week', 'month'] as const) as p (p)}
 				<button
 					onclick={() => (period = p)}
+					data-testid="period-{p}"
 					class="{period === p ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} capitalize"
 				>
 					{p}
@@ -220,20 +230,20 @@
 		<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 			<div class="card p-4">
 				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Requests</p>
-				<p class="text-2xl font-bold text-[var(--color-text)]">{formatNum(summary.total_requests_24h)}</p>
-				<p class="text-xs text-[var(--color-text-subtle)] mt-1">24 hours</p>
+				<p class="text-2xl font-bold text-[var(--color-text)]" data-testid="metrics-total-requests">{formatNum(summary.total_requests_24h)}</p>
+				<p class="text-xs text-[var(--color-text-subtle)] mt-1" data-testid="metrics-window-label">{windowLabel}</p>
 			</div>
 			<div class="card p-4">
 				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Tokens</p>
 				<p class="text-2xl font-bold text-[var(--color-text)]">{formatNum(summary.total_tokens_24h)}</p>
-				<p class="text-xs text-[var(--color-text-subtle)] mt-1">24 hours</p>
+				<p class="text-xs text-[var(--color-text-subtle)] mt-1">{windowLabel}</p>
 			</div>
 			<div class="card p-4">
 				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Error Rate</p>
 				<p class="text-2xl font-bold {summary.error_rate_24h > 0.05 ? 'text-red-400' : 'text-[var(--color-text)]'}">
 					{formatPct(summary.error_rate_24h)}
 				</p>
-				<p class="text-xs text-[var(--color-text-subtle)] mt-1">24 hours</p>
+				<p class="text-xs text-[var(--color-text-subtle)] mt-1">{windowLabel}</p>
 			</div>
 			<div class="card p-4">
 				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Avg TTFT</p>
@@ -265,7 +275,7 @@
 							></div>
 						{/each}
 					</div>
-					<div class="flex justify-between mt-2 text-xs text-[var(--color-text-subtle)]">
+					<div class="flex justify-between mt-2 text-xs text-[var(--color-text-subtle)]" data-testid="metrics-chart-range">
 						<span>{formatTime(rollups[0]?.timestamp ?? '')}</span>
 						<span>{formatTime(rollups[rollups.length - 1]?.timestamp ?? '')}</span>
 					</div>

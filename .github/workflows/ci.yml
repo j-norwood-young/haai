@@ -44,6 +44,20 @@ jobs:
         env:
           NODE_ENV: test
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @haai/playwright exec playwright install chromium --with-deps
+
+      - name: Run Playwright tests
+        run: pnpm --filter @haai/playwright test:playwright
+        env:
+          NODE_ENV: test
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

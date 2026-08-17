@@ -4,6 +4,7 @@ packages:
   - "tools/*"
   - "docs"
   - "tests/e2e"
+  - "tests/playwright"
   - "examples/plugins/*"
 allowBuilds:
   better-sqlite3: true

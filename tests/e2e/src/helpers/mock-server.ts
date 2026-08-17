@@ -13,7 +13,7 @@ export interface StartedMockServer {
 export async function startMockServer(
   overrides: Partial<MockBackendConfig> = {},
 ): Promise<StartedMockServer> {
-  const port = await getPort();
+  const port = overrides.port ?? (await getPort());
   const config: MockBackendConfig = {
     port,
     host: "127.0.0.1",

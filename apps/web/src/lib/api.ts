@@ -557,6 +557,7 @@ export interface MetricsFilters {
 	vmodelId?: string;
 	backendId?: string;
 	backendModelId?: string;
+	since?: string;
 }
 
 function metricsFiltersQuery(params?: MetricsFilters): string {

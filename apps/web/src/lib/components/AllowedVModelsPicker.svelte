@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api, type VModel } from '$lib/api.js';
+	import { normalizeVModelAllowList, vModelMatchesAllowList } from '$lib/vmodel-utils.js';
 
 	interface Props {
 		restrict: boolean;
@@ -18,6 +19,9 @@
 	onMount(async () => {
 		try {
 			vmodels = await api.getVModels();
+			if (restrict && selectedIds.length > 0) {
+				selectedIds = normalizeVModelAllowList(selectedIds, vmodels);
+			}
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load virtual models';
 		} finally {
@@ -34,7 +38,9 @@
 			} else if (m === 'specific') {
 				restrict = true;
 				if (selectedIds.length === 0) {
-					selectedIds = enabledVModels.map((vm) => vm.id);
+					selectedIds = enabledVModels.map((vm) => vm.model_id);
+				} else {
+					selectedIds = normalizeVModelAllowList(selectedIds, enabledVModels);
 				}
 			} else {
 				restrict = true;
@@ -42,11 +48,11 @@
 			}
 		}
 
-		function toggleModel(modelId: string) {
-			if (selectedIds.includes(modelId)) {
-				selectedIds = selectedIds.filter((id) => id !== modelId);
+		function toggleModel(vm: VModel) {
+			if (vModelMatchesAllowList(vm, selectedIds)) {
+				selectedIds = selectedIds.filter((id) => id !== vm.model_id && id !== vm.id);
 			} else {
-				selectedIds = [...selectedIds, modelId];
+				selectedIds = [...selectedIds, vm.model_id];
 			}
 		}
 
@@ -111,8 +117,8 @@
 					<input
 						type="checkbox"
 						class="checkbox"
-						checked={selectedIds.includes(vm.id)}
-						onchange={() => toggleModel(vm.id)}
+						checked={vModelMatchesAllowList(vm, selectedIds)}
+						onchange={() => toggleModel(vm)}
 					/>
 					<span class="font-mono text-cyan-400/90">{vm.model_id}</span>
 					{#if vm.display_name && vm.display_name !== vm.model_id}

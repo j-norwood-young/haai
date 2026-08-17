@@ -27,11 +27,21 @@ export interface TestProxy {
   db: ReturnType<typeof createDbClient>;
   masterKey: Buffer;
   adminToken: string;
+  adminUsername: string;
+  adminPassword: string;
   stop: () => Promise<void>;
 }
 
-export async function startTestProxy(): Promise<TestProxy> {
-  const port = await getPort();
+export interface StartTestProxyOptions {
+  port?: number;
+  adminUsername?: string;
+  adminPassword?: string;
+}
+
+export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<TestProxy> {
+  const port = opts.port ?? (await getPort());
+  const adminUsername = opts.adminUsername ?? "testadmin";
+  const adminPassword = opts.adminPassword ?? "test-admin-password";
   const dataDir = mkdtempSync(join(tmpdir(), "haai-test-"));
   ensureDataDir(dataDir);
 
@@ -178,10 +188,10 @@ export async function startTestProxy(): Promise<TestProxy> {
 
   const now = Date.now();
   const adminUserId = `user-${nanoid(8)}`;
-  const passwordHash = await hash("test-admin-password");
+  const passwordHash = await hash(adminPassword);
   db.db.insert(users).values({
     id: adminUserId,
-    username: "testadmin",
+    username: adminUsername,
     displayName: "Test Admin",
     passwordHash,
     role: "admin",
@@ -231,6 +241,8 @@ export async function startTestProxy(): Promise<TestProxy> {
     db,
     masterKey,
     adminToken,
+    adminUsername,
+    adminPassword,
     stop: async () => {
       await app.close();
       db.sqlite.close();

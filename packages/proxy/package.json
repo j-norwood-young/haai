@@ -17,6 +17,14 @@
       "import": "./dist/app.js",
       "types": "./dist/app.d.ts"
     },
+    "./health": {
+      "import": "./dist/health.js",
+      "types": "./dist/health.d.ts"
+    },
+    "./vmodel-health": {
+      "import": "./dist/vmodel-health.js",
+      "types": "./dist/vmodel-health.d.ts"
+    },
     "./key-auth": {
       "import": "./dist/key-auth.js",
       "types": "./dist/key-auth.d.ts"

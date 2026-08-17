@@ -30,9 +30,19 @@ export function validateKeyModelAccess(
   return null;
 }
 
-export function isVModelAllowed(allowedModels: string[] | null, vmodelId: string): boolean {
+/**
+ * Whether a key may use a v-model. `allowedModels` may contain the public alias
+ * (`smart-chat`) and/or the internal row id (`vmodel-…`); both must match.
+ */
+export function isVModelAllowed(
+  allowedModels: string[] | null,
+  modelId: string,
+  internalId?: string,
+): boolean {
   if (allowedModels === null) return true;
-  return allowedModels.includes(vmodelId);
+  if (allowedModels.includes(modelId)) return true;
+  if (internalId != null && allowedModels.includes(internalId)) return true;
+  return false;
 }
 
 export function isBackendAllowed(allowedBackends: string[] | null, backendId: string): boolean {

@@ -34,4 +34,10 @@ describe("key-access", () => {
     expect(isBackendAllowed(["backend-1"], "backend-1")).toBe(true);
     expect(isBackendAllowed(["backend-1"], "backend-2")).toBe(false);
   });
+
+  it("accepts either the public alias or the internal v-model id", () => {
+    expect(isVModelAllowed(["vmodel-abc"], "smart-chat", "vmodel-abc")).toBe(true);
+    expect(isVModelAllowed(["smart-chat"], "smart-chat", "vmodel-abc")).toBe(true);
+    expect(isVModelAllowed(["vmodel-other"], "smart-chat", "vmodel-abc")).toBe(false);
+  });
 });

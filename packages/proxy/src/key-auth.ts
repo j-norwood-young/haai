@@ -105,11 +105,12 @@ export class KeyAuthenticator {
 
   async checkVModelAccess(
     key: ApiKey,
-    vmodelId: string,
+    modelId: string,
     capabilities: { tools?: boolean; vision?: boolean; embeddings?: boolean },
+    internalId?: string,
   ): Promise<{ allowed: true } | { allowed: false; error: string }> {
-    if (!isVModelAllowed(parseAllowedList(key.allowedModels), vmodelId)) {
-      return { allowed: false, error: `Virtual model ${vmodelId} not allowed for this key` };
+    if (!isVModelAllowed(parseAllowedList(key.allowedModels), modelId, internalId)) {
+      return { allowed: false, error: `Virtual model ${modelId} not allowed for this key` };
     }
     return this.checkCapabilities(key, capabilities);
   }

@@ -8,11 +8,17 @@
     "test:watch": "vitest",
     "clean": "rm -rf coverage"
   },
+  "exports": {
+    "./helpers/proxy-server": "./src/helpers/proxy-server.ts",
+    "./helpers/mock-server": "./src/helpers/mock-server.ts",
+    "./helpers/seed": "./src/helpers/seed.ts"
+  },
   "dependencies": {
     "@haai/core": "workspace:*",
     "@haai/mock-backend": "workspace:*",
     "@haai/proxy": "workspace:*",
     "@node-rs/argon2": "^2.0.0",
+    "drizzle-orm": "^0.44.1",
     "nanoid": "^5.1.5"
   },
   "devDependencies": {

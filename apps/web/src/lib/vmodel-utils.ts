@@ -24,6 +24,19 @@ export function validateKeyAccessSelection(
 	return null;
 }
 
+/** Whether an allow-list entry refers to this v-model (alias or internal id). */
+export function vModelMatchesAllowList(vm: VModel, allowedIds: string[]): boolean {
+	return allowedIds.includes(vm.model_id) || allowedIds.includes(vm.id);
+}
+
+/** Rewrite stored allow-list entries to public aliases (migrates legacy internal ids). */
+export function normalizeVModelAllowList(ids: string[], vmodels: VModel[]): string[] {
+	return ids.map((id) => {
+		const vm = vmodels.find((item) => item.id === id || item.model_id === id);
+		return vm ? vm.model_id : id;
+	});
+}
+
 /** V-models a key may use for Connect / inference (enabled, optional allow-list). */
 export function eligibleVModelsForKey(
 	vmodels: VModel[],
@@ -31,7 +44,7 @@ export function eligibleVModelsForKey(
 ): VModel[] {
 	return vmodels.filter(
 		(vm) =>
-			vm.enabled && (!allowedVModels?.length || allowedVModels.includes(vm.id))
+			vm.enabled && (!allowedVModels?.length || vModelMatchesAllowList(vm, allowedVModels))
 	);
 }
 
