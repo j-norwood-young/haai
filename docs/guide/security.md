@@ -38,7 +38,7 @@ Revoke compromised tokens immediately from Settings or CLI.
 ## Transport
 
 - Session cookies set `secure` when the request protocol is HTTPS
-- Recommended: terminate TLS at a reverse proxy — see [TLS Setup](./tls)
+- Recommended: terminate TLS at a reverse proxy — see [TLS Setup](./tls) — or use [Tailscale Serve](./tailscale) on a private tailnet
 - Request body limit: 10 MB
 
 ## Webhook security
@@ -54,10 +54,11 @@ External hooks support HMAC-SHA256 signatures via `webhookSecret`. Verify `X-HAA
 - [ ] Set token budgets on client keys
 - [ ] Enable TOTP or passkeys for admin accounts
 - [ ] Restrict CORS origins (`HAAI_CORS_ORIGINS`)
-- [ ] Run behind TLS-terminating reverse proxy
+- [ ] Run behind TLS-terminating reverse proxy, or [Tailscale Serve](./tailscale) for tailnet-only access
 
 ## Related
 
 - [TLS Setup](./tls)
+- [Tailscale](./tailscale)
 - [Audit Log](./audit)
 - [Key Modes](./key-modes)

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Optional Docker Compose `tailscale` profile that joins a Tailscale tailnet and serves the proxy over HTTPS on MagicDNS
+- Optional Docker Compose `tailscale` profile that joins a Tailscale tailnet and serves the proxy over HTTPS on MagicDNS, with a [Tailscale](docs/guide/tailscale.md) guide covering auth keys and OAuth clients
 
 ## [0.2.2] - 2026-08-17
 

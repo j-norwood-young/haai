@@ -100,6 +100,7 @@ export default defineConfig({
         text: "Deployment",
         items: [
           { text: "Docker", link: "/guide/docker" },
+          { text: "Tailscale", link: "/guide/tailscale" },
           { text: "Reverse Proxy (nginx)", link: "/guide/reverse-proxy" },
           { text: "Kubernetes", link: "/guide/kubernetes" },
           { text: "Systemd", link: "/guide/systemd" },

@@ -106,7 +106,7 @@ Data is stored in `~/.haai/`. On first run an admin user is created with passwor
 docker compose up
 ```
 
-Runs on port 4000 with data in a Docker volume. See [docs/guide/docker.md](docs/guide/docker.md) for details.
+Runs on port 4000 with data in a Docker volume. See [docs/guide/docker.md](docs/guide/docker.md). To join a Tailscale tailnet, see [docs/guide/tailscale.md](docs/guide/tailscale.md).
 
 ## Usage
 
@@ -178,6 +178,7 @@ Full docs live in [docs/](docs/):
 - [Plugins](docs/guide/plugin-authoring.md)
 - [Hooks](docs/guide/hooks.md)
 - [Docker](docs/guide/docker.md)
+- [Tailscale](docs/guide/tailscale.md)
 - [Kubernetes](docs/guide/kubernetes.md)
 
 Build and serve the docs site locally:

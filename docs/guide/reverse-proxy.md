@@ -92,6 +92,7 @@ For nginx Ingress Controller, use long proxy timeouts for streaming — see [Kub
 ## Related
 
 - [TLS Setup](./tls) — Caddy, certificates, WebAuthn
+- [Tailscale](./tailscale) — HTTPS on your tailnet via Serve
 - [Docker](./docker)
 - [Systemd](./systemd)
 - [Environment Variables](./env-vars)

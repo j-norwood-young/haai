@@ -33,4 +33,4 @@ Documentation for **HAAI** — a streaming reverse proxy for OpenAI-compatible L
 
 ## Deployment
 
-- [Docker](./docker) · [Kubernetes](./kubernetes) · [Systemd](./systemd)
+- [Docker](./docker) · [Tailscale](./tailscale) · [Kubernetes](./kubernetes) · [Systemd](./systemd)

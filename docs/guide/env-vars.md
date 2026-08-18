@@ -70,6 +70,19 @@ These variables are read by the `haai` CLI, MCP server, and other clients — no
 | `HAAI_ADMIN_TOKEN` | Admin Bearer token for CLI/API access |
 | `HAAI_API_KEY` | Client API key for inference commands such as `haai prompt` |
 
+## Docker Compose / Tailscale
+
+These are read by Compose and the Tailscale sidecar, not by the HAAI process. See [Tailscale](./tailscale) for how to generate `TS_AUTHKEY`.
+
+| Variable | Default | Description |
+|---|---|---|
+| `COMPOSE_PROFILES` | — | Set to `tailscale` to start the sidecar with `docker compose up` |
+| `TS_AUTHKEY` | — | Tailscale auth key or OAuth client secret |
+| `TS_HOSTNAME` | `haai` | Hostname on the tailnet |
+| `TS_EXTRA_ARGS` | — | Extra `tailscale up` flags (required tags when using an OAuth secret) |
+| `TS_USERSPACE` | `true` | Userspace networking (no `/dev/net/tun`) |
+| `HAAI_TAILSCALE_NETWORK` | `haai-tailscale` | Compose network name |
+
 ## Examples
 
 ```bash

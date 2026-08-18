@@ -39,6 +39,10 @@ server {
 
 Update `HAAI_CORS_ORIGINS` to include your HTTPS admin URL.
 
+## Tailscale Serve
+
+The optional Docker Compose `tailscale` profile terminates HTTPS with a Tailscale certificate and proxies to the HAAI container. Devices on your tailnet use `https://haai.<tailnet>.ts.net` — no public DNS or Let's Encrypt. See [Tailscale](./tailscale) for auth keys, MagicDNS, and CORS/WebAuthn settings.
+
 ## Config file TLS fields
 
 `config.yaml` accepts `server.tlsCert` and `server.tlsKey` (env: `HAAI_TLS_CERT`, `HAAI_TLS_KEY`).
@@ -58,4 +62,4 @@ security:
     - https://admin.example.com
 ```
 
-See [Security Overview](./security).
+See [Security Overview](./security). When using Tailscale Serve, set `webauthnRpId` / `HAAI_WEBAUTHN_RP_ID` to the MagicDNS hostname (for example `haai.your-tailnet.ts.net`).
