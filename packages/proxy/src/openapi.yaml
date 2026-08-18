@@ -7,7 +7,7 @@ info:
     **Management API** (`/api/v1/*`) requires admin authentication via session cookie or Bearer token.
 
     **Inference API** (`/v1/*`) requires an API key in the `Authorization: Bearer` header.
-  version: 0.0.1
+  version: 0.2.2
 
 servers:
   - url: /

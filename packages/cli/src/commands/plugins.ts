@@ -236,7 +236,7 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
             },
           },
           devDependencies: {
-            "@haai/plugin-sdk": "^0.1.0",
+            "@haai/plugin-sdk": "^0.2.2",
             typescript: "^5.8.3",
             "@types/node": "^22.0.0",
           },

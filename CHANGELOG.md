@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-08-17
+
+### Added
+
+- Playwright browser tests for the admin UI (backends, v-models, keys, and metrics)
+- E2E coverage for admin CRUD, the metrics API, and v-model health states
+- Metrics summary endpoint honors a `since` query so Analytics can show 48-hour, 48-day, 48-week, and 48-month windows
+
+### Changed
+
+- Key allow-lists accept the public v-model alias (`smart-chat`) or the internal `vmodel-…` id, so existing production keys keep working
+- Admin v-model picker and Connect snippet store and copy `model_id` instead of the internal row id
+
+### Fixed
+
+- Analytics cards no longer hardcode “24 hours” when a longer window is selected
+
+## [0.2.1] - 2026-08-16
+
+### Changed
+
+- **Breaking:** Rebrand from AiVM / ai-v-models to HAAI. CLI `aivm` → `haai`, env prefix `AIVM_*` → `HAAI_*`, data directory `~/.aivm` → `~/.haai`, npm scope `@ai-v-models/*` → `@haai/*`, Prometheus metrics `aivm_*` → `haai_*`, plugin/hook manifests, webhook headers, and session cookie. See [Migrating from AiVM](docs/guide/migrating-from-aivm.md). Existing stored API keys still authenticate; only newly issued credentials use the `haai-` prefix.
+- CLI, MCP, and TUI auto-detect the proxy on the production or dev listen port when `HAAI_URL` is unset
+
+### Added
+
+- Migration guide from AiVM to HAAI
+- CLI screenshots in the README
+
+### Fixed
+
+- Metrics dashboard flash on load
+- TypeScript, SvelteKit, and test failures after the rebrand
+- Plugin SDK workspace dependency alignment
+
 ## [0.1.0] - 2026-08-16
 
 Initial public release of haai (HAAI): a streaming reverse proxy for OpenAI-compatible LLMs with virtual models, key management, plugins, hooks, and a built-in admin UI.
@@ -28,5 +63,7 @@ Initial public release of haai (HAAI): a streaming reverse proxy for OpenAI-comp
 - VitePress documentation covering installation, configuration, CLI, v-models, plugins, hooks, Docker, and Kubernetes
 - Example plugins (e.g. system-prompt injection, token compression, vLLM compatibility fixes)
 
-[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/j-norwood-young/haai/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/j-norwood-young/haai/compare/v0.1.0...v0.2.1
 [0.1.0]: https://github.com/j-norwood-young/haai/releases/tag/v0.1.0

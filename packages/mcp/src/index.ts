@@ -25,7 +25,7 @@ async function apiRequest<T>(method: string, path: string, body?: unknown): Prom
 
 const server = new McpServer({
   name: "haai",
-  version: "0.2.1",
+  version: "0.2.2",
 });
 
 // ── Backend tools ─────────────────────────────────────────────────────────────

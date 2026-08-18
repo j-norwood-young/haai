@@ -1,8 +1,8 @@
 {
   "name": "haai",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
-  "description": "HAAI — High Availability AI: modern streaming reverse proxy for OpenAI-compatible LLMs",
+  "description": "HAAI \u2014 High Availability AI: modern streaming reverse proxy for OpenAI-compatible LLMs",
   "license": "MIT",
   "packageManager": "pnpm@11.1.2",
   "engines": {

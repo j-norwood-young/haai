@@ -71,7 +71,7 @@ async function main(): Promise<void> {
   program
     .name("haai")
     .description("HAAI CLI — manage your LLM reverse proxy")
-    .version("0.2.1")
+    .version("0.2.2")
     .option("-u, --url <url>", "Proxy URL (default: HAAI_URL, or auto-detect :4000/:4001)", defaultUrl)
     .option("-t, --token <token>", "Admin API token", process.env["HAAI_ADMIN_TOKEN"]);
 
