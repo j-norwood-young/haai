@@ -29,10 +29,10 @@ Continue with [Quick Start](./quickstart.md).
 ## Docker
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
-Data persists in the `haai-data` volume. Configuration can be passed via environment variables — see [Configuration](./configuration.md).
+Pulls `harbor.10layer.com/haai/haai:latest`. Data persists in the `haai-data` volume. Configuration can be passed via environment variables — see [Configuration](./configuration.md).
 
 ## Data directory
 

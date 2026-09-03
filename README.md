@@ -106,7 +106,7 @@ Data is stored in `~/.haai/`. On first run an admin user is created with passwor
 docker compose up
 ```
 
-Runs on port 4000 with data in a Docker volume. See [docs/guide/docker.md](docs/guide/docker.md). To join a Tailscale tailnet, see [docs/guide/tailscale.md](docs/guide/tailscale.md).
+Pulls `harbor.10layer.com/haai/haai:latest` and runs on port 4000 with data in a Docker volume. See [docs/guide/docker.md](docs/guide/docker.md). To join a Tailscale tailnet, see [docs/guide/tailscale.md](docs/guide/tailscale.md).
 
 ## Usage
 

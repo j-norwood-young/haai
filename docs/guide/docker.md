@@ -23,7 +23,7 @@ The included compose file defines two default services plus optional profiles:
 
 `proxy` and `web`:
 
-- Build `proxy` from the repo `Dockerfile` (or use a published image)
+- Use the published image `harbor.10layer.com/haai/haai:latest` (or specify a version tag)
 - Mount volume `haai-data` → `/data` (`HAAI_DATA_DIR`) on `proxy`
 - Health check `GET /health` on `proxy`
 - Join the default network and the optional `tailscale` network (`haai-tailscale`)

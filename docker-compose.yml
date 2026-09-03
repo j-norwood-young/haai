@@ -1,7 +1,7 @@
 services:
   # API, bundled admin UI (/), docs (/docs/), and Swagger (/api/docs/) on port 4000.
   proxy:
-    build: .
+    image: harbor.10layer.com/haai/haai:latest
     ports:
       - "${HAAI_HOST_PROXY_PORT:-4000}:4000"
     networks:
