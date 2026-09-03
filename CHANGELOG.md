@@ -5,11 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.3] - 2026-09-03
 
 ### Added
 
 - Optional Docker Compose `tailscale` profile that joins a Tailscale tailnet and serves the proxy over HTTPS on MagicDNS, with a [Tailscale](docs/guide/tailscale.md) guide covering auth keys and OAuth clients
+- Drag-and-drop reordering for backends in the admin UI
+- Improved model selection logic in the admin UI
+- Live metrics dashboard with live-updating charts
+
+### Changed
+
+- Enhanced Tailscale integration in documentation and configuration
 
 ## [0.2.2] - 2026-08-17
 
@@ -67,7 +74,8 @@ Initial public release of haai (HAAI): a streaming reverse proxy for OpenAI-comp
 - VitePress documentation covering installation, configuration, CLI, v-models, plugins, hooks, Docker, and Kubernetes
 - Example plugins (e.g. system-prompt injection, token compression, vLLM compatibility fixes)
 
-[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.2.2...HEAD
+[0.2.3]: https://github.com/j-norwood-young/haai/compare/v0.2.2...v0.2.3
+[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.2.3...HEAD
 [0.2.2]: https://github.com/j-norwood-young/haai/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/j-norwood-young/haai/compare/v0.1.0...v0.2.1
 [0.1.0]: https://github.com/j-norwood-young/haai/releases/tag/v0.1.0
