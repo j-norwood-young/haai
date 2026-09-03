@@ -231,6 +231,11 @@ body {
 	color: var(--color-brand);
 	border-color: rgba(34, 211, 238, 0.25);
 }
+.badge-violet {
+	background: rgba(167, 139, 250, 0.12);
+	color: #a78bfa;
+	border-color: rgba(167, 139, 250, 0.3);
+}
 
 /* ── Card ── */
 .card {
@@ -536,4 +541,31 @@ body {
 }
 .table-container td {
 	padding: 0.75rem 1rem;
+}
+
+/* ── Dashboard ── */
+@keyframes dashboard-row-in {
+	from {
+		opacity: 0;
+		transform: translateY(-2px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.dashboard-row {
+	animation: dashboard-row-in 0.2s ease-out;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+	.pulse-dot::before,
+	.animate-ping,
+	.animate-pulse,
+	.dashboard-row,
+	.skeleton {
+		animation: none !important;
+		transition: none !important;
+	}
 }

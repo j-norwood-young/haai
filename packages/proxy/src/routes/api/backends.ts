@@ -35,6 +35,7 @@ function scheduleBackendHealthCheck(
     },
     ctx.config.health.timeoutMs,
     ctx.sse,
+    { live: ctx.live },
   ).catch((err) => {
     getLogger().warn({ err, backendId: backend.id }, "Immediate backend health check failed");
   });
@@ -277,6 +278,7 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
             probe,
             10000,
             ctx.sse,
+            { live: ctx.live },
           );
 
     return {

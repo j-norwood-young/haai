@@ -236,22 +236,42 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
       const upstreamBody = { ...mutatedBody, model: selected.backendModelId };
       const hasMoreCandidates = remaining.length > 1;
 
-      ctx.balancer.incrementConcurrency(selected.backendId);
-
-      proxyResult = await streamingProxy(reply, {
-        upstreamUrl: buildBackendApiUrl(selected.backend.baseUrl, "/v1/chat/completions"),
-        upstreamApiKey,
-        requestBody: upstreamBody,
-        vmodelId: vmodel?.id ?? "direct",
+      const attemptStart = Date.now();
+      const liveId = ctx.live.startRequest({
+        keyPrefix: key.prefix,
+        vmodelId: vmodel?.id ?? null,
+        vmodelName: requestedModel,
         backendId: selected.backendId,
         backendName: selected.backend.name,
-        modelId: selected.backendModelId,
-        keyPrefix: key.prefix,
-        bufferResponse: needsBuffer,
-        suppressClientError: hasMoreCandidates,
+        backendModelId: selected.backendModelId,
+        stream: body["stream"] !== false,
+        attempt: spentKeys.size,
       });
 
-      ctx.balancer.decrementConcurrency(selected.backendId);
+      ctx.balancer.incrementConcurrency(selected.backendId);
+
+      try {
+        proxyResult = await streamingProxy(reply, {
+          upstreamUrl: buildBackendApiUrl(selected.backend.baseUrl, "/v1/chat/completions"),
+          upstreamApiKey,
+          requestBody: upstreamBody,
+          vmodelId: vmodel?.id ?? "direct",
+          backendId: selected.backendId,
+          backendName: selected.backend.name,
+          modelId: selected.backendModelId,
+          keyPrefix: key.prefix,
+          bufferResponse: needsBuffer,
+          suppressClientError: hasMoreCandidates,
+          onFirstToken: () => ctx.live.firstToken(liveId),
+          onProgress: (completionTokens) => ctx.live.progress(liveId, completionTokens),
+        });
+      } finally {
+        ctx.balancer.decrementConcurrency(selected.backendId);
+        ctx.live.end(liveId, {
+          statusCode: proxyResult?.statusCode ?? 0,
+          durationMs: Date.now() - attemptStart,
+        });
+      }
 
       const cb = ctx.balancer.getCircuitBreaker(selected.backendId, selected.backend.name);
       if (proxyResult.statusCode >= 500) {
@@ -294,6 +314,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
           vmodelModelId: requestedModel,
           backendId: selected.backendId,
           backendModelId: selected.backendModelId,
+          backendName: selected.backend.displayName || selected.backend.name,
           endpoint: "/v1/chat/completions",
           shouldLogRequest: key.logRequests,
           requestSize: JSON.stringify(body).length,
@@ -317,6 +338,7 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
         vmodelModelId: requestedModel,
         backendId: selected.backendId,
         backendModelId: selected.backendModelId,
+        backendName: selected.backend.displayName || selected.backend.name,
         endpoint: "/v1/chat/completions",
         shouldLogRequest: key.logRequests,
         requestSize: JSON.stringify(body).length,

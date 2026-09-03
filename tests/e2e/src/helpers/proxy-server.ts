@@ -17,6 +17,7 @@ import { createApp } from "@haai/proxy/app";
 import { KeyAuthenticator } from "@haai/proxy/key-auth";
 import { BackendBalancer } from "@haai/proxy/balancer";
 import { SseEmitter } from "@haai/proxy/sse";
+import { LiveStatsTracker } from "@haai/proxy/live-stats";
 import { PluginRuntime } from "@haai/proxy/plugins/runtime";
 import { getPort } from "./ports.js";
 
@@ -220,19 +221,24 @@ export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<
   const pluginsDir = join(dataDir, "plugins");
   mkdirSync(pluginsDir, { recursive: true });
 
+  const sse = new SseEmitter();
+  const balancer = new BackendBalancer();
+  const live = new LiveStatsTracker(sse, balancer);
   const ctx = {
     db,
     config,
     masterKey,
     keyAuth: new KeyAuthenticator(db),
-    balancer: new BackendBalancer(),
-    sse: new SseEmitter(),
+    balancer,
+    sse,
+    live,
     pluginRuntime: new PluginRuntime(),
     pluginsDir,
   };
 
   const app = await createApp(ctx);
   await app.listen({ port, host: "127.0.0.1" });
+  live.start();
 
   return {
     port,
@@ -244,6 +250,7 @@ export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<
     adminUsername,
     adminPassword,
     stop: async () => {
+      live.stop();
       await app.close();
       db.sqlite.close();
       rmSync(dataDir, { recursive: true, force: true });

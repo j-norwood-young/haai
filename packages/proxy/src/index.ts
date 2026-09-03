@@ -14,6 +14,7 @@ import { KeyAuthenticator } from "./key-auth.js";
 import { BackendBalancer } from "./balancer.js";
 import { HealthMonitor } from "./health.js";
 import { SseEmitter } from "./sse.js";
+import { LiveStatsTracker } from "./live-stats.js";
 import { ensureAdminUser } from "./setup.js";
 import { PluginRuntime } from "./plugins/runtime.js";
 import type { AppContext } from "./context.js";
@@ -51,16 +52,23 @@ mkdirSync(pluginsDir, { recursive: true });
 const pluginRuntime = new PluginRuntime();
 
 // Build context
+const sse = new SseEmitter();
+const balancer = new BackendBalancer();
+const live = new LiveStatsTracker(sse, balancer);
 const ctx: AppContext = {
   db,
   config,
   masterKey,
   keyAuth: new KeyAuthenticator(db),
-  balancer: new BackendBalancer(),
-  sse: new SseEmitter(),
+  balancer,
+  sse,
+  live,
   pluginRuntime,
   pluginsDir,
 };
+
+// Start live stats tracker
+live.start();
 
 // Start health monitor
 const healthMonitor = new HealthMonitor(
@@ -69,6 +77,7 @@ const healthMonitor = new HealthMonitor(
   config.health.checkIntervalSecs,
   config.health.timeoutMs,
   ctx.sse,
+  ctx.live,
 );
 await healthMonitor.start();
 
@@ -96,6 +105,7 @@ await printStartupBanner({ config, db, dataDir });
 // Graceful shutdown
 const shutdown = async (signal: string) => {
   log.info({ signal }, "Shutting down gracefully...");
+  live.stop();
   healthMonitor.stop();
   pluginRuntime.dispose();
   await app.close();

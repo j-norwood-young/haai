@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
 	import { api } from '$lib/api.js';
 	import { sse } from '$lib/sse.svelte.js';
 	import type { ApiKey, Backend, MetricsSummary, MetricsRollup, VModel } from '$lib/api.js';
@@ -22,6 +24,33 @@
 	// Non-reactive guards — must not be $state or effects re-enter
 	let loadSeq = 0;
 	let lastHandledAt: number | null = null;
+	let urlSynced = false;
+
+	// Initialize filters from URL query params (deep links from the Dashboard)
+	onMount(() => {
+		const params = page.url.searchParams;
+		filterBackendId = params.get('backendId') ?? '';
+		filterVmodelId = params.get('vmodelId') ?? '';
+		filterModelId = params.get('backendModelId') ?? '';
+		filterKeyId = params.get('keyId') ?? '';
+		urlSynced = true;
+	});
+
+	// Keep the URL in sync so filter combinations are shareable
+	$effect(() => {
+		if (!urlSynced) return;
+		void filterBackendId;
+		void filterVmodelId;
+		void filterModelId;
+		void filterKeyId;
+		const params = new URLSearchParams();
+		if (filterBackendId) params.set('backendId', filterBackendId);
+		if (filterVmodelId) params.set('vmodelId', filterVmodelId);
+		if (filterModelId) params.set('backendModelId', filterModelId);
+		if (filterKeyId) params.set('keyId', filterKeyId);
+		const qs = params.toString();
+		replaceState(`?${qs}`, {});
+	});
 
 	const hasFilters = $derived(
 		Boolean(filterBackendId || filterVmodelId || filterModelId || filterKeyId)

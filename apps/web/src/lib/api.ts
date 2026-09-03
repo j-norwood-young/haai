@@ -381,9 +381,14 @@ interface MetricsEventApiRow {
 	id: string;
 	keyPrefix?: string | null;
 	vmodel?: string;
+	backendId?: string | null;
+	backendName?: string | null;
 	endpoint: string;
 	statusCode: number;
 	totalTokens?: number;
+	promptTokens?: number;
+	completionTokens?: number;
+	ttftMs?: number | null;
 	durationMs?: number;
 	tps?: number | null;
 	error?: string | null;
@@ -403,6 +408,11 @@ function mapMetricsEvent(row: MetricsEventApiRow): MetricsEvent {
 	if (row.durationMs !== undefined) event.duration_ms = row.durationMs;
 	if (row.tps != null) event.tps = row.tps;
 	if (row.error) event.error = row.error;
+	if (row.backendId) event.backend_id = row.backendId;
+	if (row.backendName) event.backend_name = row.backendName;
+	if (row.ttftMs != null) event.ttft_ms = row.ttftMs;
+	if (row.promptTokens !== undefined) event.prompt_tokens = row.promptTokens;
+	if (row.completionTokens !== undefined) event.completion_tokens = row.completionTokens;
 	return event;
 }
 
@@ -497,6 +507,19 @@ export interface MetricsSummary {
 	error_rate_24h: number;
 	avg_ttft_ms?: number;
 	avg_tps?: number;
+	p50_ttft_ms?: number;
+	p95_ttft_ms?: number;
+	p50_duration_ms?: number;
+	p95_duration_ms?: number;
+	p50_tps?: number;
+	max_tps?: number;
+	previous?: {
+		total_requests: number;
+		total_tokens: number;
+		error_rate: number;
+		avg_ttft_ms?: number;
+		avg_tps?: number;
+	};
 	backends: BackendHealth[];
 	vmodels?: VModelHealthSummary[];
 }
@@ -531,6 +554,16 @@ export interface VModelHealthSummary {
 	mappings?: VModelHealthMapping[];
 }
 
+export type MetricsRollupPeriod =
+	| 'minute'
+	| '5min'
+	| '15min'
+	| 'hour'
+	| 'day'
+	| 'week'
+	| 'month'
+	| (string & {});
+
 export interface MetricsRollup {
 	timestamp: string;
 	requests: number;
@@ -549,7 +582,99 @@ export interface MetricsEvent {
 	duration_ms?: number;
 	tps?: number;
 	error?: string;
+	backend_id?: string;
+	backend_name?: string;
+	ttft_ms?: number;
+	prompt_tokens?: number;
+	completion_tokens?: number;
 	created_at: string;
+}
+
+// ── Live operations snapshot ─────────────────────────────────────────────────
+
+export interface InFlightRequest {
+	id: string;
+	keyPrefix: string;
+	vmodelId: string | null;
+	vmodelName: string;
+	backendId: string;
+	backendName: string;
+	backendModelId: string;
+	stream: boolean;
+	startedAt: number;
+	firstTokenAt: number | null;
+	completionTokens: number;
+	attempt: number;
+}
+
+export interface LivePoint {
+	t: number;
+	completed: number;
+	errors: number;
+	tokens: number;
+	inFlight: number;
+}
+
+export interface LiveProbeSample {
+	t: number;
+	status: 'healthy' | 'degraded' | 'unhealthy';
+	latencyMs: number;
+}
+
+export interface LiveBackend {
+	backendId: string;
+	backendName: string;
+	concurrency: number;
+	circuit: 'closed' | 'open' | 'half-open';
+	probes: LiveProbeSample[];
+	max_concurrency?: number;
+	enabled?: boolean;
+	lastHealthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+}
+
+export interface LiveSnapshot {
+	now: number;
+	startedAt: number;
+	inFlight: InFlightRequest[];
+	inFlightTotal: number;
+	series: LivePoint[];
+	backends: LiveBackend[];
+}
+
+// ── Performance breakdown ────────────────────────────────────────────────────
+
+export type BreakdownBy = 'backend' | 'vmodel' | 'backendModel';
+
+export interface BreakdownGroup {
+	key: string;
+	name?: string;
+	backendId?: string;
+	vmodelId?: string;
+	backendModelId?: string;
+	requests: number;
+	share: number;
+	errors: number;
+	error_rate: number;
+	prompt_tokens: number;
+	completion_tokens: number;
+	total_tokens: number;
+	tool_calls: number;
+	ttft_p50_ms?: number;
+	ttft_p95_ms?: number;
+	ttft_max_ms?: number;
+	duration_p50_ms?: number;
+	duration_p95_ms?: number;
+	tps_avg?: number;
+	tps_p50?: number;
+	tps_max?: number;
+	last_seen: number;
+	sparkline: number[];
+}
+
+export interface BreakdownResponse {
+	by: BreakdownBy;
+	since: number;
+	groups: BreakdownGroup[];
 }
 
 export interface MetricsFilters {
@@ -787,7 +912,7 @@ export const api = {
 		return request<MetricsRollup[]>(`/metrics/rollups${qs ? `?${qs}` : ''}`);
 	},
 	getMetricsEvents: async (
-		params: { limit?: number; since?: string } & MetricsFilters = {}
+		params: { limit?: number; since?: string; errorsOnly?: boolean } & MetricsFilters = {}
 	) => {
 		const qs = new URLSearchParams(
 			Object.entries(params)
@@ -796,6 +921,20 @@ export const api = {
 		).toString();
 		const rows = await request<MetricsEventApiRow[]>(`/metrics/events${qs ? `?${qs}` : ''}`);
 		return rows.map(mapMetricsEvent);
+	},
+	getLiveSnapshot: () => request<LiveSnapshot>('/metrics/live'),
+	getMetricsBreakdown: (
+		params: {
+			by: BreakdownBy;
+			since?: string;
+		} & Omit<MetricsFilters, 'since'>
+	) => {
+		const qs = new URLSearchParams(
+			Object.entries(params)
+				.filter(([, v]) => v !== undefined && v !== '')
+				.map(([k, v]) => [k, String(v)])
+		).toString();
+		return request<BreakdownResponse>(`/metrics/breakdown${qs ? `?${qs}` : ''}`);
 	},
 
 	// Auth

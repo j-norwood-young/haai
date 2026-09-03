@@ -12,6 +12,7 @@ export interface RecordUsageOptions extends ProxyResult {
   vmodelModelId?: string | null;
   backendId: string | null;
   backendModelId: string | null;
+  backendName?: string;
   endpoint: string;
   shouldLogRequest: boolean;
   requestSize: number;
@@ -87,8 +88,13 @@ export class UsageRecorder {
       keyId: opts.keyId,
       keyPrefix: opts.keyPrefix ?? null,
       vmodel: opts.vmodelModelId ?? opts.vmodelId ?? "unknown",
+      backendId: opts.backendId,
+      backendName: opts.backendName ?? null,
       endpoint: opts.endpoint,
       statusCode: opts.statusCode,
+      ttftMs: opts.ttftMs,
+      promptTokens: opts.promptTokens,
+      completionTokens: opts.completionTokens,
       totalTokens: opts.totalTokens,
       durationMs: opts.durationMs,
       tps: opts.tps,

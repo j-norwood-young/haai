@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Backend } from "@haai/core";
 import type { BalancingStrategy } from "@haai/core";
-import { CircuitBreaker } from "./circuit-breaker.js";
+import { CircuitBreaker, type CircuitState } from "./circuit-breaker.js";
 import { backendConcurrencyGauge } from "./metrics.js";
 import {
   evaluateMappingAvailability,
@@ -65,6 +65,14 @@ export class BackendBalancer {
 
   getConcurrency(backendId: string): number {
     return this.concurrencyCounters.get(backendId) ?? 0;
+  }
+
+  getAllConcurrency(): Map<string, number> {
+    return new Map(this.concurrencyCounters);
+  }
+
+  getCircuitState(backendId: string): CircuitState {
+    return this.circuitBreakers.get(backendId)?.getState() ?? "closed";
   }
 
   select(

@@ -33,6 +33,10 @@
       "import": "./dist/sse.js",
       "types": "./dist/sse.d.ts"
     },
+    "./live-stats": {
+      "import": "./dist/live-stats.js",
+      "types": "./dist/live-stats.d.ts"
+    },
     "./plugins/runtime": {
       "import": "./dist/plugins/runtime.js",
       "types": "./dist/plugins/runtime.d.ts"

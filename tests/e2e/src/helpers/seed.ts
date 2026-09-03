@@ -164,7 +164,17 @@ export function setBackendHealth(
 
 export function insertUsageEvent(
   proxy: TestProxy,
-  opts: { timestamp: number; totalTokens?: number; statusCode?: number; durationMs?: number },
+  opts: {
+    timestamp: number;
+    totalTokens?: number;
+    statusCode?: number;
+    durationMs?: number;
+    ttftMs?: number | null;
+    tps?: number | null;
+    backendId?: string | null;
+    vmodelId?: string | null;
+    backendModelId?: string | null;
+  },
 ): void {
   proxy.db.db
     .insert(usageEvents)
@@ -174,9 +184,14 @@ export function insertUsageEvent(
       promptTokens: 10,
       completionTokens: 20,
       totalTokens: opts.totalTokens ?? 30,
+      ttftMs: opts.ttftMs !== undefined ? opts.ttftMs : 120,
       durationMs: opts.durationMs ?? 100,
+      tps: opts.tps ?? null,
       toolCallCount: 0,
       statusCode: opts.statusCode ?? 200,
+      backendId: opts.backendId ?? null,
+      vmodelId: opts.vmodelId ?? null,
+      backendModelId: opts.backendModelId ?? null,
       timestamp: opts.timestamp,
     })
     .run();

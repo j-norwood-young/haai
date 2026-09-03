@@ -28,6 +28,10 @@ export interface ProxyRequestOptions {
    * Used for pre-stream failover retries — the caller sends the final error.
    */
   suppressClientError?: boolean;
+  /** Called once when the first upstream byte/token arrives (TTFT). */
+  onFirstToken?: () => void;
+  /** Called after each chunk with the running completion token count. */
+  onProgress?: (completionTokens: number) => void;
 }
 
 export interface ProxyResult {
@@ -115,6 +119,7 @@ export async function streamingProxy(
       const rawBody = Buffer.concat(chunks).toString("utf8");
       const durationMs = Date.now() - start;
       ttft = durationMs;
+      opts.onFirstToken?.();
 
       let bufferedResponse: ChatResponse | null = null;
       try {
@@ -164,6 +169,7 @@ export async function streamingProxy(
         if (ttft === null) {
           ttft = Date.now() - start;
           ttftHistogram.observe({ vmodel: opts.vmodelId, backend: opts.backendName }, ttft);
+          opts.onFirstToken?.();
         }
 
         const text = decoder.decode(chunk instanceof Uint8Array ? chunk : Buffer.from(chunk as ArrayBuffer), { stream: true });
@@ -194,6 +200,7 @@ export async function streamingProxy(
             // Ignore parse errors for individual chunks
           }
         }
+        opts.onProgress?.(completionTokens);
       }
 
       reply.raw.end();
@@ -212,6 +219,8 @@ export async function streamingProxy(
       } catch {
         // not JSON
       }
+      opts.onFirstToken?.();
+      opts.onProgress?.(completionTokens);
 
       reply
         .status(200)
@@ -245,7 +254,10 @@ export async function streamingProxy(
   const durationMs = Date.now() - start;
   if (totalTokens === 0) totalTokens = promptTokens + completionTokens;
 
-  const tps = durationMs > 0 && completionTokens > 0 ? (completionTokens / (durationMs / 1000)) : null;
+  // TPS is averaged over the token-generation window only: from the first
+  // token to the end of the stream, excluding the TTFT wait.
+  const generatingMs = ttft !== null ? Math.max(0, durationMs - ttft) : durationMs;
+  const tps = generatingMs > 0 && completionTokens > 0 ? (completionTokens / (generatingMs / 1000)) : null;
   if (tps !== null) tpsGauge.set({ vmodel: opts.vmodelId, backend: opts.backendName }, tps);
   if (totalTokens > 0) {
     tokensTotal.inc({ type: "prompt", vmodel: opts.vmodelId, backend: opts.backendName, key_prefix: opts.keyPrefix ?? "unknown" }, promptTokens);

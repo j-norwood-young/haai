@@ -7,7 +7,10 @@ const SSE_EVENT_TYPES = new Set([
 	'usage-event',
 	'key-event',
 	'log',
-	'system'
+	'system',
+	'request-start',
+	'request-end',
+	'live-tick'
 ]);
 
 export interface SseEvent {
@@ -19,9 +22,17 @@ export interface SseEvent {
 function createSseStore() {
 	let latestEvent = $state<SseEvent | null>(null);
 	let connected = $state(false);
+	let reconnectCount = $state(0);
 	let abort: AbortController | null = null;
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	let generation = 0;
+
+	const listeners = new Set<(ev: SseEvent) => void>();
+
+	function subscribe(handler: (ev: SseEvent) => void): () => void {
+		listeners.add(handler);
+		return () => listeners.delete(handler);
+	}
 
 	function clearReconnect() {
 		if (reconnectTimer != null) {
@@ -47,6 +58,14 @@ function createSseStore() {
 				data: raw,
 				timestamp: Date.now()
 			};
+		}
+		// Invoke callback subscribers synchronously before the rune update
+		// propagates — consecutive events within one microtask would otherwise
+		// overwrite latestEvent and lose high-rate events.
+		if (listeners.size > 0 && latestEvent) {
+			for (const listener of listeners) {
+				listener(latestEvent);
+			}
 		}
 	}
 
@@ -109,7 +128,11 @@ function createSseStore() {
 				throw new Error(`SSE connection failed (${res.status})`);
 			}
 
-			if (myGen === generation) connected = true;
+			if (myGen === generation) {
+				const wasConnected = connected;
+				connected = true;
+				if (!wasConnected) reconnectCount++;
+			}
 			await readStream(res.body);
 		} catch (err) {
 			if ((err as Error)?.name === 'AbortError') return;
@@ -137,6 +160,10 @@ function createSseStore() {
 		get connected() {
 			return connected;
 		},
+		get reconnectCount() {
+			return reconnectCount;
+		},
+		subscribe,
 		connect,
 		disconnect
 	};

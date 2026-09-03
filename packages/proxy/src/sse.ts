@@ -7,7 +7,10 @@ export type SseEventType =
   | "usage-event"
   | "key-event"
   | "log"
-  | "system";
+  | "system"
+  | "request-start"
+  | "request-end"
+  | "live-tick";
 
 export interface SseEvent {
   type: SseEventType;

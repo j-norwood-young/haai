@@ -6,6 +6,7 @@ import { backendHealthGauge } from "./metrics.js";
 import { getLogger } from "./logger.js";
 import { backendAuthHeaders } from "./backend-auth.js";
 import type { SseEmitter } from "./sse.js";
+import type { LiveStatsTracker } from "./live-stats.js";
 import { recomputeAllVModelHealth } from "./vmodel-health.js";
 
 export interface HealthCheckResult {
@@ -117,10 +118,16 @@ export async function checkAndPersistBackendHealth(
   },
   timeoutMs: number,
   sse?: SseEmitter,
-  opts?: { recomputeVModels?: boolean },
+  opts?: { recomputeVModels?: boolean; live?: LiveStatsTracker },
 ): Promise<HealthCheckResult> {
   const result = await checkBackendHealth(backend, masterKey, timeoutMs);
   const now = Date.now();
+
+  opts?.live?.recordProbe(backend.id, {
+    t: now,
+    status: result.status,
+    latencyMs: result.latencyMs,
+  });
 
   // Clear model inventory when unhealthy so we never route on stale lists.
   const availableModelsJson =
@@ -173,6 +180,7 @@ export class HealthMonitor {
     private readonly intervalSecs: number = 30,
     private readonly timeoutMs: number = 5000,
     private readonly sse?: SseEmitter,
+    private readonly live?: LiveStatsTracker,
   ) {}
 
   async start(): Promise<void> {
@@ -202,8 +210,12 @@ export class HealthMonitor {
         .all();
 
       const results = await Promise.allSettled(
-        allBackends.map((b) =>
-          checkAndPersistBackendHealth(
+        allBackends.map((b) => {
+          const opts: { recomputeVModels: boolean; live?: LiveStatsTracker } = {
+            recomputeVModels: false,
+          };
+          if (this.live) opts.live = this.live;
+          return checkAndPersistBackendHealth(
             this.db,
             this.masterKey,
             {
@@ -216,9 +228,9 @@ export class HealthMonitor {
             },
             this.timeoutMs,
             undefined,
-            { recomputeVModels: false },
-          ),
-        ),
+            opts,
+          );
+        }),
       );
 
       for (const result of results) {

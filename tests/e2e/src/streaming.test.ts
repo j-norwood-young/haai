@@ -292,4 +292,81 @@ describe("V-model routing", () => {
     const modelIds = data.data.map((m) => m.id);
     expect(modelIds).toContain("smart-chat");
   });
+
+  it("should emit request-start/request-end SSE events around a streaming request", async () => {
+    const controller = new AbortController();
+    const events: Array<{ type: string; data: Record<string, unknown> }> = [];
+    const collector = (async () => {
+      const res = await fetch(`${proxy.url}/api/v1/events`, {
+        signal: controller.signal,
+        headers: { Accept: "text/event-stream" },
+      });
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let sep: number;
+        while ((sep = buffer.indexOf("\n\n")) !== -1) {
+          const block = buffer.slice(0, sep);
+          buffer = buffer.slice(sep + 2);
+          let type = "message";
+          let data = "";
+          for (const line of block.split("\n")) {
+            if (line.startsWith("event: ")) type = line.slice(7).trim();
+            else if (line.startsWith("data: ")) data += line.slice(6);
+          }
+          if (data) {
+            try {
+              events.push({ type, data: JSON.parse(data) as Record<string, unknown> });
+            } catch {
+              // ignore malformed
+            }
+          }
+        }
+      }
+    })().catch(() => {});
+
+    // Give the SSE connection time to register
+    await new Promise((r) => setTimeout(r, 200));
+
+    const chatRes = await fetch(`${proxy.url}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "smart-chat",
+        messages: [{ role: "user", content: "Hello" }],
+        stream: true,
+      }),
+    });
+    expect(chatRes.status).toBe(200);
+    await chatRes.text();
+
+    // Wait briefly for SSE events to land
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      const start = events.find((e) => e.type === "request-start");
+      const end = events.find((e) => e.type === "request-end");
+      if (start && end) {
+        expect(end.data["id"]).toBe(start.data["id"]);
+        expect(end.data["statusCode"]).toBe(200);
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    controller.abort();
+    await collector;
+
+    const liveRes = await fetch(`${proxy.url}/api/v1/metrics/live`, {
+      headers: { Authorization: `Bearer ${proxy.adminToken}` },
+    });
+    const live = (await liveRes.json()) as { inFlight: unknown[]; inFlightTotal: number };
+    expect(live.inFlight).toEqual([]);
+    expect(live.inFlightTotal).toBe(0);
+  });
 });
