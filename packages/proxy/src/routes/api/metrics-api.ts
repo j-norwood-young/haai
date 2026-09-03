@@ -193,11 +193,6 @@ function isSubHourPeriod(period: string): period is "minute" | "5min" | "15min" 
   return period in SUB_HOUR_BUCKET_MS;
 }
 
-function probeStatus(input: string | null | undefined): "healthy" | "degraded" | "unhealthy" {
-  if (input === "degraded" || input === "unhealthy") return input;
-  return "healthy";
-}
-
 interface MetricsFilters {
   keyId?: string;
   vmodelId?: string;
