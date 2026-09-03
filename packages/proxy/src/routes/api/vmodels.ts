@@ -260,12 +260,13 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
           and(
             eq(vmodelBackendsTable.vmodelId, req.params.id),
             eq(vmodelBackendsTable.backendId, backendId),
+            eq(vmodelBackendsTable.backendModelId, backendModelId),
           ),
         )
         .get();
       if (existingMapping) {
         return reply.status(409).send({
-          error: "This backend is already mapped to this virtual model",
+          error: "This backend model is already mapped to this virtual model",
         });
       }
 

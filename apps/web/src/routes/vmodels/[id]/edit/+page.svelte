@@ -122,6 +122,38 @@
 		return backends.find((b) => b.id === backendId)?.name ?? backendId;
 	}
 
+	const modelsForSelectedBackend = $derived(
+		addBackendId
+			? (availableModelsByBackend[addBackendId] ?? []).filter(
+					(m) => !mappedModelKeys.has(`${addBackendId}::${m.id}`)
+			  )
+			: []
+	);
+
+	const mappedModelKeys = $derived(
+		vmodel
+			? new Set(vmodel.backends.map((b) => `${b.backend_id}::${b.backend_model_id}`))
+			: new Set<string>()
+	);
+
+	const sortedBackends = $derived(
+		vmodel
+			? [...vmodel.backends].sort((a, b) => {
+					const wA = a.weight ?? 1;
+					const wB = b.weight ?? 1;
+					if (wA !== wB) return wB - wA;
+					const nameA = backendName(a.backend_id).toLowerCase();
+					const nameB = backendName(b.backend_id).toLowerCase();
+					if (nameA !== nameB) return nameA < nameB ? -1 : 1;
+					const mA = a.backend_model_id.toLowerCase();
+					const mB = b.backend_model_id.toLowerCase();
+					return mA < mB ? -1 : mA > mB ? 1 : 0;
+			  })
+			: []
+	);
+
+	let dragSourceId = $state<string | null>(null);
+
 	async function handleUpdateWeight(mappingId: string, weight: number) {
 		if (!vmodel || !mappingId) return;
 		try {
@@ -130,6 +162,35 @@
 		} catch (err) {
 			saveError = err instanceof Error ? err.message : 'Failed to update weight';
 		}
+	}
+
+	async function handleDragDrop(targetId: string) {
+		if (!dragSourceId || dragSourceId === targetId || !vmodel) {
+			dragSourceId = null;
+			return;
+		}
+		const source = vmodel.backends.find((b) => b.id === dragSourceId);
+		const target = vmodel.backends.find((b) => b.id === targetId);
+		if (!source || !target) {
+			dragSourceId = null;
+			return;
+		}
+		const sourceWeight = source.weight ?? 1;
+		const targetWeight = target.weight ?? 1;
+		if (sourceWeight === targetWeight) {
+			dragSourceId = null;
+			return;
+		}
+		try {
+			await Promise.all([
+				api.updateVModelBackendWeight(vmodel.id, source.id, targetWeight),
+				api.updateVModelBackendWeight(vmodel.id, target.id, sourceWeight)
+			]);
+			vmodel = await api.getVModel(vmodel.id);
+		} catch (err) {
+			saveError = err instanceof Error ? err.message : 'Failed to reorder backends';
+		}
+		dragSourceId = null;
 	}
 
 	onMount(load);
@@ -244,8 +305,16 @@
 					<p class="text-sm text-gray-500 mb-3">No backends assigned.</p>
 				{:else}
 					<div class="space-y-1.5 mb-4">
-						{#each vmodel.backends as b (b.id)}
-							<div class="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2">
+						{#each sortedBackends as b (b.id)}
+							<div
+								class="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2 cursor-grab active:cursor-grabbing"
+								draggable="true"
+								ondragstart={() => (dragSourceId = b.id)}
+								ondragend={() => (dragSourceId = null)}
+								ondragover={(e) => e.preventDefault()}
+								ondrop={() => handleDragDrop(b.id)}
+							>
+								<span class="text-xs text-gray-500 font-mono shrink-0 mr-1" aria-hidden="true">⠿</span>
 								<span class="text-sm text-gray-200 flex-1">{backendName(b.backend_id)}</span>
 								<span class="text-xs text-gray-500 font-mono">{b.backend_model_id}</span>
 								{#if editingWeightFor === b.id}
@@ -329,10 +398,14 @@
 						disabled={!addBackendId}
 					>
 						<option value="" disabled>Select model…</option>
-						{#if addBackendId && ((availableModelsByBackend[addBackendId] ?? [])?.length ?? 0) > 0}
-							{#each (availableModelsByBackend[addBackendId] ?? []) as m (m.id)}
+						{#if addBackendId && modelsForSelectedBackend.length > 0}
+							{#each modelsForSelectedBackend as m (m.id)}
 								<option value={m.id}>{m.name}</option>
 							{/each}
+						{:else if addBackendId && (availableModelsByBackend[addBackendId] ?? []).length > 0}
+							<optgroup label="All models mapped">
+								<option value="" disabled>— All models from this backend already mapped —</option>
+							</optgroup>
 						{:else if !vmodel || !addBackendId}
 							<optgroup label="Select a backend first">
 								<option disabled>Select a backend to see available models</option>
