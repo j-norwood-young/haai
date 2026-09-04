@@ -1,25 +1,46 @@
 # Quick Start
 
-Get HAAI running in production: one process, one port, API and admin UI together.
+Get HAAI running in under a minute. Two options: Docker (fastest) or Node.js (full control).
 
-## Requirements
+## Docker (fastest)
 
-- Node.js 22+
-- pnpm 9+
-- An LLM backend (LM Studio, Ollama, vLLM, etc.)
+The quickest way to get HAAI running:
 
-## Install and build
+```bash
+git clone https://github.com/j-norwood-young/haai.git
+cd haai
+
+# Optional: customise settings
+cp .env.example .env
+# Edit .env if you want to change the port, admin password, session secret, etc.
+
+# Start everything
+docker compose up -d
+```
+
+HAAI is live at **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port. Data persists in the `haai-data` Docker volume.
+
+Default login is `admin` / `admin` — change it immediately in **Settings**.
+
+### Tailscale (optional)
+
+Serve HAAI over your tailnet with HTTPS:
+
+```bash
+COMPOSE_PROFILES=tailscale TS_AUTHKEY=tskey-auth-... docker compose up -d
+```
+
+HAAI is then reachable at `https://<TS_HOSTNAME>.<tailnet>.ts.net`. See [Tailscale](./tailscale.md) for the full guide.
+
+## Node.js
+
+For full control over the runtime and development:
 
 ```bash
 git clone https://github.com/j-norwood-young/haai.git
 cd haai
 pnpm install
 pnpm build
-```
-
-## Start
-
-```bash
 pnpm start
 ```
 
@@ -110,14 +131,6 @@ pnpm haai vmodel add-backend smart-chat \
 
 Clients can then use `smart-chat` instead of the full backend model ID.
 
-## Docker
-
-```bash
-docker-compose up
-```
-
-Runs on port 4000 with data in a Docker volume.
-
 ## CLI reference
 
 ```bash
@@ -128,3 +141,11 @@ pnpm haai key list
 pnpm haai key suspend <prefix> --reason "Over quota"
 pnpm haai key logs <prefix>
 ```
+
+## Next steps
+
+- [Web UI](./web-ui.md) — Admin dashboard walkthrough
+- [Virtual models](./vmodels.md) — Deep dive into v-models
+- [High availability](./ha.md) — Load balancing, failover, circuit breakers
+- [Configuration](./configuration.md) — All config options
+- [CLI reference](./cli.md) — Full CLI command list
