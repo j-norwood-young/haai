@@ -240,7 +240,7 @@
 						<button
 							type="button"
 							onclick={() => (streaming = !streaming)}
-							class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
+							class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
 							class:bg-cyan-500={streaming}
 							class:bg-gray-700={!streaming}
 							role="switch"
@@ -259,7 +259,7 @@
 						<button
 							type="button"
 							onclick={() => (enabled = !enabled)}
-							class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
+							class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
 							class:bg-cyan-500={enabled}
 							class:bg-gray-700={!enabled}
 							role="switch"
@@ -308,6 +308,7 @@
 						{#each sortedBackends as b (b.id)}
 							<div
 								class="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2 cursor-grab active:cursor-grabbing"
+								role="listitem"
 								draggable="true"
 								ondragstart={() => (dragSourceId = b.id)}
 								ondragend={() => (dragSourceId = null)}
@@ -324,7 +325,7 @@
 											bind:value={tempWeight}
 											min="1"
 											max="100"
-											class="input !w-20 shrink-0 text-xs"
+											class="input w-20! shrink-0 text-xs"
 											placeholder="weight"
 										/>
 										<button
@@ -385,7 +386,7 @@
 						onchange={() => {
 							newBackendModelId = '';
 						}}
-						class="input !w-full min-w-0 text-xs"
+						class="input w-full! min-w-0 text-xs"
 					>
 						<option value="">Select backend…</option>
 						{#each backends as b (b.id)}
@@ -394,7 +395,7 @@
 					</select>
 					<select
 						bind:value={newBackendModelId}
-						class="input !w-full min-w-0 text-xs"
+						class="input w-full! min-w-0 text-xs"
 						disabled={!addBackendId}
 					>
 						<option value="" disabled>Select model…</option>
@@ -421,7 +422,7 @@
 						bind:value={addBackendWeight}
 						min="0"
 						max="100"
-						class="input !w-full text-xs"
+						class="input w-full! text-xs"
 						placeholder="weight"
 						aria-label="Weight"
 					/>
