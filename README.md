@@ -2,18 +2,66 @@
 
 ![HAAI](assets/brand/haai.svg)
 
-High Availability AI — modern streaming reverse proxy for OpenAI-compatible LLMs. Built for homelab users and sysadmins who need to manage access to multiple LLM backends across different machines.
+High Availability AI — a streaming reverse proxy that turns your collection of LLM backends into one seamless, fault-tolerant AI service.
 
-Like HAProxy or Nginx, but purpose-built for LLMs — with virtual models, key management, load balancing, hooks, plugins, and a full admin UI.
+Give your applications a single endpoint. Behind it, HAAI handles virtual models, load balancing, failover, key management, and observability — so your consumers never have to think about which GPU, machine, or provider is serving their request.
 
 ![HAAI dashboard showing 24-hour request metrics, backend health, and request volume chart](screenshots/dashboard.png)
+
+## Why HAAI?
+
+### Virtual models for your consumers
+Clients talk to simple model names like `smart-chat` or `fast-summarizer` — never the internal `<model>:<hostname>:<provider>` strings. You define the mapping; HAAI routes everything. Switch backends, add GPUs, change providers — your consumers keep working without a single code change.
+
+### High availability, out of the box
+Health checks, circuit breakers, and automatic failover keep your service running when individual backends go down. Load balancing strategies (session pinning, round-robin, weighted) spread traffic intelligently. No manual intervention required.
+
+### Run as many models as you need
+Add dozens of backends across different machines and providers — Ollama, LM Studio, vLLM, OpenAI, and any OpenAI-compatible server. HAAI manages the routing, streaming, and metrics so you can scale your homelab or production cluster without complexity.
+
+### Invisible to the LLM consumer
+Your existing tools — LangChain, LlamaIndex, ChatUI, curl scripts, custom apps — all talk to HAAI's OpenAI-compatible API exactly as they would to any provider. No SDK changes, no rewrites. HAAI is transparent.
+
+### Full control for you
+Key management with rate limits and token budgets, request/response hooks, sandboxed plugins, and deep observability with Prometheus, OTLP, and a real-time admin dashboard — all served from the same port as your API.
+
+## Quickstart
+
+### Docker (fastest way)
+
+Grab the compose file, set up a few env vars, and you're running in under a minute:
+
+```bash
+# Clone the repo (or just copy docker-compose.yml from GitHub)
+git clone https://github.com/j-norwood-young/haai.git
+cd haai
+
+# Optional: create .env with custom settings
+cp .env.example .env
+# Edit .env if you want to change the port, admin password, session secret, etc.
+
+# Start it up
+docker compose up -d
+```
+
+HAAI is now live at **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port. Data persists in the `haai-data` Docker volume.
+
+Default login is `admin` / `admin` — change it immediately in **Settings**.
+
+For Tailscale integration (serving over your tailnet with HTTPS), add `--profile tailscale` and set `TS_AUTHKEY`:
+
+```bash
+COMPOSE_PROFILES=tailscale TS_AUTHKEY=tskey-auth-... docker compose up -d
+```
+
+See [Docker](docs/guide/docker.md) for the full guide.
 
 ## Features
 
 - **Streaming proxy** — Full SSE pass-through with token counting, TTFT tracking, and TPS metrics
 - **Virtual models (v-models)** — User-facing aliases that map to one or more backends with configurable load-balancing strategies
+- **High availability** — Automatic failover with health checks, circuit breakers, and multiple load-balancing strategies
 - **Key management** — Create, scope, rate-limit, and audit API keys with per-key usage logs
-- **Load balancing & HA** — Session pinning, round-robin, weighted, and automatic failover with health checks and circuit breakers
 - **Plugins** — Sandboxed request/response transformers you install from npm or GitHub (e.g. system-prompt injection, vLLM compatibility fixes)
 - **Hooks** — Pre-request mutation and post-completion callbacks (internal worker threads or external webhooks)
 - **Web admin UI** — Built-in SvelteKit dashboard for everything: backends, v-models, keys, plugins, live logs, and metrics — served from the same port as the API
@@ -122,6 +170,16 @@ pnpm haai backend add \
   --hostname bob
 ```
 
+### Create a virtual model
+
+```bash
+pnpm haai vmodel create --model-id smart-chat --display-name "Smart Chat"
+pnpm haai vmodel add-backend smart-chat \
+  --backend-id <backend-id> \
+  --backend-model qwen3.5-35b \
+  --weight 1
+```
+
 ### Create an API key
 
 ```bash
@@ -137,13 +195,15 @@ curl http://localhost:4000/v1/chat/completions \
   -H "Authorization: Bearer haai-sk-YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3.5-35b:bob:lmstudio",
+    "model": "smart-chat",
     "messages": [{"role": "user", "content": "Hello!"}],
     "stream": true
   }'
 ```
 
-Models are namespaced as `<model>:<hostname>:<provider>`, e.g. `qwen3.5-35b:bob:lmstudio`. Virtual models are simpler aliases like `smart-chat`.
+That's it — `smart-chat` resolves to the backends you configured. Behind the scenes, HAAI handles the routing, load balancing, streaming, and metrics.
+
+For direct backend access, models are namespaced as `<model>:<hostname>:<provider>`, e.g. `qwen3.5-35b:bob:lmstudio`.
 
 ## Configuration
 
