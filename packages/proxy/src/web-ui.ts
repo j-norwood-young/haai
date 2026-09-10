@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { getLogger } from "./logger.js";
 
@@ -17,8 +17,14 @@ function isProxyRoute(url: string): boolean {
 }
 
 export function resolveWebBuildDir(): string | null {
+  // In the published npm package the SvelteKit build ships as `<pkg>/web` next
+  // to `dist/` (where this module ends up bundled); in the repo it resolves via
+  // cwd candidates. HAAI_WEB_DIR always wins for explicit overrides.
+  const moduleDir = dirname(fileURLToPath(import.meta.url));
   const candidates = [
     process.env["HAAI_WEB_DIR"],
+    join(moduleDir, "web"),
+    join(moduleDir, "..", "web"),
     join(process.cwd(), "apps/web/build"),
     join(process.cwd(), "../../apps/web/build"),
   ].filter((p): p is string => Boolean(p));

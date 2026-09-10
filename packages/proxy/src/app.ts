@@ -22,6 +22,7 @@ import { registerDocsSite } from "./docs-site.js";
 import { registerOpenApiDocs } from "./openapi.js";
 import { registerWebUi } from "./web-ui.js";
 import { getLogger } from "./logger.js";
+import { VERSION } from "./version.js";
 
 export async function createApp(ctx: AppContext) {
   const log = getLogger();
@@ -92,7 +93,7 @@ export async function createApp(ctx: AppContext) {
   app.get("/health", async () => ({
     status: "ok",
     timestamp: new Date().toISOString(),
-    version: "0.2.2",
+    version: VERSION,
   }));
 
   // Readiness (checks DB)

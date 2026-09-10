@@ -1,0 +1,78 @@
+{
+  "name": "haai",
+  "version": "0.2.3",
+  "description": "HAAI — High Availability AI: streaming reverse proxy for OpenAI-compatible LLMs with admin UI, CLI, and MCP server",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "llm",
+    "proxy",
+    "openai",
+    "reverse-proxy",
+    "load-balancing",
+    "ollama",
+    "vllm",
+    "lmstudio"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j-norwood-young/haai.git",
+    "directory": "packages/app"
+  },
+  "bugs": {
+    "url": "https://github.com/j-norwood-young/haai/issues"
+  },
+  "homepage": "https://github.com/j-norwood-young/haai#readme",
+  "private": false,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "haai": "bin/haai.js",
+    "haai-server": "bin/haai-server.js",
+    "haai-mcp": "bin/haai-mcp.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "web",
+    "README.md"
+  ],
+  "scripts": {
+    "package": "node scripts/build-package.mjs",
+    "prepack": "node scripts/verify-package.mjs"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^10.0.3",
+    "@fastify/rate-limit": "^10.2.1",
+    "@fastify/static": "^9.0.0",
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.2.1",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@node-rs/argon2": "^2.0.0",
+    "@simplewebauthn/server": "^13.3.0",
+    "better-sqlite3": "^11.10.0",
+    "chalk": "^5.4.1",
+    "chokidar": "^4.0.3",
+    "commander": "^13.1.0",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.1",
+    "esbuild": "^0.28.1",
+    "fastify": "^5.4.0",
+    "isolated-vm": "^7.0.0",
+    "js-yaml": "^4.1.0",
+    "ms": "^2.1.3",
+    "nanoid": "^5.1.5",
+    "ora": "^8.2.0",
+    "otplib": "^12.0.1",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "pino-roll": "^1.0.0",
+    "prom-client": "^15.1.3",
+    "table": "^6.9.0",
+    "undici": "^7.10.0",
+    "zod": "^3.25.46"
+  }
+}

@@ -1,8 +1,34 @@
 # Quick Start
 
-Get HAAI running in under a minute. Two options: Docker (fastest) or Node.js (full control).
+Get HAAI running in under a minute. Three options: npm/npx (no Docker), Docker, or from source.
 
-## Docker (fastest)
+## npm / npx (easiest — no Docker)
+
+Requires **Node.js 22+** only:
+
+```bash
+npx haai serve
+```
+
+HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you.
+
+Or install globally:
+
+```bash
+npm i -g haai
+haai serve
+```
+
+Default login is `admin` / `admin` — change it immediately in **Settings**.
+
+Useful flags:
+
+- `haai serve --port 8080` — different port
+- `haai serve --no-open` — don't open browser
+
+See [Installation](./installation.md) for all install methods and per-OS notes.
+
+## Docker
 
 The quickest way to get HAAI running:
 

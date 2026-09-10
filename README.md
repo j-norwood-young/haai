@@ -27,7 +27,30 @@ Key management with rate limits and token budgets, request/response hooks, sandb
 
 ## Quickstart
 
-### Docker (fastest way)
+### npm / npx (easiest)
+
+Requires **Node.js 22+** — that's it. No Docker, no pnpm, no clone.
+
+```bash
+# Quick start (no install needed):
+npx haai serve
+
+# Or install globally:
+npm i -g haai && haai serve
+```
+
+HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you.
+
+Data lives in `~/.haai/` (`%USERPROFILE%\.haai` on Windows). Default login is `admin` / `admin` — change it immediately in **Settings**.
+
+Useful flags:
+
+- `haai serve --port 8080` — change the listen port
+- `haai serve --no-open` — don't open a browser
+
+See [Installation](docs/guide/installation.md) for per-OS guidance and all available methods.
+
+### Docker (fastest for containerized environments)
 
 Grab the compose file, set up a few env vars, and you're running in under a minute:
 
@@ -127,18 +150,9 @@ LM Studio, Ollama, vLLM, OpenAI, and generic OpenAI-compatible backends.
 ### Requirements
 
 - Node.js 22+
-- pnpm 9+
-- An LLM backend (LM Studio, Ollama, vLLM, etc.)
+- If building from source: pnpm 9+ (otherwise use `npm i -g haai` or `pnpm add -g haai`)
 
-### Install and run
-
-```bash
-git clone https://github.com/j-norwood-young/haai.git
-cd haai
-pnpm install
-pnpm build
-pnpm start
-```
+### Quick start (build from source)
 
 This starts the proxy on **http://localhost:4000** with:
 

@@ -9,6 +9,7 @@ import {
 } from "../inference.js";
 
 const TOP_LEVEL_COMMANDS = [
+  "serve",
   "status",
   "config",
   "backend",
@@ -23,6 +24,7 @@ const TOP_LEVEL_COMMANDS = [
 ];
 
 const PROMPT_FLAGS = ["-m", "--model", "-k", "--key", "-s", "--system", "--no-stream"];
+const SERVE_FLAGS = ["-p", "--port", "--host", "--no-open"];
 
 function bashCompletionScript(): string {
   return `# haai bash completion
@@ -55,6 +57,10 @@ _haai() {
     fi
   fi
 
+  if [[ "$cmd" == "serve" && "$cur" == -* ]]; then
+    COMPREPLY=( $(compgen -W "${SERVE_FLAGS.join(" ")}" -- "$cur") )
+    return
+  fi
   if [[ "$cmd" == "completion" && "$prev" == "completion" ]]; then
     COMPREPLY=( $(compgen -W "bash zsh install" -- "$cur") )
     return
@@ -94,9 +100,15 @@ _haai() {
             '--system[System prompt]:system:' \\
             '--no-stream[Disable streaming]' \\
             '*:message:'
-          ;;
         completion)
           _arguments '1:shell:(bash zsh install)'
+          ;;
+        serve)
+          _arguments \\
+            '-p[Listen port]:port:' \\
+            '--port[Listen port]:port:' \\
+            '--host[Listen host/address]:host:' \\
+            '--no-open[Do not open the browser]'
           ;;
       esac
       ;;

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createRequire } from "node:module";
 import { Command } from "commander";
 import chalk from "chalk";
 import { loadHaaiDotenv } from "@haai/core/config";
@@ -13,6 +14,15 @@ import { registerUserCommands } from "./commands/users.js";
 import { registerAdminTokenCommands } from "./commands/admin-tokens.js";
 import { registerPromptCommands } from "./commands/prompt.js";
 import { registerCompletionCommands, runDynamicComplete } from "./commands/completion.js";
+import { serve, serveCommand, serveDescriptor } from "./commands/serve.js";
+
+// Read from package.json instead of hardcoding (bundles resolve the published
+// package root; the tsc build resolves packages/cli/package.json).
+const _require = createRequire(import.meta.url);
+function require(module: string): unknown {
+  return _require(module);
+}
+const CLI_VERSION = (require("../package.json") as { version: string }).version;
 
 function explicitUrlFromArgs(args: string[]): string | undefined {
   const urlFlagIndex = args.findIndex((arg) => arg === "-u" || arg === "--url");
@@ -53,12 +63,14 @@ async function main(): Promise<void> {
 
   const args = process.argv.slice(2);
   const explicitUrl = explicitUrlFromArgs(args);
-  const defaultUrl = await resolveDefaultProxyUrl({
-    ...(explicitUrl ? { explicitUrl } : {}),
-  });
+  // serve starts the server; skip the proxy probe it would hit (and the 300ms
+  // delay) — resolveDefaultProxyUrl auto-detects :4000/:4001 on its own.
+  const defaultUrl = args[0] === serveCommand
+    ? undefined
+    : await resolveDefaultProxyUrl({ ...(explicitUrl ? { explicitUrl } : {}) });
   const completeIndex = args.indexOf("__complete");
   if (completeIndex >= 0 && args[completeIndex + 1]) {
-    const baseUrl = defaultUrl;
+    const baseUrl = defaultUrl ?? (await resolveDefaultProxyUrl({}));
     const client = createApiClient(baseUrl);
     const token = resolveAdminToken(args);
     if (token) client["opts"].token = token;
@@ -70,18 +82,26 @@ async function main(): Promise<void> {
 
   program
     .name("haai")
-    .description("HAAI CLI — manage your LLM reverse proxy")
-    .version("0.2.2")
+    .description("HAAI CLI — start and manage your LLM reverse proxy")
+    .version(CLI_VERSION)
     .option("-u, --url <url>", "Proxy URL (default: HAAI_URL, or auto-detect :4000/:4001)", defaultUrl)
     .option("-t, --token <token>", "Admin API token", process.env["HAAI_ADMIN_TOKEN"]);
 
   program.hook("preSubcommand", (thisCmd) => {
+    if (thisCmd.name() === serveCommand) return; // serve doesn't talk to a running proxy
     const opts = thisCmd.opts() as { url: string; token?: string };
     const client = createApiClient(opts.url);
     if (opts.token) client["opts"].token = opts.token;
     thisCmd.setOptionValue("client", client);
   });
-
+  // Start the bundled server (npx haai / npm i -g haai)
+  program
+    .command(serveCommand)
+    .description(serveDescriptor)
+    .option("-p, --port <port>", "Listen port (default: $HAAI_PORT or 4000)")
+    .option("--host <host>", "Listen host/address (default: $HAAI_HOST or 0.0.0.0)")
+    .option("--no-open", "Don't open the browser")
+    .action((options: { port?: string; host?: string; noOpen?: boolean }) => serve(options));
   // Status / health
   program
     .command("status")

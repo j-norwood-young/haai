@@ -21,6 +21,14 @@ node packages/cli/dist/index.js --help
 
 ## Commands
 
+### Serve
+
+```bash
+haai serve                 # boot the server (default port 4000) and open the admin UI
+haai serve --port 5000     # custom listen port
+haai serve --no-open       # don't open the browser
+```
+
 ### Status & config
 
 ```bash

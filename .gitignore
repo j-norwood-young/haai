@@ -3,6 +3,8 @@ dist/
 build/
 .svelte-kit/
 coverage/
+packages/app/web/
+*.tgz
 *.db
 *.db-wal
 *.db-shm

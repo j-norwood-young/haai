@@ -1,0 +1,32 @@
+name: Package Smoke
+on:
+  workflow_call:
+
+jobs:
+  smoke:
+    name: Smoke (Node ${{ matrix.node-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, macos-13, windows-latest]
+        node-version: ["22.x", "24.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter haai package
+      - working-directory: packages/app
+        run: npm pack
+      - shell: bash
+        run: |
+          TARBALL=$(ls "${{ github.workspace }}/packages/app"/haai-*.tgz | tail -1)
+          npm install --global "$TARBALL"
+      - shell: bash
+        env:
+          HAAI_SMOKE_PLUGIN_DIR: ${{ runner.os == 'Linux' && format('{0}/examples/plugins/talk-like-a-pirate', github.workspace) || '' }}
+        run: node scripts/smoke-package.mjs --port 4100 --skip-install

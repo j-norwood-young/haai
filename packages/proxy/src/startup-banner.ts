@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import type { AppConfig, DbClient } from "@haai/core";
 import { backends as backendsTable, vmodels as vmodelsTable } from "@haai/core";
+import { VERSION } from "./version.js";
 
-const VERSION = "0.2.2";
 const DEV_WEB_PORT = "5173";
 
 const LOGO = [

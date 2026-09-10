@@ -78,3 +78,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Docker image
         run: docker build -t haai:ci .
+
+  package-smoke:
+    uses: ./.github/workflows/package-smoke.yml
