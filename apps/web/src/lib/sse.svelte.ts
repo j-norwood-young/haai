@@ -1,17 +1,34 @@
 import { browser } from '$app/environment';
 import { getApiBaseUrl } from './api-base.js';
 
-const SSE_EVENT_TYPES = new Set([
-	'backend-health',
-	'vmodel-health',
-	'usage-event',
-	'key-event',
-	'log',
-	'system',
-	'request-start',
-	'request-end',
-	'live-tick'
-]);
+const SSE_EVENT_TYPES: Record<string, true> = {
+	'backend-health': true,
+	'vmodel-health': true,
+	'usage-event': true,
+	'key-event': true,
+	log: true,
+	system: true,
+	'request-start': true,
+	'request-end': true,
+	'live-tick': true
+};
+
+/**
+ * While the stream is down, probe a cheap HTTP endpoint every few seconds and
+ * only re-establish the event stream once the server answers. A plain request
+ * settles reliably even when a stale SSE connection is stuck half-open, so
+ * recovery is detected by reachability rather than by the (possibly
+ * black-holed) event-stream request itself.
+ */
+const RECONNECT_INTERVAL_MS = 5_000;
+const PROBE_TIMEOUT_MS = 4_000;
+
+/**
+ * A connect attempt must not wedge reconnection forever. Intermediaries
+ * (nginx, Tailscale, corporate proxies) can accept the connection and then
+ * never answer, leaving `fetch` pending until the next probe abandons it.
+ */
+const CONNECT_TIMEOUT_MS = 10_000;
 
 export interface SseEvent {
 	type: string;
@@ -24,7 +41,8 @@ function createSseStore() {
 	let connected = $state(false);
 	let reconnectCount = $state(0);
 	let abort: AbortController | null = null;
-	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	let probeTimer: ReturnType<typeof setInterval> | null = null;
+	let probing = false;
 	let generation = 0;
 
 	const listeners = new Set<(ev: SseEvent) => void>();
@@ -34,19 +52,43 @@ function createSseStore() {
 		return () => listeners.delete(handler);
 	}
 
-	function clearReconnect() {
-		if (reconnectTimer != null) {
-			clearTimeout(reconnectTimer);
-			reconnectTimer = null;
+	function startProbing() {
+		if (probeTimer !== null) return;
+		probeTimer = setInterval(() => {
+			void probeAndReconnect();
+		}, RECONNECT_INTERVAL_MS);
+	}
+
+	function stopProbing() {
+		if (probeTimer !== null) {
+			clearInterval(probeTimer);
+			probeTimer = null;
 		}
 	}
 
-	function scheduleReconnect() {
-		clearReconnect();
-		reconnectTimer = setTimeout(() => {
-			reconnectTimer = null;
+	async function probeAndReconnect() {
+		if (connected || probing) return;
+		probing = true;
+		try {
+			let up = false;
+			try {
+				const res = await fetch(`${getApiBaseUrl()}/health`, {
+					method: 'GET',
+					signal: AbortSignal.timeout(PROBE_TIMEOUT_MS)
+				});
+				up = res.ok;
+			} catch {
+				// Still unreachable.
+			}
+			if (!up || connected) return;
+			// The server answered — drop any attempt still stuck mid-connect
+			// and open a fresh stream.
+			abort?.abort();
+			abort = null;
 			void connect();
-		}, 5000);
+		} finally {
+			probing = false;
+		}
 	}
 
 	function dispatchParsed(raw: string) {
@@ -82,7 +124,7 @@ function createSseStore() {
 		}
 
 		if (dataLines.length === 0) return;
-		if (eventType !== 'message' && !SSE_EVENT_TYPES.has(eventType)) return;
+		if (eventType !== 'message' && !Object.hasOwn(SSE_EVENT_TYPES, eventType)) return;
 
 		dispatchParsed(dataLines.join('\n'));
 	}
@@ -111,10 +153,17 @@ function createSseStore() {
 	async function connect() {
 		if (!browser || abort) return;
 
-		clearReconnect();
+		// Keep probing while disconnected even if this attempt hangs.
+		startProbing();
 		const myGen = ++generation;
 		const controller = new AbortController();
 		abort = controller;
+
+		// Safety net: abandon an attempt whose headers never arrive.
+		let connectTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+			connectTimer = null;
+			controller.abort();
+		}, CONNECT_TIMEOUT_MS);
 
 		try {
 			const res = await fetch(`${getApiBaseUrl()}/api/v1/events`, {
@@ -124,6 +173,11 @@ function createSseStore() {
 				signal: controller.signal
 			});
 
+			if (connectTimer !== null) {
+				clearTimeout(connectTimer);
+				connectTimer = null;
+			}
+
 			if (!res.ok || !res.body) {
 				throw new Error(`SSE connection failed (${res.status})`);
 			}
@@ -132,22 +186,27 @@ function createSseStore() {
 				const wasConnected = connected;
 				connected = true;
 				if (!wasConnected) reconnectCount++;
+				stopProbing();
 			}
 			await readStream(res.body);
 		} catch (err) {
 			if ((err as Error)?.name === 'AbortError') return;
 		} finally {
+			if (connectTimer !== null) {
+				clearTimeout(connectTimer);
+				connectTimer = null;
+			}
 			if (abort === controller) abort = null;
 			if (myGen !== generation) return;
 			connected = false;
-			// Network/auth failures and server-closed streams should retry.
-			scheduleReconnect();
+			// Network/auth failures and server-closed streams: keep polling.
+			startProbing();
 		}
 	}
 
 	function disconnect() {
 		generation++;
-		clearReconnect();
+		stopProbing();
 		abort?.abort();
 		abort = null;
 		connected = false;

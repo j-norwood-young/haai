@@ -103,11 +103,22 @@ await waitForLogDrain();
 await printStartupBanner({ config, db, dataDir });
 
 // Graceful shutdown
+let shuttingDown = false;
 const shutdown = async (signal: string) => {
+  if (shuttingDown) {
+    // A second signal while still draining: bail out immediately rather
+    // than leave the user stuck.
+    log.warn({ signal }, "Forcing shutdown");
+    process.exit(1);
+  }
+  shuttingDown = true;
   log.info({ signal }, "Shutting down gracefully...");
   live.stop();
   healthMonitor.stop();
   pluginRuntime.dispose();
+  // SSE (/api/v1/events) and keep-alive connections outlive app.close();
+  // they would keep close() waiting forever. Tear them down first.
+  app.server.closeAllConnections?.();
   await app.close();
   db.sqlite.close();
   process.exit(0);

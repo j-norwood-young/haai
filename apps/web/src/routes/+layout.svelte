@@ -9,6 +9,7 @@
 	import HealthIndicator from '$lib/components/HealthIndicator.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
 	import BrandLogo from '$lib/components/BrandLogo.svelte';
+	import ConnectionWarning from '$lib/components/ConnectionWarning.svelte';
 
 	interface Props {
 		children: import('svelte').Snippet;
@@ -348,5 +349,7 @@
 		<main class="flex-1 min-w-0 overflow-y-auto bg-[var(--color-surface)] pt-14 md:pt-0">
 			{@render children()}
 		</main>
+
+		<ConnectionWarning connected={sse.connected} />
 	</div>
 {/if}

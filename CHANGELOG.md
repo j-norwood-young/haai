@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The admin UI now shows a “Server disconnected” warning in the top-right corner when the live event stream drops, and clears it automatically once the server is reachable again
+
 ### Changed
 
 - `haai serve` is now a first-class CLI subcommand (visible in `haai --help`) instead of a hidden entry point in the `haai` bin shim; the shim now only gates the Node version and delegates to the CLI
+
+### Fixed
+
+- `haai serve` (and SIGTERM shutdowns) no longer hang when a client holds a long-lived connection open — the SSE event stream (`/api/v1/events`) kept `app.close()` waiting forever, so the process printed “Shutting down gracefully…” but never exited; open connections are now force-closed after the server stops accepting new ones, and a second signal forces an immediate exit
 
 ## [0.2.3] - 2026-09-03
 
