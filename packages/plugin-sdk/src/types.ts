@@ -16,6 +16,12 @@ export interface ChatMessage {
   tool_calls?: ToolCall[];
   tool_call_id?: string;
   name?: string;
+  /** vLLM's reasoning field. Haai additively mirrors whichever of these two the
+   * upstream sends into the other, so plugins/clients can read either name. */
+  reasoning?: string;
+  /** oMLX's reasoning field (same content as `reasoning` after normalisation). */
+  reasoning_content?: string;
+  refusal?: string | null;
 }
 
 export interface ContentPart {
@@ -59,6 +65,9 @@ export interface UsageStats {
   prompt_tokens: number;
   completion_tokens: number;
   total_tokens: number;
+  /** Absent on backends that don't itemise reasoning tokens (e.g. oMLX) — never
+   * fabricated by Haai when missing. */
+  completion_tokens_details?: { reasoning_tokens?: number };
 }
 
 // ── Config field definitions ───────────────────────────────────────────────

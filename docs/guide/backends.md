@@ -8,8 +8,22 @@ A **backend** is an upstream OpenAI-compatible LLM server. HAAI proxies `/v1/cha
 |-------|-------------|
 | `name` | Unique identifier (e.g. `lmstudio-bob`) |
 | `hostName` | Short hostname label used in model IDs (e.g. `bob`) |
-| `provider` | `lmstudio`, `ollama`, `vllm`, `openai`, or `generic` |
+| `provider` | `lmstudio`, `ollama`, `vllm`, `omlx`, `openai`, or `generic` |
 | `baseUrl` | Base URL of the upstream API |
+
+`hostName` must be **globally unique across all backends**, regardless of `provider`.
+It's the sole differentiator in every pass-through model ID
+(`<model>:<hostName>:<provider>`, see [Model ID Convention](./model-ids)) — two backends
+sharing a `hostName` would produce model IDs that differ only by provider suffix, which
+isn't a meaningful distinction to an end user picking a model from a list, and the
+direct namespaced lookup would only ever reach one of them anyway. HAAI rejects creating
+a second backend with a `hostName` already in use (`409 Conflict`), even under a
+different provider — if one machine runs both vLLM and LM Studio, give it two distinct
+host labels (e.g. `bob-vllm` and `bob-lmstudio`).
+
+Neither `hostName` nor `provider` can be changed after creation (delete and re-create
+instead), since changing either would silently break any client already using the old
+model IDs.
 
 ## Add via CLI
 
@@ -84,5 +98,6 @@ See [High Availability](./ha) for failover behavior.
 - [LM Studio](./providers/lmstudio)
 - [Ollama](./providers/ollama)
 - [vLLM](./providers/vllm)
+- [oMLX](./providers/omlx)
 - [OpenAI / Generic](./providers/openai)
 - [Key Modes](./key-modes)

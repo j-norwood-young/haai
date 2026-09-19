@@ -1,4 +1,5 @@
 export type { Backend, BackendInsert, BackendProvider } from "./backend.js";
+export { BACKEND_PROVIDERS } from "./backend.js";
 export type { VModel, VModelInsert, VModelBackend, BalancingStrategy, VModelHealthStatus, MappingUnavailableReason } from "./vmodel.js";
 export type { ApiKey, ApiKeyInsert, KeyScope } from "./key.js";
 export type { UsageEvent, UsageRollup, UsagePeriod } from "./usage.js";

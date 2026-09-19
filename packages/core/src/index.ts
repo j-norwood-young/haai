@@ -5,3 +5,4 @@ export * from "./db/index.js";
 export * from "./http/index.js";
 export * from "./settings/index.js";
 export * from "./key-access.js";
+export * from "./reasoning/index.js";

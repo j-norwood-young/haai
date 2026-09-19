@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Reasoning/thinking-budget requests are now capability-aware: v-models that fan out across backends with different reasoning support (e.g. a budget-enforcing vLLM backend mixed with an [oMLX](docs/guide/providers/omlx.md) backend that accepts but silently ignores `thinking_token_budget`) automatically steer budgeted requests to a backend that can honour them, falling back gracefully — with an `X-HAAI-Warning` header and `haai.warnings[]` in the response — when none is available. Toggling reasoning on/off never affects routing. See [Thinking budgets across mixed backends](docs/guide/debugging-thinking.md).
+- Haai now additively normalises reasoning field names across backends (vLLM's `reasoning` and oMLX's `reasoning_content`), so clients can read either name regardless of which backend served the request, in both streaming and non-streaming responses.
+- New `omlx` backend provider, for [oMLX](https://github.com/jundot/omlx) (an OpenAI/Anthropic-compatible inference server for Apple Silicon).
+- `GET /v1/models` now advertises reasoning capability per model and v-model (`supported_parameters`, `capabilities`, and a precise `haai.reasoning` block distinguishing "enforces a budget" from "accepts but ignores one").
+- Backends gained an optional `reasoningCaps` override (`PATCH /api/v1/backends/:id`) for correcting a backend's reasoning capabilities without touching `provider`, which is part of the published model-id and can't be changed after creation.
 - The admin UI now shows a “Server disconnected” warning in the top-right corner when the live event stream drops, and clears it automatically once the server is reachable again
 
 ### Changed
@@ -17,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Creating a backend with a `hostName` already used by another backend is now rejected (`409 Conflict`) instead of silently succeeding, even under a different `provider` — `hostName` is the sole differentiator in every pass-through model ID (`<model>:<hostName>:<provider>`), so a duplicate would produce model IDs indistinguishable to an end user picking a model, and only one of the two backends would ever be reachable by its direct ID. A missing `hostName` is now also rejected with a clear `400` instead of a raw database error. ⚠️ **If you already have two backends sharing a `hostName`, the migration that enforces this will fail to apply (logged as a warning, not fatal) until you resolve the duplicate** — `hostName` can't be changed after creation, so delete and re-create one of the conflicting backends under a different host label.
+- The admin UI's "Add Backend" / "Edit Backend" provider dropdown listed the wrong options (`OpenAI`/`Anthropic`/`Ollama`/`Other` — `Anthropic` and `Other` aren't valid providers, and `LM Studio`/`vLLM`/`Generic` were missing entirely) and didn't include the new `omlx` provider; it now lists the real provider set. The "Edit Backend" page also explains why Provider and Host can't be changed after creation.
+- Response-buffering plugins (`needsResponseBuffer: true`) no longer silently drop `reasoning`/`reasoning_content`, `tool_calls`, `refusal`, and `usage.completion_tokens_details` when reconstructing a streamed upstream response.
 - `haai serve` (and SIGTERM shutdowns) no longer hang when a client holds a long-lived connection open — the SSE event stream (`/api/v1/events`) kept `app.close()` waiting forever, so the process printed “Shutting down gracefully…” but never exited; open connections are now force-closed after the server stops accepting new ones, and a second signal forces an immediate exit
 
 ## [0.2.3] - 2026-09-03

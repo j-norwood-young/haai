@@ -2,35 +2,39 @@ import { describe, it, beforeAll, afterAll, expect } from "vitest";
 import { BackendBalancer } from "@haai/proxy/balancer";
 import type { BackendCandidate } from "@haai/proxy/balancer";
 import type { Backend } from "@haai/core";
+import { resolveReasoningCaps } from "@haai/core";
 
 function makeCandidate(id: string, overrides: Partial<Backend> = {}): BackendCandidate {
   const backendModelId = "model";
+  const backend = {
+    id,
+    name: id,
+    displayName: id,
+    hostName: "test",
+    provider: "generic",
+    baseUrl: "http://localhost",
+    keyMode: "passthrough",
+    encryptedApiKey: null,
+    enabled: true,
+    weight: 1,
+    maxConcurrency: 10,
+    healthCheckEnabled: true,
+    lastHealthCheck: null,
+    lastHealthStatus: "healthy",
+    lastLatencyMs: 100,
+    lastHealthError: null,
+    availableModels: JSON.stringify([backendModelId]),
+    reasoningCaps: null,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    ...overrides,
+  } as Backend;
   return {
     backendId: id,
-    backend: {
-      id,
-      name: id,
-      displayName: id,
-      hostName: "test",
-      provider: "generic",
-      baseUrl: "http://localhost",
-      keyMode: "passthrough",
-      encryptedApiKey: null,
-      enabled: true,
-      weight: 1,
-      maxConcurrency: 10,
-      healthCheckEnabled: true,
-      lastHealthCheck: null,
-      lastHealthStatus: "healthy",
-      lastLatencyMs: 100,
-      lastHealthError: null,
-      availableModels: JSON.stringify([backendModelId]),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      ...overrides,
-    } as Backend,
+    backend,
     backendModelId,
     weight: 1,
+    reasoning: resolveReasoningCaps(backend),
   };
 }
 

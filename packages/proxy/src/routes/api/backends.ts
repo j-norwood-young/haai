@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { backends as backendsTable } from "@haai/core";
+import { backends as backendsTable, BACKEND_PROVIDERS } from "@haai/core";
 import { encrypt } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { checkAndPersistBackendHealth, checkBackendHealth } from "../../health.js";
@@ -67,6 +67,18 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       return reply.status(400).send({ error: "name is required" });
     }
 
+    const provider = body["provider"] as string | undefined;
+    if (!provider || !(BACKEND_PROVIDERS as readonly string[]).includes(provider)) {
+      return reply.status(400).send({
+        error: `provider must be one of: ${BACKEND_PROVIDERS.join(", ")}`,
+      });
+    }
+
+    const hostName = typeof body["hostName"] === "string" ? body["hostName"].trim() : "";
+    if (!hostName) {
+      return reply.status(400).send({ error: "hostName is required" });
+    }
+
     const existing = await ctx.db.db
       .select({ id: backendsTable.id })
       .from(backendsTable)
@@ -75,6 +87,23 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
     if (existing) {
       return reply.status(409).send({
         error: `A backend with name '${name}' already exists`,
+      });
+    }
+
+    // hostName is the sole differentiator in every pass-through model id
+    // (`<model>:<hostName>:<provider>`) — two backends sharing one would produce model
+    // ids that differ only by provider suffix, which isn't a meaningful distinction to
+    // an end user picking a model, and the direct namespaced lookup in
+    // routes/v1/chat.ts would only ever reach one of them anyway (see
+    // docs/guide/model-ids.md).
+    const existingHost = await ctx.db.db
+      .select({ id: backendsTable.id })
+      .from(backendsTable)
+      .where(eq(backendsTable.hostName, hostName))
+      .get();
+    if (existingHost) {
+      return reply.status(409).send({
+        error: `A backend with host '${hostName}' already exists — model ids would be indistinguishable`,
       });
     }
 
@@ -99,8 +128,8 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
           id,
           name,
           displayName: (body["displayName"] as string) ?? name,
-          hostName: body["hostName"] as string,
-          provider: body["provider"] as string,
+          hostName,
+          provider,
           baseUrl: body["baseUrl"] as string,
           keyMode,
           encryptedApiKey,
@@ -108,13 +137,20 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
           weight: (body["weight"] as number) ?? 1,
           maxConcurrency: (body["maxConcurrency"] as number) ?? 10,
           healthCheckEnabled: (body["healthCheckEnabled"] as boolean) ?? true,
+          reasoningCaps:
+            body["reasoningCaps"] !== undefined ? JSON.stringify(body["reasoningCaps"]) : null,
           createdAt: now,
           updatedAt: now,
         })
         .run();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (message.includes("UNIQUE") || message.includes("unique")) {
+      if (message.toLowerCase().includes("unique")) {
+        if (message.includes("host_name")) {
+          return reply.status(409).send({
+            error: `A backend with host '${hostName}' already exists — model ids would be indistinguishable`,
+          });
+        }
         return reply.status(409).send({
           error: `A backend with name '${name}' already exists`,
         });
@@ -152,6 +188,12 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       if (body["enabled"] !== undefined) updates.enabled = body["enabled"] as boolean;
       if (body["weight"] !== undefined) updates.weight = body["weight"] as number;
       if (body["keyMode"] !== undefined) updates.keyMode = body["keyMode"] as string;
+      // Unlike `provider`, reasoningCaps is not part of the model-id composite key, so
+      // it's freely PATCH-able — this is the override an admin uses when a backend's
+      // real reasoning behaviour diverges from its provider's default profile.
+      if (body["reasoningCaps"] !== undefined) {
+        updates.reasoningCaps = body["reasoningCaps"] === null ? null : JSON.stringify(body["reasoningCaps"]);
+      }
       if (body["apiKey"] !== undefined) {
         const apiKey = typeof body["apiKey"] === "string" ? body["apiKey"] : "";
         if (apiKey) {

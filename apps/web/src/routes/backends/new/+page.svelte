@@ -5,9 +5,19 @@
 	import InfoTip from '$lib/components/InfoTip.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import { BACKEND_PROVIDERS, type BackendProvider } from '@haai/core/types';
+
+	const PROVIDER_LABELS: Record<BackendProvider, string> = {
+		lmstudio: 'LM Studio',
+		ollama: 'Ollama',
+		vllm: 'vLLM',
+		omlx: 'oMLX',
+		openai: 'OpenAI',
+		generic: 'Generic / OpenAI-compatible'
+	};
 
 	let name = $state('');
-	let provider = $state('openai');
+	let provider = $state<BackendProvider>('openai');
 	let host = $state('');
 	let url = $state('');
 	let apiKey = $state('');
@@ -154,10 +164,9 @@
 			<div>
 				<label for="backend-new-provider" class="block text-xs font-medium text-gray-400 mb-1">Provider *</label>
 				<select id="backend-new-provider" bind:value={provider} class="input w-full">
-					<option value="openai">OpenAI</option>
-					<option value="anthropic">Anthropic</option>
-					<option value="ollama">Ollama</option>
-					<option value="other">Other</option>
+					{#each BACKEND_PROVIDERS as p (p)}
+						<option value={p}>{PROVIDER_LABELS[p]}</option>
+					{/each}
 				</select>
 			</div>
 			<div>

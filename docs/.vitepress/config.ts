@@ -40,6 +40,7 @@ export default defineConfig({
           { text: "LM Studio", link: "/guide/providers/lmstudio" },
           { text: "Ollama", link: "/guide/providers/ollama" },
           { text: "vLLM", link: "/guide/providers/vllm" },
+          { text: "oMLX", link: "/guide/providers/omlx" },
           { text: "OpenAI / Generic", link: "/guide/providers/openai" },
           { text: "Key Modes", link: "/guide/key-modes" },
         ],
@@ -77,6 +78,7 @@ export default defineConfig({
           { text: "Monitoring & Graphs", link: "/guide/monitoring" },
           { text: "Prometheus & OTLP", link: "/guide/prometheus" },
           { text: "Logging", link: "/guide/logging" },
+          { text: "Debugging Thinking Budgets", link: "/guide/debugging-thinking" },
         ],
       },
       {

@@ -14,8 +14,13 @@ export const backends = sqliteTable(
     id: text("id").primaryKey(),
     name: text("name").notNull().unique(),
     displayName: text("display_name").notNull(),
-    hostName: text("host_name").notNull(),
-    provider: text("provider").notNull(), // lmstudio|ollama|vllm|openai|generic
+    // Globally unique: hostName is the sole differentiator in every pass-through model id
+    // (`<model>:<hostName>:<provider>`, see docs/guide/model-ids.md). Two backends sharing
+    // a hostName would produce model ids that differ only by provider suffix — not a
+    // meaningful distinction to an end user picking a model — and the direct namespaced
+    // lookup in routes/v1/chat.ts would only ever reach one of them anyway.
+    hostName: text("host_name").notNull().unique(),
+    provider: text("provider").notNull(), // lmstudio|ollama|vllm|omlx|openai|generic
     baseUrl: text("base_url").notNull(),
     keyMode: text("key_mode").notNull().default("passthrough"), // passthrough|abstraction
     encryptedApiKey: text("encrypted_api_key"),
@@ -29,6 +34,8 @@ export const backends = sqliteTable(
     lastHealthError: text("last_health_error"),
     /** JSON array of model ids from last successful GET /v1/models; null when unknown/cleared */
     availableModels: text("available_models"),
+    /** JSON partial override of this backend's reasoning capabilities; null = derive from provider */
+    reasoningCaps: text("reasoning_caps"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },

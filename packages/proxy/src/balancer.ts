@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Backend } from "@haai/core";
+import type { Backend, ResolvedReasoningCaps } from "@haai/core";
 import type { BalancingStrategy } from "@haai/core";
 import { CircuitBreaker, type CircuitState } from "./circuit-breaker.js";
 import { backendConcurrencyGauge } from "./metrics.js";
@@ -13,6 +13,8 @@ export interface BackendCandidate {
   backend: Backend;
   backendModelId: string;
   weight: number;
+  /** This candidate's resolved reasoning capabilities — a pure function of `backend`. */
+  reasoning: ResolvedReasoningCaps;
 }
 
 export function isCandidateAvailable(candidate: BackendCandidate): boolean {
@@ -29,6 +31,31 @@ export function filterAvailableCandidates(candidates: BackendCandidate[]): Backe
     if (!isCandidateAvailable(c)) return false;
     return true;
   });
+}
+
+export interface ReasoningRequirement {
+  /** The only routing gate — see docs/guide/debugging-thinking.md. Toggling reasoning
+   * on/off must never steer a request; only a positive token budget does. */
+  needsBudgetEnforcement: boolean;
+}
+
+export function satisfiesReasoning(candidate: BackendCandidate, req?: ReasoningRequirement): boolean {
+  if (!req?.needsBudgetEnforcement) return true;
+  return candidate.reasoning.budget.enforcement === "exact";
+}
+
+/**
+ * Soft preference, not a hard filter: returns the budget-capable subset when one exists,
+ * otherwise returns the pool unchanged so the request still gets served (with a warning
+ * attached upstream) rather than failing. See routes/v1/chat.ts for the warning wiring.
+ */
+export function preferReasoningCapable(
+  candidates: BackendCandidate[],
+  req?: ReasoningRequirement,
+): BackendCandidate[] {
+  if (!req?.needsBudgetEnforcement) return candidates;
+  const capable = candidates.filter((c) => satisfiesReasoning(c, req));
+  return capable.length > 0 ? capable : candidates;
 }
 
 export class BackendBalancer {
@@ -79,6 +106,7 @@ export class BackendBalancer {
     candidates: BackendCandidate[],
     strategy: BalancingStrategy,
     sessionKey?: string,
+    opts?: { reasoning?: ReasoningRequirement; counterKey?: string },
   ): BackendCandidate | null {
     // Exclude disabled, unhealthy, model-missing, and open-circuit backends.
     const available = candidates.filter((c) => {
@@ -99,19 +127,27 @@ export class BackendBalancer {
       return withOpenCircuit[0] ?? null;
     }
 
+    // Soft preference: narrow to budget-capable backends when the request needs one,
+    // but fall back to the full pool rather than refusing the request. This is
+    // re-evaluated on every call, so failover across the retry loop in chat.ts composes
+    // naturally: if the capable backend fails, the next select() call sees it removed
+    // from `available` and the (now-empty) capable subset falls back automatically.
+    const pool = preferReasoningCapable(available, opts?.reasoning);
+    const counterKey = opts?.counterKey ?? candidates[0]?.backendId ?? "default";
+
     switch (strategy) {
       case "session-pin":
-        return this.selectSessionPin(available, sessionKey);
+        return this.selectSessionPin(pool, sessionKey);
       case "round-robin":
-        return this.selectRoundRobin(available, candidates[0]?.backendId ?? "default");
+        return this.selectRoundRobin(pool, counterKey);
       case "weighted":
-        return this.selectWeighted(available);
+        return this.selectWeighted(pool);
       case "least-connections":
-        return this.selectLeastConnections(available);
+        return this.selectLeastConnections(pool);
       case "least-latency":
-        return this.selectLeastLatency(available);
+        return this.selectLeastLatency(pool);
       default:
-        return available[0] ?? null;
+        return pool[0] ?? null;
     }
   }
 

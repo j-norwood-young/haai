@@ -5,7 +5,7 @@ import {
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
 } from "@haai/core";
-import { buildBackendApiUrl, decrypt } from "@haai/core";
+import { buildBackendApiUrl, decrypt, resolveReasoningCaps } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { streamingProxy, type ProxyResult } from "../../streaming-proxy.js";
 import { UsageRecorder } from "../../usage-recorder.js";
@@ -13,10 +13,11 @@ import {
   filterAvailableCandidates,
   type BackendCandidate,
 } from "../../balancer.js";
-import type { Backend } from "@haai/core";
+import type { Backend, ReasoningWarning } from "@haai/core";
 import type { ChatRequest, ChatResponse } from "@haai/plugin-sdk";
 import { resolveBindings } from "../../plugins/loader.js";
 import type { PluginHostContext } from "../../plugins/runtime.js";
+import { parseReasoningIntent, applyReasoningDialect, aliasReasoningInResponse, warningCodesHeader } from "../../reasoning/index.js";
 
 function isRetryableUpstreamFailure(result: ProxyResult): boolean {
   if (result.statusCode === 404) return true;
@@ -65,6 +66,9 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
         (m) => Array.isArray(m["content"]) &&
           (m["content"] as Array<Record<string, unknown>>).some((c) => c["type"] === "image_url"),
       );
+    // The only routing gate a reasoning param can trip — see docs/guide/debugging-thinking.md.
+    // Toggling reasoning on/off never steers a request; only a positive token budget does.
+    const reasoningIntent = parseReasoningIntent(body);
 
     const budgetCheck = await ctx.keyAuth.checkTokenBudget(key);
     if (!budgetCheck.allowed) {
@@ -101,11 +105,13 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
           .where(eq(backendsTable.id, vmb.backendId))
           .get();
         if (backend) {
+          const mapped = mapBackendRow(backend);
           candidates.push({
             backendId: backend.id,
-            backend: mapBackendRow(backend),
+            backend: mapped,
             backendModelId: vmb.backendModelId,
             weight: vmb.weight,
+            reasoning: resolveReasoningCaps(mapped),
           });
         }
       }
@@ -130,11 +136,13 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
           .get();
 
         if (backend) {
+          const mapped = mapBackendRow(backend);
           candidates.push({
             backendId: backend.id,
-            backend: mapBackendRow(backend),
+            backend: mapped,
             backendModelId: modelId,
             weight: backend.weight,
+            reasoning: resolveReasoningCaps(mapped),
           });
         }
       }
@@ -167,6 +175,12 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
       });
     }
 
+    // A capable backend exists somewhere in the pool but may be down right now — worth
+    // telling the client that explicitly, distinct from "no capable backend was ever
+    // configured" (both surface as the selected backend's own dialect warnings below).
+    const hasBudgetCapableBackend = candidates.some((c) => c.reasoning.budget.enforcement === "exact");
+    const hasBudgetCapableAvailable = availableCandidates.some((c) => c.reasoning.budget.enforcement === "exact");
+
     const sessionKey = key.id;
     const strategy = (vmodel?.balancingStrategy ?? "session-pin") as
       | "session-pin"
@@ -184,7 +198,10 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
 
     while (true) {
       const remaining = availableCandidates.filter((c) => !spentKeys.has(candidateKey(c)));
-      selected = ctx.balancer.select(remaining, strategy, sessionKey);
+      selected = ctx.balancer.select(remaining, strategy, sessionKey, {
+        reasoning: { needsBudgetEnforcement: reasoningIntent.needsBudgetEnforcement },
+        counterKey: vmodel?.id ?? requestedModel,
+      });
       if (!selected) {
         break;
       }
@@ -233,8 +250,33 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
         mutatedBody = await ctx.pluginRuntime.runOnRequest(binding, mutatedBody, pluginHostCtx);
       }
 
-      const upstreamBody = { ...mutatedBody, model: selected.backendModelId };
+      // Re-parse intent post-plugin so translation reflects what actually goes on the
+      // wire (a plugin may have added or removed a reasoning param); dialect translation
+      // is additive-only (see reasoning/dialect.ts) so every field the client sent still
+      // reaches the upstream verbatim.
+      const backendLabel = selected.backend.displayName || selected.backend.name;
+      const postPluginIntent = parseReasoningIntent(mutatedBody);
+      const { patch: reasoningPatch, warnings: reasoningWarnings } = applyReasoningDialect(
+        mutatedBody,
+        postPluginIntent,
+        selected.reasoning,
+        backendLabel,
+      );
+      if (reasoningIntent.needsBudgetEnforcement && hasBudgetCapableBackend && !hasBudgetCapableAvailable) {
+        const warning: ReasoningWarning = {
+          code: "reasoning_no_capable_backend",
+          severity: "warning",
+          message: `A backend capable of enforcing a reasoning budget is configured for '${requestedModel}' but currently unavailable; the request was served by '${backendLabel}' instead.`,
+          backend: backendLabel,
+        };
+        reasoningWarnings.unshift(warning);
+      }
+
+      const upstreamBody = { ...mutatedBody, ...reasoningPatch, model: selected.backendModelId };
       const hasMoreCandidates = remaining.length > 1;
+      // vLLM's byte-verbatim fast path stays untouched unless we actually need to alias
+      // a non-canonical reasoning field name or inject a warning chunk.
+      const needsReasoningStreamRewrite = reasoningWarnings.length > 0 || selected.reasoning.channel !== "reasoning";
 
       const attemptStart = Date.now();
       const liveId = ctx.live.startRequest({
@@ -262,6 +304,8 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
           keyPrefix: key.prefix,
           bufferResponse: needsBuffer,
           suppressClientError: hasMoreCandidates,
+          reasoningWarnings,
+          needsReasoningStreamRewrite,
           onFirstToken: () => ctx.live.firstToken(liveId),
           onProgress: (completionTokens) => ctx.live.progress(liveId, completionTokens),
         });
@@ -292,17 +336,28 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
               pluginHostCtx,
             );
           }
+          // Alias again post-plugin (idempotent) in case a plugin dropped a field, and
+          // attach any reasoning warnings computed above.
+          aliasReasoningInResponse(transformedResponse as unknown as Record<string, unknown>);
+          if (reasoningWarnings.length > 0) {
+            (transformedResponse as unknown as Record<string, unknown>)["haai"] = { warnings: reasoningWarnings };
+          }
           if (body["stream"] !== false) {
             reply.raw.writeHead(200, {
               "Content-Type": "text/event-stream",
               "Cache-Control": "no-cache",
               Connection: "keep-alive",
+              ...(reasoningWarnings.length ? { "X-HAAI-Warning": warningCodesHeader(reasoningWarnings) } : {}),
             });
             reply.raw.write(`data: ${JSON.stringify(transformedResponse)}\n\n`);
             reply.raw.write("data: [DONE]\n\n");
             reply.raw.end();
           } else {
-            reply.status(200).header("Content-Type", "application/json").send(JSON.stringify(transformedResponse));
+            const bufferedReply = reply.status(200).header("Content-Type", "application/json");
+            if (reasoningWarnings.length) {
+              bufferedReply.header("X-HAAI-Warning", warningCodesHeader(reasoningWarnings));
+            }
+            bufferedReply.send(JSON.stringify(transformedResponse));
           }
         }
 

@@ -108,7 +108,7 @@ pnpm haai backend add \
   --hostname bob
 ```
 
-Providers: `lmstudio`, `ollama`, `vllm`, `openai`, `generic`.
+Providers: `lmstudio`, `ollama`, `vllm`, `omlx`, `openai`, `generic`.
 
 Use `--mode abstraction --api-key sk-...` when the backend needs its own key. Omit `--mode` to pass through the caller's key (default).
 

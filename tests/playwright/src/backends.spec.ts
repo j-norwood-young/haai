@@ -10,7 +10,7 @@ test.describe("backend CRUD", () => {
 
     await page.goto("/backends/new");
     await page.fill("#backend-new-name", name);
-    await page.selectOption("#backend-new-provider", "other");
+    await page.selectOption("#backend-new-provider", "generic");
     await page.fill("#backend-host", "pw-laptop");
     await page.fill("#backend-new-url", mockUrl);
     await page.getByRole("button", { name: "Add Backend" }).click();

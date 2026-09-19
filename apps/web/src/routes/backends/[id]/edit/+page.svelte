@@ -5,6 +5,7 @@
 	import { api } from '$lib/api.js';
 	import type { Backend } from '$lib/api.js';
 	import { backendHealthState } from '$lib/backend-health-state.svelte.js';
+	import InfoTip from '$lib/components/InfoTip.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 
@@ -191,7 +192,13 @@
 					<input id="backend-edit-name" bind:value={name} required class="input w-full" />
 				</div>
 				<div>
-					<label for="backend-edit-provider" class="block text-xs font-medium text-gray-400 mb-1">Provider</label>
+					<div class="mb-1 flex items-center gap-1.5">
+						<label for="backend-edit-provider" class="text-xs font-medium text-gray-400">Provider</label>
+						<InfoTip
+							label="Why can't I change this?"
+							text="Provider and Host together form the backend's model IDs (e.g. qwen3.5-35b:bob:lmstudio). Changing either after creation would break any client already using those IDs. Delete and re-create the backend if you need a different provider."
+						/>
+					</div>
 					<input id="backend-edit-provider" value={backend.provider} disabled class="input w-full opacity-60 cursor-not-allowed capitalize" />
 				</div>
 				<div>

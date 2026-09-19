@@ -54,12 +54,12 @@ export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<
   db.sqlite.exec(`
     CREATE TABLE IF NOT EXISTS backends (
       id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL,
-      host_name TEXT NOT NULL, provider TEXT NOT NULL, base_url TEXT NOT NULL,
+      host_name TEXT NOT NULL UNIQUE, provider TEXT NOT NULL, base_url TEXT NOT NULL,
       key_mode TEXT NOT NULL DEFAULT 'passthrough', encrypted_api_key TEXT,
       enabled INTEGER NOT NULL DEFAULT 1, weight INTEGER NOT NULL DEFAULT 1,
       max_concurrency INTEGER NOT NULL DEFAULT 10, health_check_enabled INTEGER NOT NULL DEFAULT 1,
       last_health_check INTEGER, last_health_status TEXT, last_latency_ms INTEGER,
-      last_health_error TEXT, available_models TEXT,
+      last_health_error TEXT, available_models TEXT, reasoning_caps TEXT,
       created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS vmodels (

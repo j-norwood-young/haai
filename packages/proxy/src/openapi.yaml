@@ -119,12 +119,15 @@ paths:
                 name: { type: string }
                 displayName: { type: string }
                 hostName: { type: string }
-                provider: { type: string, example: lmstudio }
+                provider: { type: string, enum: [lmstudio, ollama, vllm, omlx, openai, generic] }
                 baseUrl: { type: string, format: uri }
                 keyMode: { type: string, enum: [passthrough, abstraction] }
                 apiKey: { type: string }
                 enabled: { type: boolean }
                 weight: { type: integer }
+                reasoningCaps:
+                  type: object
+                  description: Partial override of this backend's reasoning capabilities (see docs/guide/debugging-thinking.md). Merged over the provider's default profile.
       responses:
         "201":
           description: Backend created

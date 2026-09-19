@@ -9,6 +9,7 @@ import {
   usageEvents,
   usageRollups,
   generateApiKey,
+  encrypt,
 } from "@haai/core";
 import type { TestProxy } from "./proxy-server.js";
 
@@ -26,6 +27,10 @@ export async function insertBackend(
     availableModels?: string[];
     lastHealthStatus?: string | null;
     enabled?: boolean;
+    /** Partial override merged over the provider's reasoning profile; see @haai/core reasoning module. */
+    reasoningCaps?: Record<string, unknown> | null;
+    /** When set, stored as an encrypted key with keyMode "abstraction" (for live-hardware tests). */
+    apiKey?: string;
   },
 ): Promise<string> {
   const id = `backend-${nanoid(8)}`;
@@ -37,8 +42,8 @@ export async function insertBackend(
     hostName: opts.hostName,
     provider: opts.provider ?? "generic",
     baseUrl: opts.baseUrl,
-    keyMode: "passthrough",
-    encryptedApiKey: null,
+    keyMode: opts.apiKey ? "abstraction" : "passthrough",
+    encryptedApiKey: opts.apiKey ? encrypt(opts.apiKey, proxy.masterKey) : null,
     enabled: opts.enabled ?? true,
     weight: 1,
     maxConcurrency: 10,
@@ -48,6 +53,9 @@ export async function insertBackend(
   };
   if (opts.availableModels) {
     row.availableModels = JSON.stringify(opts.availableModels);
+  }
+  if (opts.reasoningCaps !== undefined) {
+    row.reasoningCaps = opts.reasoningCaps === null ? null : JSON.stringify(opts.reasoningCaps);
   }
   if (opts.lastHealthStatus !== undefined) {
     row.lastHealthStatus = opts.lastHealthStatus;
@@ -62,6 +70,7 @@ export async function insertVModel(
     modelId: string;
     displayName?: string;
     backends?: Array<{ backendId: string; backendModelId: string; weight?: number }>;
+    balancingStrategy?: "session-pin" | "round-robin" | "weighted" | "least-connections" | "least-latency";
   },
 ): Promise<string> {
   const id = `vmodel-${nanoid(8)}`;
@@ -73,7 +82,7 @@ export async function insertVModel(
       modelId: opts.modelId,
       displayName: opts.displayName ?? opts.modelId,
       description: null,
-      balancingStrategy: "session-pin",
+      balancingStrategy: opts.balancingStrategy ?? "session-pin",
       streaming: true,
       allowToolCalling: true,
       allowVision: false,

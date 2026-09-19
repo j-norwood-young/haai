@@ -64,6 +64,27 @@
       "when": 1781956000000,
       "tag": "0008_vmodel_model_health",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1781957000000,
+      "tag": "0009_backend_reasoning_caps",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1781958000000,
+      "tag": "0010_backend_host_provider_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1781959000000,
+      "tag": "0011_backend_host_name_unique",
+      "breakpoints": true
     }
   ]
 }

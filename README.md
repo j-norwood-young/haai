@@ -143,7 +143,7 @@ See [CLI reference](docs/guide/cli.md) for the full command set.
 
 ## Supported providers
 
-LM Studio, Ollama, vLLM, OpenAI, and generic OpenAI-compatible backends.
+LM Studio, Ollama, vLLM, oMLX, OpenAI, and generic OpenAI-compatible backends.
 
 ## Quick start
 

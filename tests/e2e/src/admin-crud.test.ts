@@ -53,6 +53,50 @@ describe("admin backend and v-model CRUD", () => {
     expect(after.status).toBe(404);
   });
 
+  it("rejects a second backend with a hostName already in use, even under a different provider", async () => {
+    const first = await adminJson(proxy, "POST", "/api/v1/backends", {
+      name: "dup-host-a",
+      hostName: "shared-host",
+      provider: "vllm",
+      baseUrl: mock.url,
+    });
+    expect(first.status).toBe(201);
+    const firstBackend = (await first.json()) as { id: string };
+
+    // Same hostName, same provider -> rejected.
+    const duplicateSameProvider = await adminJson(proxy, "POST", "/api/v1/backends", {
+      name: "dup-host-b",
+      hostName: "shared-host",
+      provider: "vllm",
+      baseUrl: mock.url,
+    });
+    expect(duplicateSameProvider.status).toBe(409);
+
+    // Same hostName, DIFFERENT provider -> also rejected. hostName is the sole
+    // differentiator in pass-through model ids; a different provider suffix isn't a
+    // meaningful distinction to an end user picking a model from a list.
+    const duplicateDifferentProvider = await adminJson(proxy, "POST", "/api/v1/backends", {
+      name: "dup-host-c",
+      hostName: "shared-host",
+      provider: "lmstudio",
+      baseUrl: mock.url,
+    });
+    expect(duplicateDifferentProvider.status).toBe(409);
+    const body = (await duplicateDifferentProvider.json()) as { error: string };
+    expect(body.error).toContain("shared-host");
+
+    await adminJson(proxy, "DELETE", `/api/v1/backends/${firstBackend.id}`);
+  });
+
+  it("requires hostName when creating a backend", async () => {
+    const res = await adminJson(proxy, "POST", "/api/v1/backends", {
+      name: "no-host-backend",
+      provider: "generic",
+      baseUrl: mock.url,
+    });
+    expect(res.status).toBe(400);
+  });
+
   it("creates, edits mappings, and deletes a v-model; empty mappings still list", async () => {
     const backendRes = await adminJson(proxy, "POST", "/api/v1/backends", {
       name: "vmodel-pool",

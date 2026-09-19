@@ -40,7 +40,7 @@ server.tool(
   {
     name: z.string().describe("Unique backend name"),
     baseUrl: z.string().url().describe("Backend base URL"),
-    provider: z.enum(["lmstudio", "ollama", "vllm", "openai", "generic"]).describe("Provider type"),
+    provider: z.enum(["lmstudio", "ollama", "vllm", "omlx", "openai", "generic"]).describe("Provider type"),
     hostName: z.string().describe("Host label (e.g. bob)"),
     keyMode: z.enum(["passthrough", "abstraction"]).default("passthrough").describe("Key mode"),
     apiKey: z.string().optional().describe("API key (for abstraction mode)"),

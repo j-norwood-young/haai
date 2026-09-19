@@ -2,6 +2,7 @@ import { fetch } from "undici";
 import type { RequestInit } from "undici";
 import type { FastifyReply } from "fastify";
 import type { ChatResponse } from "@haai/plugin-sdk";
+import type { ReasoningWarning } from "@haai/core";
 import {
   httpRequestsTotal,
   httpRequestDurationMs,
@@ -11,6 +12,7 @@ import {
   toolCallsTotal,
 } from "./metrics.js";
 import { getLogger } from "./logger.js";
+import { aliasReasoningInChunk, aliasReasoningInMessage, aliasReasoningInResponse, buildWarningChunkLine, warningCodesHeader } from "./reasoning/index.js";
 
 export interface ProxyRequestOptions {
   upstreamUrl: string;
@@ -28,6 +30,17 @@ export interface ProxyRequestOptions {
    * Used for pre-stream failover retries — the caller sends the final error.
    */
   suppressClientError?: boolean;
+  /** Pre-flight reasoning warnings computed in chat.ts from the selected backend's
+   * capabilities (e.g. "this backend accepts a budget but doesn't enforce it"). */
+  reasoningWarnings?: ReasoningWarning[];
+  /**
+   * When true, the raw SSE stream is buffered per-line and re-serialised instead of
+   * written verbatim, so `reasoning`/`reasoning_content` can be aliased and a trailing
+   * warning chunk can be injected before [DONE]. Only set when actually needed (the
+   * selected backend's reasoning channel isn't already canonical, or there are warnings
+   * to inject) — vLLM's default byte-verbatim fast path is otherwise untouched.
+   */
+  needsReasoningStreamRewrite?: boolean;
   /** Called once when the first upstream byte/token arrives (TTFT). */
   onFirstToken?: () => void;
   /** Called after each chunk with the running completion token count. */
@@ -129,6 +142,9 @@ export async function streamingProxy(
         } else {
           bufferedResponse = JSON.parse(rawBody) as ChatResponse;
         }
+        if (bufferedResponse) {
+          aliasReasoningInResponse(bufferedResponse as unknown as Record<string, unknown>);
+        }
         const usage = bufferedResponse?.usage;
         if (usage) {
           promptTokens = usage.prompt_tokens;
@@ -155,66 +171,138 @@ export async function streamingProxy(
     }
 
     if (isStreaming && response.body) {
-      reply.raw.writeHead(200, {
+      const streamHeaders: Record<string, string> = {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
         "X-Accel-Buffering": "no",
-      });
+      };
+      if (opts.reasoningWarnings?.length) {
+        streamHeaders["X-HAAI-Warning"] = warningCodesHeader(opts.reasoningWarnings);
+      }
+      reply.raw.writeHead(200, streamHeaders);
 
       const decoder = new TextDecoder();
       let buffer = "";
 
-      for await (const chunk of response.body) {
-        if (ttft === null) {
-          ttft = Date.now() - start;
-          ttftHistogram.observe({ vmodel: opts.vmodelId, backend: opts.backendName }, ttft);
-          opts.onFirstToken?.();
-        }
-
-        const text = decoder.decode(chunk instanceof Uint8Array ? chunk : Buffer.from(chunk as ArrayBuffer), { stream: true });
-        buffer += text;
-        reply.raw.write(text);
-
-        // Parse SSE for token counting
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
-          try {
-            const parsed = JSON.parse(line.slice(6)) as Record<string, unknown>;
-            const choices = parsed["choices"] as Array<Record<string, unknown>> | undefined;
-            if (choices?.[0]) {
-              const delta = choices[0]["delta"] as Record<string, unknown> | undefined;
-              if (delta?.["content"]) completionTokens++;
-              const toolCalls = delta?.["tool_calls"] as unknown[] | undefined;
-              if (toolCalls?.length) toolCallCount += toolCalls.length;
-            }
-            const usage = parsed["usage"] as Record<string, number> | undefined;
-            if (usage) {
-              promptTokens = usage["prompt_tokens"] ?? promptTokens;
-              completionTokens = usage["completion_tokens"] ?? completionTokens;
-              totalTokens = usage["total_tokens"] ?? totalTokens;
-            }
-          } catch {
-            // Ignore parse errors for individual chunks
+      if (opts.needsReasoningStreamRewrite) {
+        // Buffer-transform-write path: needed to alias reasoning field names and/or
+        // inject a warning chunk before [DONE]. vLLM's default fast path (below) is
+        // untouched — this only runs for backends whose reasoning channel isn't
+        // already canonical, or when there's a warning to attach.
+        let warningsSent = false;
+        for await (const chunk of response.body) {
+          if (ttft === null) {
+            ttft = Date.now() - start;
+            ttftHistogram.observe({ vmodel: opts.vmodelId, backend: opts.backendName }, ttft);
+            opts.onFirstToken?.();
           }
+
+          const text = decoder.decode(chunk instanceof Uint8Array ? chunk : Buffer.from(chunk as ArrayBuffer), { stream: true });
+          buffer += text;
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          const outLines: string[] = [];
+          for (const line of lines) {
+            if (line === "data: [DONE]") {
+              if (opts.reasoningWarnings?.length && !warningsSent) {
+                outLines.push(buildWarningChunkLine(opts.reasoningWarnings, opts.modelId));
+                warningsSent = true;
+              }
+              outLines.push(line);
+              continue;
+            }
+            if (!line.startsWith("data: ")) {
+              outLines.push(line);
+              continue;
+            }
+            try {
+              const parsed = JSON.parse(line.slice(6)) as Record<string, unknown>;
+              const choices = parsed["choices"] as Array<Record<string, unknown>> | undefined;
+              if (choices?.[0]) {
+                const delta = choices[0]["delta"] as Record<string, unknown> | undefined;
+                if (delta?.["content"] || delta?.["reasoning"] || delta?.["reasoning_content"]) completionTokens++;
+                const toolCalls = delta?.["tool_calls"] as unknown[] | undefined;
+                if (toolCalls?.length) toolCallCount += toolCalls.length;
+              }
+              const usage = parsed["usage"] as Record<string, number> | undefined;
+              if (usage) {
+                promptTokens = usage["prompt_tokens"] ?? promptTokens;
+                completionTokens = usage["completion_tokens"] ?? completionTokens;
+                totalTokens = usage["total_tokens"] ?? totalTokens;
+              }
+              const changed = aliasReasoningInChunk(parsed);
+              outLines.push(changed ? `data: ${JSON.stringify(parsed)}` : line);
+            } catch {
+              outLines.push(line);
+            }
+          }
+          if (outLines.length) reply.raw.write(outLines.join("\n") + "\n");
+          opts.onProgress?.(completionTokens);
         }
-        opts.onProgress?.(completionTokens);
+        if (buffer) reply.raw.write(buffer);
+      } else {
+        for await (const chunk of response.body) {
+          if (ttft === null) {
+            ttft = Date.now() - start;
+            ttftHistogram.observe({ vmodel: opts.vmodelId, backend: opts.backendName }, ttft);
+            opts.onFirstToken?.();
+          }
+
+          const text = decoder.decode(chunk instanceof Uint8Array ? chunk : Buffer.from(chunk as ArrayBuffer), { stream: true });
+          buffer += text;
+          reply.raw.write(text);
+
+          // Parse SSE for token counting
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+            try {
+              const parsed = JSON.parse(line.slice(6)) as Record<string, unknown>;
+              const choices = parsed["choices"] as Array<Record<string, unknown>> | undefined;
+              if (choices?.[0]) {
+                const delta = choices[0]["delta"] as Record<string, unknown> | undefined;
+                if (delta?.["content"]) completionTokens++;
+                const toolCalls = delta?.["tool_calls"] as unknown[] | undefined;
+                if (toolCalls?.length) toolCallCount += toolCalls.length;
+              }
+              const usage = parsed["usage"] as Record<string, number> | undefined;
+              if (usage) {
+                promptTokens = usage["prompt_tokens"] ?? promptTokens;
+                completionTokens = usage["completion_tokens"] ?? completionTokens;
+                totalTokens = usage["total_tokens"] ?? totalTokens;
+              }
+            } catch {
+              // Ignore parse errors for individual chunks
+            }
+          }
+          opts.onProgress?.(completionTokens);
+        }
       }
 
       reply.raw.end();
     } else {
       // Non-streaming
-      const body = await response.text();
+      const rawBody = await response.text();
       const durationMs = Date.now() - start;
+      let outBody = rawBody;
       try {
-        const parsed = JSON.parse(body) as Record<string, unknown>;
+        const parsed = JSON.parse(rawBody) as Record<string, unknown>;
         const usage = parsed["usage"] as Record<string, number> | undefined;
         if (usage) {
           promptTokens = usage["prompt_tokens"] ?? 0;
           completionTokens = usage["completion_tokens"] ?? 0;
           totalTokens = usage["total_tokens"] ?? 0;
+        }
+        const aliased = aliasReasoningInResponse(parsed);
+        const hasWarnings = (opts.reasoningWarnings?.length ?? 0) > 0;
+        if (hasWarnings) {
+          parsed["haai"] = { warnings: opts.reasoningWarnings };
+        }
+        if (aliased || hasWarnings) {
+          outBody = JSON.stringify(parsed);
         }
       } catch {
         // not JSON
@@ -222,10 +310,11 @@ export async function streamingProxy(
       opts.onFirstToken?.();
       opts.onProgress?.(completionTokens);
 
-      reply
-        .status(200)
-        .header("Content-Type", "application/json")
-        .send(body);
+      const outReply = reply.status(200).header("Content-Type", "application/json");
+      if (opts.reasoningWarnings?.length) {
+        outReply.header("X-HAAI-Warning", warningCodesHeader(opts.reasoningWarnings));
+      }
+      outReply.send(outBody);
 
       return {
         statusCode: 200,
@@ -237,7 +326,7 @@ export async function streamingProxy(
         tps: null,
         toolCallCount,
         error: undefined,
-        responseBody: body,
+        responseBody: outBody,
         bufferedResponse: null,
       };
     }
@@ -281,9 +370,21 @@ export async function streamingProxy(
   return { statusCode, promptTokens, completionTokens, totalTokens, ttftMs: ttft, durationMs, tps, toolCallCount, error, responseBody: undefined, bufferedResponse: null };
 }
 
+interface AccumulatingToolCall {
+  id?: string;
+  type?: string;
+  function: { name?: string; arguments: string };
+}
+
 /**
  * Reconstruct a single ChatResponse object by concatenating SSE delta chunks.
  * Used when bufferResponse=true for streaming upstreams.
+ *
+ * Previously this dropped everything except id/model/created/content/finish_reason/usage
+ * — silently destroying reasoning output the moment any response-buffering plugin was
+ * bound (see tests/e2e/src/thinking-passthrough.test.ts). Fixed to also accumulate
+ * `reasoning`, `reasoning_content`, `refusal`, `tool_calls`, and the full `usage` object
+ * (including completion_tokens_details), then alias reasoning field names.
  */
 function reconstructResponseFromSse(raw: string): ChatResponse {
   const lines = raw.split("\n");
@@ -291,8 +392,12 @@ function reconstructResponseFromSse(raw: string): ChatResponse {
   let model = "";
   let created = Math.floor(Date.now() / 1000);
   let content = "";
+  let reasoning = "";
+  let reasoningContent = "";
+  let refusal: string | null = null;
   let finishReason: string | null = null;
-  let usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | undefined;
+  let usage: ChatResponse["usage"] | undefined;
+  const toolCallsByIndex = new Map<number, AccumulatingToolCall>();
 
   for (const line of lines) {
     if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
@@ -304,22 +409,59 @@ function reconstructResponseFromSse(raw: string): ChatResponse {
       const choices = chunk["choices"] as Array<Record<string, unknown>> | undefined;
       if (choices?.[0]) {
         const delta = choices[0]["delta"] as Record<string, unknown> | undefined;
-        if (delta?.["content"]) content += delta["content"] as string;
+        if (delta) {
+          if (typeof delta["content"] === "string") content += delta["content"];
+          if (typeof delta["reasoning"] === "string") reasoning += delta["reasoning"];
+          if (typeof delta["reasoning_content"] === "string") reasoningContent += delta["reasoning_content"];
+          if (typeof delta["refusal"] === "string") refusal = (refusal ?? "") + delta["refusal"];
+          const toolCalls = delta["tool_calls"] as Array<Record<string, unknown>> | undefined;
+          if (Array.isArray(toolCalls)) {
+            for (const tc of toolCalls) {
+              const idx = typeof tc["index"] === "number" ? (tc["index"] as number) : 0;
+              const existing = toolCallsByIndex.get(idx) ?? { function: { arguments: "" } };
+              if (typeof tc["id"] === "string") existing.id = tc["id"] as string;
+              if (typeof tc["type"] === "string") existing.type = tc["type"] as string;
+              const fn = tc["function"] as Record<string, unknown> | undefined;
+              if (fn) {
+                if (typeof fn["name"] === "string") existing.function.name = fn["name"] as string;
+                if (typeof fn["arguments"] === "string") existing.function.arguments += fn["arguments"] as string;
+              }
+              toolCallsByIndex.set(idx, existing);
+            }
+          }
+        }
         if (choices[0]["finish_reason"]) finishReason = choices[0]["finish_reason"] as string;
       }
-      const u = chunk["usage"] as { prompt_tokens: number; completion_tokens: number; total_tokens: number } | undefined;
+      const u = chunk["usage"] as ChatResponse["usage"] | undefined;
       if (u) usage = u;
     } catch {
       // skip bad chunks
     }
   }
 
+  const message: Record<string, unknown> = { role: "assistant", content };
+  if (reasoning) message["reasoning"] = reasoning;
+  if (reasoningContent) message["reasoning_content"] = reasoningContent;
+  if (refusal !== null) message["refusal"] = refusal;
+  if (toolCallsByIndex.size > 0) {
+    message["tool_calls"] = [...toolCallsByIndex.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([, tc]) => ({ id: tc.id ?? "", type: tc.type ?? "function", function: tc.function }));
+  }
+  aliasReasoningInMessage(message);
+
   const result: ChatResponse = {
     id: id || `haai-reconstructed-${Date.now()}`,
     object: "chat.completion",
     created,
     model: model || "unknown",
-    choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: finishReason }],
+    choices: [
+      {
+        index: 0,
+        message: message as unknown as ChatResponse["choices"][number]["message"],
+        finish_reason: finishReason,
+      },
+    ],
   };
   if (usage) result.usage = usage;
   return result;

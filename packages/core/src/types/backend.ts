@@ -1,4 +1,6 @@
-export type BackendProvider = "lmstudio" | "ollama" | "vllm" | "openai" | "generic";
+export const BACKEND_PROVIDERS = ["lmstudio", "ollama", "vllm", "omlx", "openai", "generic"] as const;
+
+export type BackendProvider = (typeof BACKEND_PROVIDERS)[number];
 
 export type BackendKeyMode = "passthrough" | "abstraction";
 
@@ -23,6 +25,13 @@ export interface Backend {
   lastHealthError: string | null;
   /** JSON-encoded string[] of model ids, or null when unknown/cleared */
   availableModels: string | null;
+  /**
+   * JSON-encoded partial override of this backend's reasoning capabilities
+   * (see @haai/core reasoning module). Null means "derive entirely from provider".
+   * Deliberately NOT part of the model-id composite key, unlike `provider` — safe
+   * to change at any time via PATCH.
+   */
+  reasoningCaps: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -37,4 +46,5 @@ export type BackendInsert = Omit<
   | "lastLatencyMs"
   | "lastHealthError"
   | "availableModels"
+  | "reasoningCaps"
 >;

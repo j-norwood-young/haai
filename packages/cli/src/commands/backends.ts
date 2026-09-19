@@ -57,7 +57,7 @@ export function registerBackendCommands(
     .requiredOption("--name <name>", "Unique backend name")
     // Named --base-url (not --url) to avoid clashing with global haai --url (proxy URL).
     .requiredOption("--base-url <url>", "Backend base URL")
-    .requiredOption("--provider <provider>", "Provider: lmstudio|ollama|vllm|openai|generic")
+    .requiredOption("--provider <provider>", "Provider: lmstudio|ollama|vllm|omlx|openai|generic")
     .requiredOption("--hostname <hostname>", "Hostname label (e.g. bob)")
     .option("--api-key <key>", "API key for abstraction mode")
     .option("--mode <mode>", "Key mode: passthrough|abstraction", "passthrough")
