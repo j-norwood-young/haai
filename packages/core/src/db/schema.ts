@@ -34,6 +34,8 @@ export const backends = sqliteTable(
     lastHealthError: text("last_health_error"),
     /** JSON array of model ids from last successful GET /v1/models; null when unknown/cleared */
     availableModels: text("available_models"),
+    /** JSON array of CatalogEntry (id, kind, contextLength?, source) from the last successful poll; null when unknown/cleared */
+    modelCatalog: text("model_catalog"),
     /** JSON partial override of this backend's reasoning capabilities; null = derive from provider */
     reasoningCaps: text("reasoning_caps"),
     createdAt: integer("created_at").notNull(),
@@ -51,6 +53,8 @@ export const vmodels = sqliteTable(
     displayName: text("display_name").notNull(),
     description: text("description"),
     balancingStrategy: text("balancing_strategy").notNull().default("session-pin"),
+    /** Which inference endpoint this v-model may serve: "chat" or "embedding". Immutable once it has members. */
+    kind: text("kind").notNull().default("chat"),
     streaming: integer("streaming", { mode: "boolean" }).notNull().default(true),
     allowToolCalling: integer("allow_tool_calling", { mode: "boolean" }).notNull().default(true),
     allowVision: integer("allow_vision", { mode: "boolean" }).notNull().default(false),

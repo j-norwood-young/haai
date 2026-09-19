@@ -19,6 +19,17 @@
 
 	const title = $derived(backend ? `${backend.name} models` : 'Models');
 
+	const KIND_BADGE: Record<AvailableModel['modelKind'], string> = {
+		llm: 'badge-cyan',
+		vlm: 'badge-yellow',
+		embeddings: 'badge-violet'
+	};
+	const KIND_LABEL: Record<AvailableModel['modelKind'], string> = {
+		llm: 'chat',
+		vlm: 'vision',
+		embeddings: 'embedding'
+	};
+
 	async function loadModels(target: Pick<Backend, 'id' | 'name' | 'host' | 'provider'>) {
 		const generation = ++fetchGeneration;
 		loading = true;
@@ -85,9 +96,14 @@
 							<li
 								class="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] px-3 py-2"
 							>
-								<p class="text-[var(--color-text)] font-mono text-sm break-all">
-									{rawBackendModelId(model.id, backend)}
-								</p>
+								<div class="flex items-start justify-between gap-2">
+									<p class="text-[var(--color-text)] font-mono text-sm break-all">
+										{rawBackendModelId(model.id, backend)}
+									</p>
+									<span class="badge {KIND_BADGE[model.modelKind]} shrink-0">
+										{KIND_LABEL[model.modelKind]}
+									</span>
+								</div>
 								<p class="text-xs text-[var(--color-text-subtle)] font-mono break-all mt-0.5">
 									{model.id}
 								</p>

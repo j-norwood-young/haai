@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Backend, ResolvedReasoningCaps } from "@haai/core";
+import type { Backend, ModelKind, ResolvedReasoningCaps, VModelKind } from "@haai/core";
 import type { BalancingStrategy } from "@haai/core";
 import { CircuitBreaker, type CircuitState } from "./circuit-breaker.js";
 import { backendConcurrencyGauge } from "./metrics.js";
@@ -15,6 +15,10 @@ export interface BackendCandidate {
   weight: number;
   /** This candidate's resolved reasoning capabilities — a pure function of `backend`. */
   reasoning: ResolvedReasoningCaps;
+  /** The v-model's routing class this candidate was resolved under; absent for pass-through. */
+  vmodelKind?: VModelKind;
+  /** This candidate's resolved model kind, populated by resolveModelRoute(). */
+  modelKind?: { kind: ModelKind; positive: boolean };
 }
 
 export function isCandidateAvailable(candidate: BackendCandidate): boolean {
@@ -23,6 +27,8 @@ export function isCandidateAvailable(candidate: BackendCandidate): boolean {
     backendHealth: candidate.backend.lastHealthStatus,
     backendModelId: candidate.backendModelId,
     availableModels: parseAvailableModelsJson(candidate.backend.availableModels),
+    vmodelKind: candidate.vmodelKind,
+    modelKind: candidate.modelKind,
   }).available;
 }
 

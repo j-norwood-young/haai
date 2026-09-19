@@ -397,6 +397,32 @@ paths:
       responses:
         "200":
           description: OpenAI-compatible model list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, enum: [list] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, object, created, owned_by, type]
+                      properties:
+                        id: { type: string }
+                        object: { type: string, enum: [model] }
+                        created: { type: integer }
+                        owned_by: { type: string }
+                        context_length: { type: integer, nullable: true }
+                        type:
+                          type: string
+                          enum: [llm, vlm, embeddings]
+                          description: >
+                            LM Studio-style classification of which inference endpoint
+                            this model belongs on. "embeddings" models are only reachable
+                            on /v1/embeddings; "llm"/"vlm" models only on
+                            /v1/chat/completions. Never "unknown" on the wire — an
+                            unclassified model reports as "llm".
 
   /v1/chat/completions:
     post:
@@ -420,15 +446,58 @@ paths:
       responses:
         "200":
           description: Completion response or SSE stream
+        "400":
+          description: >
+            Invalid request, or the requested model is an embedding model
+            (code: model_not_supported — use POST /v1/embeddings instead)
+        "403":
+          description: Key not permitted to use this model or capability
+        "404":
+          description: Model not found
+        "429":
+          description: Token budget exceeded
+        "503":
+          description: No available (healthy, matching-kind) backend for this model
 
   /v1/embeddings:
     post:
       tags: [OpenAI]
       summary: Create embeddings
       security: [{ apiKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, input]
+              properties:
+                model:
+                  type: string
+                  description: A pass-through backend model id, or an embedding-kind v-model alias.
+                input:
+                  description: A string or array of strings to embed.
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items: { type: string }
+                encoding_format: { type: string, enum: [float, base64] }
+                dimensions: { type: integer }
       responses:
         "200":
           description: Embeddings response
+        "400":
+          description: >
+            Invalid request, or the requested model is a chat model
+            (code: model_not_supported — use POST /v1/chat/completions instead)
+        "403":
+          description: Key not permitted to use this model, or allowEmbeddings is false
+        "404":
+          description: Model not found
+        "429":
+          description: Token budget exceeded
+        "503":
+          description: No available (healthy, matching-kind) backend for this model
 
   /health:
     get:

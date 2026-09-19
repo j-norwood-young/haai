@@ -1,11 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { eq, and } from "drizzle-orm";
-import {
-  backends as backendsTable,
-  vmodels as vmodelsTable,
-  vmodelBackends as vmodelBackendsTable,
-} from "@haai/core";
-import { buildBackendApiUrl, decrypt, resolveReasoningCaps } from "@haai/core";
+import { buildBackendApiUrl, decrypt } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { streamingProxy, type ProxyResult } from "../../streaming-proxy.js";
 import { UsageRecorder } from "../../usage-recorder.js";
@@ -13,25 +7,12 @@ import {
   filterAvailableCandidates,
   type BackendCandidate,
 } from "../../balancer.js";
-import type { Backend, ReasoningWarning } from "@haai/core";
+import { resolveModelRoute, isRetryableUpstreamFailure } from "../../model-routing.js";
+import type { ReasoningWarning } from "@haai/core";
 import type { ChatRequest, ChatResponse } from "@haai/plugin-sdk";
 import { resolveBindings } from "../../plugins/loader.js";
 import type { PluginHostContext } from "../../plugins/runtime.js";
 import { parseReasoningIntent, applyReasoningDialect, aliasReasoningInResponse, warningCodesHeader } from "../../reasoning/index.js";
-
-function isRetryableUpstreamFailure(result: ProxyResult): boolean {
-  if (result.statusCode === 404) return true;
-  if (result.statusCode >= 500) return true;
-  const err = (result.error ?? "").toLowerCase();
-  if (err.includes("model") && (err.includes("not found") || err.includes("does not exist"))) {
-    return true;
-  }
-  return false;
-}
-
-function mapBackendRow(row: typeof backendsTable.$inferSelect): Backend {
-  return row as unknown as Backend;
-}
 
 export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {
   const recorder = new UsageRecorder(ctx.db, ctx.sse);
@@ -77,76 +58,21 @@ export async function chatRoutes(app: FastifyInstance, ctx: AppContext): Promise
       });
     }
 
-    // Resolve model — is it a v-model or direct backend model?
-    const vmodel = await ctx.db.db
-      .select()
-      .from(vmodelsTable)
-      .where(and(eq(vmodelsTable.modelId, requestedModel), eq(vmodelsTable.enabled, true)))
-      .get();
-
-    let candidates: BackendCandidate[] = [];
-
-    if (vmodel) {
-      const vmBackends = await ctx.db.db
-        .select()
-        .from(vmodelBackendsTable)
-        .where(
-          and(
-            eq(vmodelBackendsTable.vmodelId, vmodel.id),
-            eq(vmodelBackendsTable.enabled, true),
-          ),
-        )
-        .all();
-
-      for (const vmb of vmBackends) {
-        const backend = await ctx.db.db
-          .select()
-          .from(backendsTable)
-          .where(eq(backendsTable.id, vmb.backendId))
-          .get();
-        if (backend) {
-          const mapped = mapBackendRow(backend);
-          candidates.push({
-            backendId: backend.id,
-            backend: mapped,
-            backendModelId: vmb.backendModelId,
-            weight: vmb.weight,
-            reasoning: resolveReasoningCaps(mapped),
-          });
-        }
+    // Resolve model — is it a v-model or direct backend model? Also enforces
+    // that an embedding-kind v-model (or member) can't be reached here.
+    const resolved = await resolveModelRoute(ctx, requestedModel, "chat");
+    if (!resolved.ok) {
+      const errorBody: { message: string; type: string; param?: string; code?: string } = {
+        message: resolved.message,
+        type: "invalid_request_error",
+      };
+      if (resolved.code) {
+        errorBody.param = "model";
+        errorBody.code = resolved.code;
       }
-    } else {
-      // Direct namespaced model lookup: "model:hostname:provider"
-      const parts = requestedModel.split(":");
-      if (parts.length >= 3) {
-        const modelId = parts.slice(0, -2).join(":");
-        const hostName = parts[parts.length - 2];
-        const provider = parts[parts.length - 1];
-
-        const backend = await ctx.db.db
-          .select()
-          .from(backendsTable)
-          .where(
-            and(
-              eq(backendsTable.hostName, hostName ?? ""),
-              eq(backendsTable.provider, provider ?? ""),
-              eq(backendsTable.enabled, true),
-            ),
-          )
-          .get();
-
-        if (backend) {
-          const mapped = mapBackendRow(backend);
-          candidates.push({
-            backendId: backend.id,
-            backend: mapped,
-            backendModelId: modelId,
-            weight: backend.weight,
-            reasoning: resolveReasoningCaps(mapped),
-          });
-        }
-      }
+      return reply.status(resolved.status).send({ error: errorBody });
     }
+    const { vmodel, candidates } = resolved;
 
     if (candidates.length === 0) {
       return reply.status(404).send({

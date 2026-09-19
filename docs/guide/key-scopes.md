@@ -42,7 +42,11 @@ haai key create --name no-tools --no-tools
 Embedding requests require:
 
 1. `allowEmbeddings: true` on the key
-2. A pass-through model ID the key can access (or appropriate v-model configuration)
+2. A pass-through model ID the key can access, or an `embedding`-kind v-model alias
+   included in `allowedModels` (see [Virtual Models](./vmodels#kind-chat-vs-embedding))
+
+`allowEmbeddings` gates both the pass-through and v-model paths identically — it's the
+only capability flag actually enforced for embeddings, on either.
 
 ## Related
 

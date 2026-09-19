@@ -109,3 +109,108 @@ describe("deriveVModelHealth", () => {
     expect(result.error).toContain("a: down");
   });
 });
+
+describe("evaluateMappingAvailability — model kind guard", () => {
+  it("marks a positive embedding member unavailable on a chat v-model", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: ["m"],
+        vmodelKind: "chat",
+        modelKind: { kind: "embeddings", positive: true },
+      }),
+    ).toEqual({ available: false, reason: "model_kind_mismatch" });
+  });
+
+  it("marks a positive chat member unavailable on an embedding v-model", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: ["m"],
+        vmodelKind: "embedding",
+        modelKind: { kind: "llm", positive: true },
+      }),
+    ).toEqual({ available: false, reason: "model_kind_mismatch" });
+  });
+
+  it("never blocks on a merely heuristic (non-positive) guess", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: ["m"],
+        vmodelKind: "chat",
+        modelKind: { kind: "embeddings", positive: false },
+      }),
+    ).toEqual({ available: true, reason: null });
+  });
+
+  it("defaults vmodelKind to chat when omitted", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: ["m"],
+        modelKind: { kind: "embeddings", positive: true },
+      }),
+    ).toEqual({ available: false, reason: "model_kind_mismatch" });
+  });
+
+  it("does not preempt backend_unhealthy", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "unhealthy",
+        backendModelId: "m",
+        availableModels: ["m"],
+        vmodelKind: "chat",
+        modelKind: { kind: "embeddings", positive: true },
+      }),
+    ).toEqual({ available: false, reason: "backend_unhealthy" });
+  });
+
+  it("does not preempt inventory_unknown", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: null,
+        vmodelKind: "chat",
+        modelKind: { kind: "embeddings", positive: true },
+      }),
+    ).toEqual({ available: false, reason: "inventory_unknown" });
+  });
+
+  it("does not preempt model_missing", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: ["other"],
+        vmodelKind: "chat",
+        modelKind: { kind: "embeddings", positive: true },
+      }),
+    ).toEqual({ available: false, reason: "model_missing" });
+  });
+
+  it("allows a matching kind through", () => {
+    expect(
+      evaluateMappingAvailability({
+        backendEnabled: true,
+        backendHealth: "healthy",
+        backendModelId: "m",
+        availableModels: ["m"],
+        vmodelKind: "embedding",
+        modelKind: { kind: "embeddings", positive: true },
+      }),
+    ).toEqual({ available: true, reason: null });
+  });
+});

@@ -1,17 +1,22 @@
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
-import { backends as backendsTable, vmodels as vmodelsTable } from "@haai/core";
+import { backends as backendsTable, vmodels as vmodelsTable, modelKindWireValue } from "@haai/core";
 import { buildBackendApiUrl, decrypt } from "@haai/core";
 import { fetch } from "undici";
 import type { AppContext } from "../../context.js";
 import { getLogger } from "../../logger.js";
+import { backendKindResolver } from "../../model-catalog.js";
 
 interface ModelEntry {
   id: string;
   ownedBy: string;
   backendId?: string;
   backendName?: string;
+  /** Distinguishes a raw backend model from a v-model alias — unrelated to `modelKind`. */
   type: "backend-model" | "vmodel";
+  /** LM Studio-style model classification (chat/vision vs embeddings), used by the
+   * plugin config UI's model picker to filter candidates by kind. */
+  modelKind: "llm" | "vlm" | "embeddings";
 }
 
 /**
@@ -47,6 +52,7 @@ export async function availableModelsRoute(app: FastifyInstance, ctx: AppContext
           if (!res.ok) return;
 
           const data = await res.json() as { data?: Array<{ id: string }> };
+          const resolveKind = backendKindResolver(backend);
           for (const model of data.data ?? []) {
             models.push({
               id: `${model.id}:${backend.hostName}:${backend.provider}`,
@@ -54,6 +60,7 @@ export async function availableModelsRoute(app: FastifyInstance, ctx: AppContext
               backendId: backend.id,
               backendName: backend.displayName,
               type: "backend-model",
+              modelKind: modelKindWireValue(resolveKind(model.id).kind),
             });
           }
         } catch (err) {
@@ -74,6 +81,7 @@ export async function availableModelsRoute(app: FastifyInstance, ctx: AppContext
         id: vm.modelId,
         ownedBy: "haai",
         type: "vmodel",
+        modelKind: vm.kind === "embedding" ? "embeddings" : "llm",
       });
     }
 

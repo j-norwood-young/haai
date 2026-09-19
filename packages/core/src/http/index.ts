@@ -1,4 +1,4 @@
-export { buildBackendApiUrl } from "./backend-url.js";
+export { buildBackendApiUrl, buildBackendRootUrl } from "./backend-url.js";
 export { buildHaaiPromptCommand, buildChatCompletionUrl } from "./chat.js";
 export {
   ApiHttpError,

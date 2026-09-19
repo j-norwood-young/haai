@@ -11,9 +11,11 @@ import {
   isVModelAllowed,
   parseAllowedList,
   resolveReasoningCaps,
+  modelKindWireValue,
 } from "@haai/core";
 import type { Backend, ResolvedReasoningCaps } from "@haai/core";
 import type { AppContext } from "../../context.js";
+import { backendKindResolver } from "../../model-catalog.js";
 
 interface ModelEntry {
   id: string;
@@ -21,6 +23,10 @@ interface ModelEntry {
   created: number;
   owned_by: string;
   context_length: number | undefined;
+  /** LM Studio-style convention: distinguishes chat/vision models from embedding models,
+   * so a client (or a human reading the catalog) can tell which endpoint a model belongs
+   * on. Never "unknown" on the wire — an unclassified model reports as "llm". */
+  type: "llm" | "vlm" | "embeddings";
   /** OpenRouter-style de facto convention. Only includes "reasoning" when a backend
    * actually enforces a token budget — claiming it for a backend that merely accepts
    * and ignores the parameter would repeat the exact silent lie this feature exists to
@@ -103,17 +109,20 @@ export async function modelsRoutes(app: FastifyInstance, ctx: AppContext): Promi
 
           const caps = resolveReasoningCaps(backend as unknown as Backend);
           const { supportedParameters, capabilities } = reasoningAdvertisement(caps);
+          const resolveKind = backendKindResolver(backend);
 
           const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
           for (const model of data.data ?? []) {
             const rawId = model["id"] as string;
             const namespacedId = `${rawId}:${backend.hostName}:${backend.provider}`;
+            const { kind } = resolveKind(rawId);
             models.push({
               id: namespacedId,
               object: "model",
               created: (model["created"] as number) ?? Math.floor(Date.now() / 1000),
               owned_by: `${backend.hostName}:${backend.provider}`,
               context_length: model["context_length"] as number | undefined,
+              type: modelKindWireValue(kind),
               ...(supportedParameters.length ? { supported_parameters: supportedParameters } : {}),
               ...(capabilities.length ? { capabilities } : {}),
               haai: {
@@ -180,6 +189,7 @@ export async function modelsRoutes(app: FastifyInstance, ctx: AppContext): Promi
         created: Math.floor(vm.createdAt / 1000),
         owned_by: "haai",
         context_length: undefined,
+        type: vm.kind === "embedding" ? "embeddings" : "llm",
         ...(vmCapabilities ? { capabilities: vmCapabilities } : {}),
         ...(vmHaai ? { haai: vmHaai } : {}),
       });

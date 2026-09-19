@@ -15,12 +15,43 @@
 	let modelId = $state('');
 	let displayName = $state('');
 	let strategy = $state<VModel['strategy']>('session-pin');
+	let kind = $state<VModel['kind']>('chat');
 	let streaming = $state(true);
 	let selectedBackendIds = $state<string[]>([]);
 	let backendModels = $state<Record<string, string>>({}); // Maps backendId -> backendModelId
 
 	// Available models grouped by backend for dropdowns
-	let availableModelsByBackend = $state<Record<string, Array<{ id: string; name: string }>>>({});
+	let availableModelsByBackend = $state<
+		Record<string, Array<{ id: string; name: string; modelKind: 'llm' | 'vlm' | 'embeddings' }>>
+	>({});
+
+	// Only offer models matching the selected v-model kind, so a chat v-model can't
+	// accidentally get an embedding member (and vice versa).
+	const modelsForKind = $derived.by(() => {
+		const wantEmbeddings = kind === 'embedding';
+		const filtered: Record<string, Array<{ id: string; name: string }>> = {};
+		for (const [backendId, models] of Object.entries(availableModelsByBackend)) {
+			filtered[backendId] = models.filter((m) =>
+				wantEmbeddings ? m.modelKind === 'embeddings' : m.modelKind !== 'embeddings'
+			);
+		}
+		return filtered;
+	});
+
+	function handleKindChange(next: VModel['kind']) {
+		kind = next;
+		const wantEmbeddings = next === 'embedding';
+		// Clear selections that no longer match the chosen kind's model list.
+		for (const backendId of Object.keys(backendModels)) {
+			const selectedId = backendModels[backendId];
+			if (!selectedId) continue;
+			const models = availableModelsByBackend[backendId] ?? [];
+			const stillValid = models.some(
+				(m) => m.id === selectedId && (wantEmbeddings ? m.modelKind === 'embeddings' : m.modelKind !== 'embeddings')
+			);
+			if (!stillValid) backendModels[backendId] = '';
+		}
+	}
 
 	const allSelectedBackendsHaveModels = $derived(
 		selectedBackendIds.length > 0 &&
@@ -36,7 +67,10 @@
 			const result = await api.getAvailableModels();
 
 			// Group models by backend ID using raw upstream model IDs
-			const grouped: Record<string, Array<{ id: string; name: string }>> = {};
+			const grouped: Record<
+				string,
+				Array<{ id: string; name: string; modelKind: 'llm' | 'vlm' | 'embeddings' }>
+			> = {};
 			const backendsById = new Map(backends.map((b) => [b.id, b]));
 			for (const model of result.models ?? []) {
 				if (model.type === 'backend-model' && model.backendId) {
@@ -48,7 +82,8 @@
 					}
 					grouped[backendId].push({
 						id: rawId,
-						name: `${rawId} (${model.backendName || model.ownedBy})`
+						name: `${rawId} (${model.backendName || model.ownedBy})`,
+						modelKind: model.modelKind
 					});
 				}
 			}
@@ -113,6 +148,7 @@
 				model_id: modelId,
 				display_name: displayName,
 				strategy,
+				kind,
 				streaming,
 				backends: mappedBackends
 			};
@@ -156,6 +192,23 @@
 				<div>
 					<label for="new-display-name" class="block text-xs font-medium text-gray-400 mb-1">Display Name *</label>
 					<input id="new-display-name" bind:value={displayName} required placeholder="GPT-4o" class="input w-full" />
+				</div>
+				<div>
+					<label for="new-kind" class="block text-xs font-medium text-gray-400 mb-1">Kind</label>
+					<select
+						id="new-kind"
+						value={kind}
+						onchange={(e) => handleKindChange(e.currentTarget.value as VModel['kind'])}
+						class="input w-full"
+					>
+						<option value="chat">Chat</option>
+						<option value="embedding">Embedding</option>
+					</select>
+					<p class="mt-1 text-xs text-gray-500">
+						{kind === 'embedding'
+							? 'Reachable only via POST /v1/embeddings.'
+							: 'Reachable only via POST /v1/chat/completions.'}
+					</p>
 				</div>
 				<div>
 					<label for="new-strategy" class="block text-xs font-medium text-gray-400 mb-1">Strategy</label>
@@ -219,13 +272,21 @@
 												class="mt-1 w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-300"
 											>
 												<option value="" disabled>Select model…</option>
-												{#if ((availableModelsByBackend[b.id] ?? [])?.length ?? 0) > 0}
-													{#each (availableModelsByBackend[b.id] ?? []) as m (m.id)}
+												{#if ((modelsForKind[b.id] ?? [])?.length ?? 0) > 0}
+													{#each (modelsForKind[b.id] ?? []) as m (m.id)}
 														<option value={m.id}>{m.name}</option>
 													{/each}
 												{:else}
-													<optgroup label="No models discovered">
-														<option value="" disabled>— No models found —</option>
+													<optgroup
+														label={kind === 'embedding'
+															? 'No embedding models found'
+															: 'No chat models found'}
+													>
+														<option value="" disabled>
+															{kind === 'embedding'
+																? '— No embedding models found on this backend —'
+																: '— No chat models found on this backend —'}
+														</option>
 													</optgroup>
 												{/if}
 											</select>

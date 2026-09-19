@@ -1,6 +1,9 @@
 # Model ID Convention
 
-HAAI exposes two kinds of model IDs in `GET /v1/models`.
+HAAI exposes two kinds of model IDs in `GET /v1/models`. Each entry also carries an
+LM Studio-style `type` field — `"llm"`, `"vlm"`, or `"embeddings"` — telling clients
+which endpoint the model belongs on. See [Virtual Models](./vmodels#kind-chat-vs-embedding)
+for how that classification is enforced.
 
 ## Pass-through (backend) models
 
@@ -62,4 +65,7 @@ See [Scopes & Capabilities](./key-scopes).
 
 ## Embeddings
 
-Embedding requests require a **pass-through** model ID (not a v-model alias) unless the v-model has `allowEmbeddings: true` and is configured accordingly.
+`POST /v1/embeddings` accepts either a pass-through model ID, or an `embedding`-kind
+v-model alias (see [Virtual Models](./vmodels#kind-chat-vs-embedding)). A `chat`-kind
+v-model alias — the default — returns `400` on `/v1/embeddings`, and an embedding model
+returns `400` on `/v1/chat/completions`, regardless of which ID form is used to reach it.

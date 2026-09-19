@@ -59,12 +59,13 @@ export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<
       enabled INTEGER NOT NULL DEFAULT 1, weight INTEGER NOT NULL DEFAULT 1,
       max_concurrency INTEGER NOT NULL DEFAULT 10, health_check_enabled INTEGER NOT NULL DEFAULT 1,
       last_health_check INTEGER, last_health_status TEXT, last_latency_ms INTEGER,
-      last_health_error TEXT, available_models TEXT, reasoning_caps TEXT,
+      last_health_error TEXT, available_models TEXT, model_catalog TEXT, reasoning_caps TEXT,
       created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS vmodels (
       id TEXT PRIMARY KEY, model_id TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL,
       description TEXT, balancing_strategy TEXT NOT NULL DEFAULT 'session-pin',
+      kind TEXT NOT NULL DEFAULT 'chat',
       streaming INTEGER NOT NULL DEFAULT 1, allow_tool_calling INTEGER NOT NULL DEFAULT 1,
       allow_vision INTEGER NOT NULL DEFAULT 0, allow_embeddings INTEGER NOT NULL DEFAULT 0,
       enabled INTEGER NOT NULL DEFAULT 1,

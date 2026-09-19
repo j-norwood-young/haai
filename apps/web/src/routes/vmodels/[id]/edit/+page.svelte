@@ -29,7 +29,9 @@
 	let tempWeight = $state<string>('1'); // Temporary weight input
 
 	// Available models grouped by backend for dropdowns
-	let availableModelsByBackend = $state<Record<string, Array<{ id: string; name: string }>>>({});
+	let availableModelsByBackend = $state<
+		Record<string, Array<{ id: string; name: string; modelKind: 'llm' | 'vlm' | 'embeddings' }>>
+	>({});
 
 	async function load() {
 		loading = true;
@@ -41,7 +43,10 @@
 			const result = await api.getAvailableModels();
 
 			// Group models by backend ID using raw upstream model IDs
-			const grouped: Record<string, Array<{ id: string; name: string }>> = {};
+			const grouped: Record<
+				string,
+				Array<{ id: string; name: string; modelKind: 'llm' | 'vlm' | 'embeddings' }>
+			> = {};
 			const backendsById = new Map(backends.map((b) => [b.id, b]));
 			for (const model of result.models ?? []) {
 				if (model.type === 'backend-model' && model.backendId) {
@@ -53,7 +58,8 @@
 					}
 					grouped[backendId].push({
 						id: rawId,
-						name: `${rawId} (${model.backendName || model.ownedBy})`
+						name: `${rawId} (${model.backendName || model.ownedBy})`,
+						modelKind: model.modelKind
 					});
 				}
 			}
@@ -124,9 +130,13 @@
 
 	const modelsForSelectedBackend = $derived(
 		addBackendId
-			? (availableModelsByBackend[addBackendId] ?? []).filter(
-					(m) => !mappedModelKeys.has(`${addBackendId}::${m.id}`)
-			  )
+			? (availableModelsByBackend[addBackendId] ?? []).filter((m) => {
+					if (mappedModelKeys.has(`${addBackendId}::${m.id}`)) return false;
+					// Only offer models matching this v-model's kind, so an embedding model
+					// can't be mapped into a chat v-model (or vice versa).
+					const wantEmbeddings = vmodel?.kind === 'embedding';
+					return wantEmbeddings ? m.modelKind === 'embeddings' : m.modelKind !== 'embeddings';
+			  })
 			: []
 	);
 
@@ -218,7 +228,19 @@
 		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-6">
 			<form onsubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div>
-					<label for="edit-model-id" class="block text-xs font-medium text-gray-400 mb-1">Model ID</label>
+					<label for="edit-model-id" class="block text-xs font-medium text-gray-400 mb-1">
+						Model ID
+						<span
+							class="ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+							class:bg-cyan-900={vmodel.kind === 'chat'}
+							class:text-cyan-300={vmodel.kind === 'chat'}
+							class:bg-purple-900={vmodel.kind === 'embedding'}
+							class:text-purple-300={vmodel.kind === 'embedding'}
+							title="A v-model's kind is set at creation and immutable once it has mapped backends."
+						>
+							{vmodel.kind}
+						</span>
+					</label>
 					<input id="edit-model-id" value={vmodel.model_id} disabled class="input w-full opacity-60 cursor-not-allowed font-mono" />
 				</div>
 				<div>
@@ -318,6 +340,14 @@
 								<span class="text-xs text-gray-500 font-mono shrink-0 mr-1" aria-hidden="true">⠿</span>
 								<span class="text-sm text-gray-200 flex-1">{backendName(b.backend_id)}</span>
 								<span class="text-xs text-gray-500 font-mono">{b.backend_model_id}</span>
+								{#if vmodel && b.model_kind && ((vmodel.kind === 'embedding') !== (b.model_kind === 'embeddings'))}
+									<span
+										class="text-xs text-amber-400 bg-amber-900/30 rounded px-1.5 py-0.5"
+										title="This member's model kind ({b.model_kind}) doesn't match this v-model's kind ({vmodel.kind}); it will be treated as unavailable."
+									>
+										kind mismatch
+									</span>
+								{/if}
 								{#if editingWeightFor === b.id}
 									<div class="flex items-center gap-2 shrink-0">
 										<input
@@ -403,17 +433,23 @@
 							{#each modelsForSelectedBackend as m (m.id)}
 								<option value={m.id}>{m.name}</option>
 							{/each}
-						{:else if addBackendId && (availableModelsByBackend[addBackendId] ?? []).length > 0}
-							<optgroup label="All models mapped">
-								<option value="" disabled>— All models from this backend already mapped —</option>
-							</optgroup>
 						{:else if !vmodel || !addBackendId}
 							<optgroup label="Select a backend first">
 								<option disabled>Select a backend to see available models</option>
 							</optgroup>
+						{:else if (availableModelsByBackend[addBackendId] ?? []).some((m) => (vmodel?.kind === 'embedding' ? m.modelKind === 'embeddings' : m.modelKind !== 'embeddings'))}
+							<optgroup label="All models mapped">
+								<option value="" disabled>— All models from this backend already mapped —</option>
+							</optgroup>
 						{:else}
-							<optgroup label="No models discovered">
-								<option value="" disabled>— No models found —</option>
+							<optgroup
+								label={vmodel.kind === 'embedding' ? 'No embedding models found' : 'No chat models found'}
+							>
+								<option value="" disabled>
+									{vmodel.kind === 'embedding'
+										? '— No embedding models found on this backend —'
+										: '— No chat models found on this backend —'}
+								</option>
 							</optgroup>
 						{/if}
 					</select>

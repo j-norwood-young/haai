@@ -109,11 +109,15 @@ export type VModelStrategy =
 	| 'least-connections'
 	| 'least-latency';
 
+export type VModelKind = 'chat' | 'embedding';
+
 export interface VModel {
 	id: string;
 	model_id: string;
 	display_name: string;
 	strategy: VModelStrategy;
+	/** Which inference endpoint this v-model may serve. Immutable once it has members. */
+	kind: VModelKind;
 	streaming: boolean;
 	enabled: boolean;
 	health?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
@@ -131,6 +135,9 @@ export interface VModelBackend {
 	weight?: number;
 	available?: boolean | null;
 	unavailable_reason?: string;
+	/** Resolved from the backend's cached model catalog; used to badge legacy
+	 * mappings that contradict their v-model's kind. */
+	model_kind?: 'llm' | 'vlm' | 'embeddings';
 }
 
 interface VModelApiRow {
@@ -138,6 +145,7 @@ interface VModelApiRow {
 	modelId: string;
 	displayName: string;
 	balancingStrategy: string;
+	kind?: string;
 	streaming: boolean;
 	enabled: boolean;
 	lastHealthStatus?: string | null;
@@ -155,6 +163,7 @@ interface VModelBackendApiRow {
 	weight: number;
 	lastAvailable?: boolean | null;
 	unavailableReason?: string | null;
+	modelKind?: 'llm' | 'vlm' | 'embeddings';
 }
 
 function mapVModelBackend(row: VModelBackendApiRow): VModelBackend {
@@ -167,6 +176,7 @@ function mapVModelBackend(row: VModelBackendApiRow): VModelBackend {
 	if (row.backendName) mapped.backend_name = row.backendName;
 	if (row.lastAvailable !== undefined) mapped.available = row.lastAvailable;
 	if (row.unavailableReason) mapped.unavailable_reason = row.unavailableReason;
+	if (row.modelKind) mapped.model_kind = row.modelKind;
 	return mapped;
 }
 
@@ -176,6 +186,7 @@ function mapVModel(row: VModelApiRow): VModel {
 		model_id: row.modelId,
 		display_name: row.displayName,
 		strategy: row.balancingStrategy as VModelStrategy,
+		kind: row.kind === 'embedding' ? 'embedding' : 'chat',
 		streaming: row.streaming,
 		enabled: row.enabled,
 		backends: (row.backends ?? []).map(mapVModelBackend),
@@ -199,6 +210,9 @@ export interface VModelCreateInput {
 	model_id: string;
 	display_name: string;
 	strategy?: VModelStrategy;
+	/** Defaults to "chat" server-side; inferred as "embedding" if omitted and every
+	 * supplied member positively classifies as an embedding model. */
+	kind?: VModelKind;
 	streaming?: boolean;
 	enabled?: boolean;
 	backends?: Array<Pick<VModelBackend, 'backend_id' | 'backend_model_id' | 'weight'>>;
@@ -209,6 +223,7 @@ function toCreateVModelPayload(data: VModelCreateInput): Record<string, unknown>
 	if (data.model_id) payload.modelId = data.model_id;
 	if (data.display_name) payload.displayName = data.display_name;
 	if (data.strategy) payload.balancingStrategy = data.strategy;
+	if (data.kind) payload.kind = data.kind;
 	if (data.streaming !== undefined) payload.streaming = data.streaming;
 	if (data.enabled !== undefined) payload.enabled = data.enabled;
 	if (data.backends?.length) {
@@ -225,6 +240,9 @@ function toUpdateVModelPayload(data: Partial<VModel>): Record<string, unknown> {
 	const payload: Record<string, unknown> = {};
 	if (data.display_name !== undefined) payload.displayName = data.display_name;
 	if (data.strategy !== undefined) payload.balancingStrategy = data.strategy;
+	// The server only honours this while the v-model has zero mapped members
+	// (409 otherwise) — kind is immutable once backends are attached.
+	if (data.kind !== undefined) payload.kind = data.kind;
 	if (data.streaming !== undefined) payload.streaming = data.streaming;
 	if (data.enabled !== undefined) payload.enabled = data.enabled;
 	return payload;
@@ -498,7 +516,11 @@ export interface AvailableModel {
 	ownedBy: string;
 	backendId?: string;
 	backendName?: string;
+	/** Distinguishes a raw backend model from a v-model alias — unrelated to `modelKind`. */
 	type: 'backend-model' | 'vmodel';
+	/** LM Studio-style classification (chat/vision vs embeddings); used to filter the
+	 * v-model member picker so embedding models can't be mapped into a chat v-model. */
+	modelKind: 'llm' | 'vlm' | 'embeddings';
 }
 
 export interface MetricsSummary {

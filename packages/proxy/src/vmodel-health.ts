@@ -4,10 +4,15 @@ import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
+  modelKindRoutingClass,
+  parseVModelKind,
   type MappingUnavailableReason,
+  type ModelKind,
   type VModelHealthStatus,
+  type VModelKind,
 } from "@haai/core";
 import type { SseEmitter } from "./sse.js";
+import { backendKindResolver } from "./model-catalog.js";
 
 export interface MappingAvailability {
   available: boolean;
@@ -30,6 +35,10 @@ export function evaluateMappingAvailability(opts: {
   backendHealth: string | null;
   backendModelId: string;
   availableModels: string[] | null;
+  /** The v-model's routing class; defaults to "chat" (matches the DB column default). */
+  vmodelKind?: VModelKind | undefined;
+  /** The mapped backend model's resolved kind; a mismatch only blocks when `positive`. */
+  modelKind?: { kind: ModelKind; positive: boolean } | null | undefined;
 }): MappingAvailability {
   if (!opts.backendEnabled) {
     return { available: false, reason: "backend_disabled" };
@@ -42,6 +51,10 @@ export function evaluateMappingAvailability(opts: {
   }
   if (!opts.availableModels.includes(opts.backendModelId)) {
     return { available: false, reason: "model_missing" };
+  }
+  const vmodelKind = opts.vmodelKind ?? "chat";
+  if (opts.modelKind?.positive && modelKindRoutingClass(opts.modelKind.kind) !== vmodelKind) {
+    return { available: false, reason: "model_kind_mismatch" };
   }
   return { available: true, reason: null };
 }
@@ -56,6 +69,8 @@ function reasonLabel(reason: MappingUnavailableReason | null, backendModelId: st
       return `model '${backendModelId}' not available`;
     case "inventory_unknown":
       return "model inventory unknown";
+    case "model_kind_mismatch":
+      return `model '${backendModelId}' is not a compatible kind for this v-model`;
     default:
       return "unavailable";
   }
@@ -124,6 +139,8 @@ export async function recomputeAllVModelHealth(
     let availableCount = 0;
     const reasons: string[] = [];
 
+    const vmodelKind = parseVModelKind(vm.kind) ?? "chat";
+
     for (const mapping of mappings) {
       const backend = backendById.get(mapping.backendId);
       const availability = !mapping.enabled
@@ -133,6 +150,10 @@ export async function recomputeAllVModelHealth(
             backendHealth: backend?.lastHealthStatus ?? null,
             backendModelId: mapping.backendModelId,
             availableModels: parseAvailableModelsJson(backend?.availableModels ?? null),
+            vmodelKind,
+            modelKind: backend
+              ? backendKindResolver(backend)(mapping.backendModelId)
+              : null,
           });
 
       if (mapping.enabled && availability.available) availableCount += 1;

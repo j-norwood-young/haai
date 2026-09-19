@@ -10,6 +10,8 @@ import {
   usageRollups,
   generateApiKey,
   encrypt,
+  serializeModelCatalog,
+  type CatalogEntry,
 } from "@haai/core";
 import type { TestProxy } from "./proxy-server.js";
 
@@ -25,6 +27,8 @@ export async function insertBackend(
     baseUrl: string;
     provider?: string;
     availableModels?: string[];
+    /** JSON-serialized as backends.model_catalog; drives model-kind classification for this backend. */
+    modelCatalog?: CatalogEntry[];
     lastHealthStatus?: string | null;
     enabled?: boolean;
     /** Partial override merged over the provider's reasoning profile; see @haai/core reasoning module. */
@@ -54,6 +58,12 @@ export async function insertBackend(
   if (opts.availableModels) {
     row.availableModels = JSON.stringify(opts.availableModels);
   }
+  if (opts.modelCatalog) {
+    row.modelCatalog = serializeModelCatalog(opts.modelCatalog);
+    if (!opts.availableModels) {
+      row.availableModels = JSON.stringify(opts.modelCatalog.map((e) => e.id));
+    }
+  }
   if (opts.reasoningCaps !== undefined) {
     row.reasoningCaps = opts.reasoningCaps === null ? null : JSON.stringify(opts.reasoningCaps);
   }
@@ -71,6 +81,7 @@ export async function insertVModel(
     displayName?: string;
     backends?: Array<{ backendId: string; backendModelId: string; weight?: number }>;
     balancingStrategy?: "session-pin" | "round-robin" | "weighted" | "least-connections" | "least-latency";
+    kind?: "chat" | "embedding";
   },
 ): Promise<string> {
   const id = `vmodel-${nanoid(8)}`;
@@ -83,6 +94,7 @@ export async function insertVModel(
       displayName: opts.displayName ?? opts.modelId,
       description: null,
       balancingStrategy: opts.balancingStrategy ?? "session-pin",
+      kind: opts.kind ?? "chat",
       streaming: true,
       allowToolCalling: true,
       allowVision: false,
@@ -260,6 +272,22 @@ export async function chatCompletion(
       messages: [{ role: "user", content: "Hello" }],
       stream: true,
     }),
+  });
+}
+
+export async function embeddingsRequest(
+  proxyUrl: string,
+  apiKey: string,
+  model: string,
+  input: string | string[] = "test input",
+): Promise<Response> {
+  return fetch(`${proxyUrl}/v1/embeddings`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model, input }),
   });
 }
 

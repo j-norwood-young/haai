@@ -86,6 +86,13 @@ server.tool(
     balancingStrategy: z
       .enum(["session-pin", "round-robin", "weighted", "least-connections", "least-latency"])
       .default("session-pin"),
+    kind: z
+      .enum(["chat", "embedding"])
+      .default("chat")
+      .describe(
+        "Routing class. A 'chat' v-model is reachable only on /v1/chat/completions; an " +
+          "'embedding' v-model only on /v1/embeddings. Immutable once backends are mapped.",
+      ),
     streaming: z.boolean().default(true),
   },
   async (args) => {
@@ -96,7 +103,8 @@ server.tool(
 
 server.tool(
   "add_backend_to_vmodel",
-  "Add a backend to a virtual model",
+  "Add a backend to a virtual model. Rejected with an error if the backend model's kind " +
+    "(chat vs. embedding) doesn't match the v-model's kind.",
   {
     vmodelId: z.string(),
     backendId: z.string(),

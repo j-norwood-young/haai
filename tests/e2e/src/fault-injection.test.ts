@@ -112,7 +112,7 @@ describe("Mock backend fault injection", () => {
     let mock: StartedMockServer;
 
     beforeAll(async () => {
-      mock = await startMockServer({});
+      mock = await startMockServer({ models: [{ id: "mock-embed-1", kind: "embeddings" }] });
     });
 
     afterAll(async () => mock.stop());
@@ -122,7 +122,7 @@ describe("Mock backend fault injection", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "mock-model-1",
+          model: "mock-embed-1",
           input: "hello world",
         }),
       });

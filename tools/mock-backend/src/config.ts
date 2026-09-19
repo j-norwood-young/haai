@@ -16,6 +16,8 @@ export interface ModelConfig {
   id: string;
   displayName?: string;
   contextLength?: number;
+  /** Reported by the provider-native probe endpoints (/api/v0/models, /api/show); defaults to "llm". */
+  kind?: "llm" | "vlm" | "embeddings";
   /** Per-model fault override */
   fault?: FaultConfig;
 }

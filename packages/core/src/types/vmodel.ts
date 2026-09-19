@@ -1,3 +1,5 @@
+import type { VModelKind } from "../models/kind.js";
+
 export type BalancingStrategy =
   | "session-pin"
   | "round-robin"
@@ -11,7 +13,8 @@ export type MappingUnavailableReason =
   | "backend_disabled"
   | "backend_unhealthy"
   | "model_missing"
-  | "inventory_unknown";
+  | "inventory_unknown"
+  | "model_kind_mismatch";
 
 export interface VModel {
   id: string;
@@ -20,10 +23,15 @@ export interface VModel {
   displayName: string;
   description: string | null;
   balancingStrategy: BalancingStrategy;
+  /** Which inference endpoint this v-model may serve. Immutable once it has members. */
+  kind: VModelKind;
   /** When false, responses are buffered before post-completion hooks */
   streaming: boolean;
+  /** @deprecated Never enforced. Kept for API back-compat; see `kind` (embedding) and API-key capability flags instead. */
   allowToolCalling: boolean;
+  /** @deprecated Never enforced. Kept for API back-compat; see `kind` (embedding) and API-key capability flags instead. */
   allowVision: boolean;
+  /** @deprecated Never enforced by this v-model; see `kind` (embedding) and the API key's `allowEmbeddings` flag. */
   allowEmbeddings: boolean;
   enabled: boolean;
   lastHealthStatus: VModelHealthStatus | null;

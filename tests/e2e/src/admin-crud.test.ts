@@ -1,4 +1,6 @@
 import { describe, it, beforeAll, afterAll, expect } from "vitest";
+import { eq } from "drizzle-orm";
+import { backends as backendsTable, serializeModelCatalog } from "@haai/core";
 import { startMockServer, type StartedMockServer } from "./helpers/mock-server.js";
 import { startTestProxy, type TestProxy } from "./helpers/proxy-server.js";
 import { insertKey, listModelIds, adminJson } from "./helpers/seed.js";
@@ -157,5 +159,131 @@ describe("admin backend and v-model CRUD", () => {
 
     const stillEmpty = await adminJson(proxy, "GET", `/api/v1/vmodels/${emptyVm.id}`);
     expect(stillEmpty.status).toBe(200);
+  });
+
+  describe("v-model kind validation", () => {
+    it("rejects adding a nonexistent backendId with 400, not 500", async () => {
+      const created = await adminJson(proxy, "POST", "/api/v1/vmodels", {
+        modelId: "kind-validation-alias-1",
+      });
+      const vm = (await created.json()) as { id: string };
+
+      const res = await adminJson(proxy, "POST", `/api/v1/vmodels/${vm.id}/backends`, {
+        backendId: "backend-does-not-exist",
+        backendModelId: "whatever",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects adding a heuristically-embedding model to a chat v-model", async () => {
+      const backendRes = await adminJson(proxy, "POST", "/api/v1/backends", {
+        name: "kind-validation-backend-1",
+        hostName: "kind-validation-host-1",
+        provider: "generic",
+        baseUrl: mock.url,
+      });
+      const backend = (await backendRes.json()) as { id: string };
+
+      const created = await adminJson(proxy, "POST", "/api/v1/vmodels", {
+        modelId: "kind-validation-chat-alias",
+        kind: "chat",
+      });
+      const vm = (await created.json()) as { id: string };
+
+      // No catalog seeded — classification falls back to the id heuristic, and
+      // "bge-m3" positively classifies as an embedding model.
+      const res = await adminJson(proxy, "POST", `/api/v1/vmodels/${vm.id}/backends`, {
+        backendId: backend.id,
+        backendModelId: "bge-m3",
+      });
+      expect(res.status).toBe(400);
+
+      const vmAfter = await adminJson(proxy, "GET", `/api/v1/vmodels/${vm.id}`);
+      const vmAfterBody = (await vmAfter.json()) as { backends: unknown[] };
+      expect(vmAfterBody.backends).toHaveLength(0);
+    });
+
+    it("rejects creating an embedding v-model with a natively-classified chat member", async () => {
+      const backendRes = await adminJson(proxy, "POST", "/api/v1/backends", {
+        name: "kind-validation-backend-2",
+        hostName: "kind-validation-host-2",
+        provider: "generic",
+        baseUrl: mock.url,
+        // Avoid racing the immediate background health check the create route
+        // schedules, which would overwrite the catalog seeded below.
+        healthCheckEnabled: false,
+      });
+      const backend = (await backendRes.json()) as { id: string };
+
+      // Simulate a health poll having positively classified this model as chat.
+      proxy.db.db
+        .update(backendsTable)
+        .set({
+          modelCatalog: serializeModelCatalog([{ id: "crud-model", kind: "llm", source: "native" }]),
+        })
+        .where(eq(backendsTable.id, backend.id))
+        .run();
+
+      const res = await adminJson(proxy, "POST", "/api/v1/vmodels", {
+        modelId: "kind-validation-embed-alias",
+        kind: "embedding",
+        backends: [{ backendId: backend.id, backendModelId: "crud-model" }],
+      });
+      expect(res.status).toBe(400);
+
+      const list = await adminJson(proxy, "GET", "/api/v1/vmodels");
+      const all = (await list.json()) as Array<{ modelId: string }>;
+      expect(all.find((v) => v.modelId === "kind-validation-embed-alias")).toBeUndefined();
+    });
+
+    it("infers kind:'embedding' when omitted and every member positively classifies as embeddings", async () => {
+      const backendRes = await adminJson(proxy, "POST", "/api/v1/backends", {
+        name: "kind-validation-backend-3",
+        hostName: "kind-validation-host-3",
+        provider: "generic",
+        baseUrl: mock.url,
+      });
+      const backend = (await backendRes.json()) as { id: string };
+
+      const created = await adminJson(proxy, "POST", "/api/v1/vmodels", {
+        modelId: "kind-inferred-embed-alias",
+        backends: [{ backendId: backend.id, backendModelId: "bge-m3" }],
+      });
+      expect(created.status).toBe(201);
+      const vm = (await created.json()) as { kind: string };
+      expect(vm.kind).toBe("embedding");
+    });
+
+    it("allows changing kind while no members are mapped, and rejects it once members exist", async () => {
+      const backendRes = await adminJson(proxy, "POST", "/api/v1/backends", {
+        name: "kind-validation-backend-4",
+        hostName: "kind-validation-host-4",
+        provider: "generic",
+        baseUrl: mock.url,
+      });
+      const backend = (await backendRes.json()) as { id: string };
+
+      const created = await adminJson(proxy, "POST", "/api/v1/vmodels", {
+        modelId: "kind-patch-alias",
+        kind: "chat",
+      });
+      const vm = (await created.json()) as { id: string };
+
+      const patchedEmpty = await adminJson(proxy, "PATCH", `/api/v1/vmodels/${vm.id}`, {
+        kind: "embedding",
+      });
+      expect(patchedEmpty.status).toBe(200);
+
+      const added = await adminJson(proxy, "POST", `/api/v1/vmodels/${vm.id}/backends`, {
+        backendId: backend.id,
+        backendModelId: "bge-m3",
+      });
+      expect(added.status).toBe(201);
+
+      const patchedWithMembers = await adminJson(proxy, "PATCH", `/api/v1/vmodels/${vm.id}`, {
+        kind: "chat",
+      });
+      expect(patchedWithMembers.status).toBe(409);
+    });
   });
 });

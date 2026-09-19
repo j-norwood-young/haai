@@ -1,10 +1,19 @@
 import { fetch } from "undici";
-import { buildBackendApiUrl, type DbClient } from "@haai/core";
+import {
+  buildBackendApiUrl,
+  catalogModelIds,
+  parseModelCatalogJson,
+  parseOpenAiModelsResponse,
+  serializeModelCatalog,
+  type CatalogEntry,
+  type DbClient,
+} from "@haai/core";
 import { eq } from "drizzle-orm";
 import { backends as backendsTable } from "@haai/core";
 import { backendHealthGauge } from "./metrics.js";
 import { getLogger } from "./logger.js";
 import { backendAuthHeaders } from "./backend-auth.js";
+import { probeModelKinds } from "./model-probe.js";
 import type { SseEmitter } from "./sse.js";
 import type { LiveStatsTracker } from "./live-stats.js";
 import { recomputeAllVModelHealth } from "./vmodel-health.js";
@@ -16,19 +25,8 @@ export interface HealthCheckResult {
   error?: string;
   /** Present on successful /v1/models responses; cleared when unhealthy */
   availableModels?: string[];
-}
-
-function extractModelIds(body: unknown): string[] {
-  if (!body || typeof body !== "object") return [];
-  const data = (body as { data?: unknown }).data;
-  if (!Array.isArray(data)) return [];
-  const ids: string[] = [];
-  for (const item of data) {
-    if (item && typeof item === "object" && typeof (item as { id?: unknown }).id === "string") {
-      ids.push((item as { id: string }).id);
-    }
-  }
-  return ids;
+  /** Present on successful /v1/models responses (kinds may be heuristic or provider-native); cleared when unhealthy */
+  modelCatalog?: CatalogEntry[];
 }
 
 export async function checkBackendHealth(
@@ -38,9 +36,14 @@ export async function checkBackendHealth(
     name: string;
     keyMode: string;
     encryptedApiKey: string | null;
+    /** Used to select a provider-native model-kind probe; no probe is run when omitted. */
+    provider?: string;
+    /** Previously cached catalog JSON, used to avoid re-probing already-known models. */
+    modelCatalog?: string | null;
   },
   masterKey: Buffer,
   timeoutMs = 5000,
+  opts?: { probeKinds?: boolean },
 ): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
@@ -56,6 +59,8 @@ export async function checkBackendHealth(
     });
     clearTimeout(timer);
 
+    // Measured before any model-kind probing, so probe latency never pollutes
+    // the degraded-latency threshold below.
     const latencyMs = Date.now() - start;
 
     if (!res.ok) {
@@ -68,13 +73,20 @@ export async function checkBackendHealth(
       };
     }
 
-    let availableModels: string[] = [];
+    let modelCatalog: CatalogEntry[] = [];
     try {
       const json = (await res.json()) as unknown;
-      availableModels = extractModelIds(json);
+      modelCatalog = parseOpenAiModelsResponse(json);
     } catch {
-      availableModels = [];
+      modelCatalog = [];
     }
+
+    if (opts?.probeKinds !== false && modelCatalog.length > 0) {
+      const previous = parseModelCatalogJson(backend.modelCatalog);
+      modelCatalog = await probeModelKinds(backend, masterKey, modelCatalog, previous);
+    }
+
+    const availableModels = catalogModelIds(modelCatalog);
 
     if (latencyMs >= 2000) {
       return {
@@ -83,10 +95,11 @@ export async function checkBackendHealth(
         latencyMs,
         error: `High latency (${latencyMs}ms)`,
         availableModels,
+        modelCatalog,
       };
     }
 
-    return { backendId: backend.id, status: "healthy", latencyMs, availableModels };
+    return { backendId: backend.id, status: "healthy", latencyMs, availableModels, modelCatalog };
   } catch (err) {
     const error =
       err instanceof Error && err.name === "AbortError"
@@ -115,6 +128,8 @@ export async function checkAndPersistBackendHealth(
     provider: string;
     keyMode: string;
     encryptedApiKey: string | null;
+    /** Previously cached catalog JSON, used to avoid re-probing already-known models. */
+    modelCatalog?: string | null;
   },
   timeoutMs: number,
   sse?: SseEmitter,
@@ -130,10 +145,16 @@ export async function checkAndPersistBackendHealth(
   });
 
   // Clear model inventory when unhealthy so we never route on stale lists.
+  // availableModels and modelCatalog are always derived from the same poll,
+  // so they stay in sync.
   const availableModelsJson =
     result.status === "unhealthy"
       ? null
       : JSON.stringify(result.availableModels ?? []);
+  const modelCatalogJson =
+    result.status === "unhealthy"
+      ? null
+      : serializeModelCatalog(result.modelCatalog ?? []);
 
   await db.db
     .update(backendsTable)
@@ -143,6 +164,7 @@ export async function checkAndPersistBackendHealth(
       lastLatencyMs: result.latencyMs,
       lastHealthError: result.error ?? null,
       availableModels: availableModelsJson,
+      modelCatalog: modelCatalogJson,
       updatedAt: now,
     })
     .where(eq(backendsTable.id, backend.id))
@@ -225,6 +247,7 @@ export class HealthMonitor {
               provider: b.provider,
               keyMode: b.keyMode,
               encryptedApiKey: b.encryptedApiKey,
+              modelCatalog: b.modelCatalog,
             },
             this.timeoutMs,
             undefined,

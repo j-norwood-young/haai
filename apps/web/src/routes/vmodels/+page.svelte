@@ -102,6 +102,7 @@
 					<tr>
 						<th>Model ID</th>
 						<th>Display Name</th>
+						<th>Kind</th>
 						<th>Strategy</th>
 						<th>Health</th>
 						<th>Streaming</th>
@@ -115,6 +116,11 @@
 						<tr>
 							<td><span class="font-mono text-cyan-400 text-xs">{vm.model_id}</span></td>
 							<td class="text-gray-200">{vm.display_name}</td>
+							<td>
+								<span class={vm.kind === 'embedding' ? 'badge badge-violet' : 'badge badge-cyan'}>
+									{vm.kind}
+								</span>
+							</td>
 							<td class="text-gray-400 capitalize">{vm.strategy.replace(/-/g, ' ')}</td>
 							<td>
 								{#if hasHealthDetails(vm.health ?? 'unknown')}

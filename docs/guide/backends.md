@@ -93,6 +93,25 @@ Each backend tracks `lastHealthStatus` (`healthy`, `degraded`, `unhealthy`), `la
 
 See [High Availability](./ha) for failover behavior.
 
+## Model kind classification
+
+Alongside each health check, HAAI classifies every model the backend reports as `llm`,
+`vlm`, or `embeddings` — this is what powers the `type` field in `GET /v1/models` and the
+kind guard on v-models (see [Virtual Models](./vmodels#kind-chat-vs-embedding)).
+
+- **LM Studio** (`provider: "lmstudio"`) — probed via `GET /api/v0/models`, which reports
+  a native `type` per model.
+- **Ollama** (`provider: "ollama"`) — probed via `POST /api/show` per model, using its
+  `capabilities` array (`"embedding"` vs `"completion"`).
+- **vLLM, OpenAI, and generic backends** have no native signal, so classification falls
+  back to a heuristic on the model's id (patterns like `embed`, `bge-`, `gte-`, `e5-`,
+  `minilm`, etc. classify as `embeddings`; anything else is treated as `llm`). A model
+  whose name doesn't hint at its purpose (e.g. an oddly-named embedding model on a vLLM
+  host) will be misclassified as `llm` until you give it a name the heuristic recognizes.
+
+A probe failure (unsupported endpoint, timeout) never affects the backend's reported
+health or latency — it just leaves that backend's models on the heuristic fallback.
+
 ## Provider guides
 
 - [LM Studio](./providers/lmstudio)

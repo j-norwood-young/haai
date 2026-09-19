@@ -5,9 +5,14 @@ import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
+  parseVModelKind,
+  modelKindRoutingClass,
+  type VModelKind,
 } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { recomputeAllVModelHealth } from "../../vmodel-health.js";
+import { backendKindResolver } from "../../model-catalog.js";
+import { getLogger } from "../../logger.js";
 
 async function loadVmodelBackends(ctx: AppContext, vmodelId: string) {
   const rows = await ctx.db.db
@@ -22,6 +27,7 @@ async function loadVmodelBackends(ctx: AppContext, vmodelId: string) {
       createdAt: vmodelBackendsTable.createdAt,
       backendName: backendsTable.displayName,
       backendSlug: backendsTable.name,
+      backendModelCatalog: backendsTable.modelCatalog,
     })
     .from(vmodelBackendsTable)
     .leftJoin(backendsTable, eq(vmodelBackendsTable.backendId, backendsTable.id))
@@ -38,7 +44,65 @@ async function loadVmodelBackends(ctx: AppContext, vmodelId: string) {
     lastAvailable: row.lastAvailable,
     unavailableReason: row.unavailableReason,
     createdAt: row.createdAt,
+    // Resolved from the backend's cached model catalog, so a legacy mapping that
+    // contradicts the v-model's kind can be badged in the UI.
+    modelKind: backendKindResolver({ modelCatalog: row.backendModelCatalog })(row.backendModelId)
+      .kind,
   }));
+}
+
+interface MemberValidationFailure {
+  ok: false;
+  status: 400;
+  error: string;
+}
+
+/**
+ * Validates a candidate v-model member before it's inserted: the backend must
+ * exist, and if the backend model's kind is *positively* known it must match
+ * the v-model's routing class. A model that's simply not in the backend's
+ * inventory yet (a normal transient state) is allowed through — health
+ * recompute will mark it unavailable with a clear reason.
+ */
+async function validateMember(
+  ctx: AppContext,
+  vmodelKind: VModelKind,
+  vmodelAlias: string,
+  backendId: string,
+  backendModelId: string,
+): Promise<{ ok: true } | MemberValidationFailure> {
+  const backend = await ctx.db.db
+    .select()
+    .from(backendsTable)
+    .where(eq(backendsTable.id, backendId))
+    .get();
+  if (!backend) {
+    return { ok: false, status: 400, error: `Backend '${backendId}' not found` };
+  }
+
+  const { kind, positive } = backendKindResolver(backend)(backendModelId);
+  if (positive && modelKindRoutingClass(kind) !== vmodelKind) {
+    const backendLabel = backend.displayName || backend.name;
+    const actualNoun = kind === "embeddings" ? "an embedding" : "a chat";
+    const targetNoun = vmodelKind === "embedding" ? "chat" : "embedding";
+    return {
+      ok: false,
+      status: 400,
+      error: `Model '${backendModelId}' on backend '${backendLabel}' is ${actualNoun} model and cannot be added to ${targetNoun} v-model '${vmodelAlias}'`,
+    };
+  }
+
+  if (!positive && kind === "unknown") {
+    // Model not in the backend's known inventory (or inventory unknown) —
+    // allow it; recomputeAllVModelHealth will mark it unavailable with a
+    // clear reason if it turns out to be missing.
+    getLogger().debug(
+      { backendId, backendModelId },
+      "Adding v-model member with unknown model kind — inventory not yet populated or model not found",
+    );
+  }
+
+  return { ok: true };
 }
 
 export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Promise<void> {
@@ -123,6 +187,34 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
       }
     }
 
+    // A v-model's kind is immutable once it has members, so it must be settled here.
+    // If not given explicitly, infer "embedding" only when every supplied member
+    // positively classifies as an embedding model; otherwise default to "chat".
+    const explicitKind = parseVModelKind(body["kind"]);
+    let kind: VModelKind = explicitKind ?? "chat";
+    if (!explicitKind && normalizedMappings.length > 0) {
+      const allEmbeddings = await Promise.all(
+        normalizedMappings.map(async (m) => {
+          const backend = await ctx.db.db
+            .select()
+            .from(backendsTable)
+            .where(eq(backendsTable.id, m.backendId))
+            .get();
+          if (!backend) return false;
+          const { kind: memberKind, positive } = backendKindResolver(backend)(m.backendModelId);
+          return positive && memberKind === "embeddings";
+        }),
+      );
+      if (allEmbeddings.every(Boolean)) kind = "embedding";
+    }
+
+    for (const mapping of normalizedMappings) {
+      const validation = await validateMember(ctx, kind, trimmedModelId, mapping.backendId, mapping.backendModelId);
+      if (!validation.ok) {
+        return reply.status(validation.status).send({ error: validation.error });
+      }
+    }
+
     const now = Date.now();
     const id = `vmodel-${nanoid(8)}`;
 
@@ -135,6 +227,7 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
           displayName: (body["displayName"] as string) ?? (body["display_name"] as string) ?? trimmedModelId,
           description: body["description"] as string | null ?? null,
           balancingStrategy: (body["balancingStrategy"] as string) ?? (body["strategy"] as string) ?? "session-pin",
+          kind,
           streaming: (body["streaming"] as boolean) ?? true,
           allowToolCalling: (body["allowToolCalling"] as boolean) ?? true,
           allowVision: (body["allowVision"] as boolean) ?? false,
@@ -194,6 +287,26 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
       const updates: Partial<typeof vmodelsTable.$inferInsert> = { updatedAt: Date.now() };
       const body = req.body;
 
+      if (body["kind"] !== undefined) {
+        const requestedKind = parseVModelKind(body["kind"]);
+        if (!requestedKind) {
+          return reply.status(400).send({ error: "kind must be 'chat' or 'embedding'" });
+        }
+        if (requestedKind !== vm.kind) {
+          const memberCount = await ctx.db.db
+            .select({ id: vmodelBackendsTable.id })
+            .from(vmodelBackendsTable)
+            .where(eq(vmodelBackendsTable.vmodelId, req.params.id))
+            .all();
+          if (memberCount.length > 0) {
+            return reply.status(409).send({
+              error: "Cannot change kind while backend models are mapped",
+            });
+          }
+          updates.kind = requestedKind;
+        }
+      }
+
       for (const field of [
         "displayName", "description", "balancingStrategy", "streaming",
         "allowToolCalling", "allowVision", "allowEmbeddings", "enabled",
@@ -245,12 +358,18 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
       }
 
       const vm = await ctx.db.db
-        .select({ id: vmodelsTable.id })
+        .select({ id: vmodelsTable.id, kind: vmodelsTable.kind, modelId: vmodelsTable.modelId })
         .from(vmodelsTable)
         .where(eq(vmodelsTable.id, req.params.id))
         .get();
       if (!vm) {
         return reply.status(404).send({ error: "VModel not found" });
+      }
+      const vmodelKind = parseVModelKind(vm.kind) ?? "chat";
+
+      const validation = await validateMember(ctx, vmodelKind, vm.modelId, backendId, backendModelId);
+      if (!validation.ok) {
+        return reply.status(validation.status).send({ error: validation.error });
       }
 
       const existingMapping = await ctx.db.db
@@ -292,6 +411,20 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
   app.delete<{ Params: { id: string; backendMappingId: string } }>(
     "/api/v1/vmodels/:id/backends/:backendMappingId",
     async (req, reply) => {
+      const mapping = await ctx.db.db
+        .select({ id: vmodelBackendsTable.id })
+        .from(vmodelBackendsTable)
+        .where(
+          and(
+            eq(vmodelBackendsTable.id, req.params.backendMappingId),
+            eq(vmodelBackendsTable.vmodelId, req.params.id),
+          ),
+        )
+        .get();
+      if (!mapping) {
+        return reply.status(404).send({ error: "Backend mapping not found" });
+      }
+
       await ctx.db.db
         .delete(vmodelBackendsTable)
         .where(eq(vmodelBackendsTable.id, req.params.backendMappingId))
@@ -307,9 +440,23 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
     async (req, reply) => {
       const body = req.body;
       const weight = body["weight"] as number | undefined;
-      
+
       if (weight === undefined || weight < 0) {
         return reply.status(400).send({ error: "weight is required and must be >= 0" });
+      }
+
+      const mapping = await ctx.db.db
+        .select({ id: vmodelBackendsTable.id })
+        .from(vmodelBackendsTable)
+        .where(
+          and(
+            eq(vmodelBackendsTable.id, req.params.backendMappingId),
+            eq(vmodelBackendsTable.vmodelId, req.params.id),
+          ),
+        )
+        .get();
+      if (!mapping) {
+        return reply.status(404).send({ error: "Backend mapping not found" });
       }
 
       await ctx.db.db
@@ -318,6 +465,7 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
         .where(eq(vmodelBackendsTable.id, req.params.backendMappingId))
         .run();
 
+      await recomputeAllVModelHealth(ctx.db, ctx.sse);
       return reply.status(200).send({ success: true });
     },
   );

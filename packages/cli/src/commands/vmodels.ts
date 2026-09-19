@@ -8,6 +8,8 @@ interface VModel {
   modelId: string;
   displayName: string;
   balancingStrategy: string;
+  /** Which inference endpoint this v-model may serve. Immutable once it has members. */
+  kind: "chat" | "embedding";
   streaming: boolean;
   enabled: boolean;
   backends?: Array<{ backendId: string; backendModelId: string; weight: number }>;
@@ -27,10 +29,11 @@ export function registerVModelCommands(program: Command, getClient: () => ApiCli
         return;
       }
       const data = [
-        ["Model ID", "Display Name", "Strategy", "Streaming", "Backends", "Enabled"],
+        ["Model ID", "Display Name", "Kind", "Strategy", "Streaming", "Backends", "Enabled"],
         ...vmodels.map((v) => [
           v.modelId,
           v.displayName,
+          v.kind ?? "chat",
           v.balancingStrategy,
           v.streaming ? "yes" : "no",
           String(v.backends?.length ?? 0),
@@ -46,6 +49,11 @@ export function registerVModelCommands(program: Command, getClient: () => ApiCli
     .requiredOption("--model-id <id>", "Model ID alias (e.g. smart-chat)")
     .option("--display-name <name>", "Display name")
     .option("--strategy <strategy>", "Balancing strategy", "session-pin")
+    .option(
+      "--kind <kind>",
+      "Routing class: 'chat' or 'embedding'. An embedding v-model is only reachable on /v1/embeddings.",
+      "chat",
+    )
     .option("--no-streaming", "Disable streaming (buffer for post hooks)")
     .action(async (opts) => {
       const client = getClient();
@@ -53,6 +61,7 @@ export function registerVModelCommands(program: Command, getClient: () => ApiCli
         modelId: opts.modelId,
         displayName: opts.displayName ?? opts.modelId,
         balancingStrategy: opts.strategy,
+        kind: opts.kind,
         streaming: opts.streaming !== false,
       });
       console.log(chalk.green(`V-Model '${vm.modelId}' created (${vm.id})`));
@@ -75,7 +84,10 @@ export function registerVModelCommands(program: Command, getClient: () => ApiCli
 
   cmd
     .command("add-backend <modelId>")
-    .description("Add a backend to a v-model")
+    .description(
+      "Add a backend to a v-model. Rejected with an error if the backend model's kind " +
+        "(chat vs. embedding) doesn't match the v-model's kind.",
+    )
     .requiredOption("--backend-id <id>", "Backend ID")
     .requiredOption("--backend-model <model>", "Backend model ID")
     .option("--weight <weight>", "Weight", "1")

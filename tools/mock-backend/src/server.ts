@@ -47,6 +47,44 @@ export function createMockServer(config: MockBackendConfig) {
     };
   });
 
+  // LM Studio-native model kind probe. Only registered for provider "lmstudio" so
+  // a "generic" mock genuinely exercises HAAI's probe-404 tolerance path.
+  if (config.provider === "lmstudio") {
+    app.get("/api/v0/models", async (req, reply) => {
+      const fault = config.fault;
+      if (fault?.alwaysDown) return reply.status(503).send({ error: "Service unavailable" });
+      if (config.globalLatencyMs) await sleep(config.globalLatencyMs);
+
+      return {
+        object: "list",
+        data: config.models.map((m) => ({
+          id: m.id,
+          object: "model",
+          type: m.kind ?? "llm",
+          max_context_length: m.contextLength ?? 4096,
+        })),
+      };
+    });
+  }
+
+  // Ollama-native model kind probe. Only registered for provider "ollama".
+  if (config.provider === "ollama") {
+    app.post("/api/show", async (req, reply) => {
+      const body = req.body as Record<string, unknown>;
+      const modelId = body["model"] as string | undefined;
+      const model = config.models.find((m) => m.id === modelId);
+      if (!model) return reply.status(404).send({ error: "model not found" });
+
+      return {
+        capabilities: model.kind === "embeddings" ? ["embedding"] : ["completion"],
+      };
+    });
+
+    app.get("/api/tags", async () => ({
+      models: config.models.map((m) => ({ name: m.id })),
+    }));
+  }
+
   // /v1/chat/completions
   app.post("/v1/chat/completions", async (req, reply) => {
     const fault = config.fault;
@@ -164,10 +202,20 @@ export function createMockServer(config: MockBackendConfig) {
   app.post("/v1/embeddings", async (req, reply) => {
     const fault = config.fault;
     if (fault?.alwaysDown) return reply.status(503).send({ error: "Service unavailable" });
+    if (shouldTrigger(fault?.rateLimitPct)) return reply.status(429).send({ error: { message: "Rate limited" } });
+    if (shouldTrigger(fault?.errorPct)) return reply.status(500).send({ error: { message: "Internal error" } });
     if (config.globalLatencyMs) await sleep(config.globalLatencyMs);
 
     const body = req.body as Record<string, unknown>;
     const modelId = (body["model"] as string) ?? config.models[0]?.id ?? "mock-model-1";
+    const model = config.models.find((m) => m.id === modelId);
+    // Mirrors a real embeddings-only backend: a chat model requested here is
+    // rejected upstream, so a test can assert HAAI never forwards one.
+    if (model && model.kind !== "embeddings") {
+      return reply.status(400).send({
+        error: { message: `Model '${modelId}' does not support embeddings`, type: "invalid_request_error" },
+      });
+    }
     const input = (body["input"] as string | string[]) ?? "test";
     return buildEmbeddingResponse(modelId, input);
   });

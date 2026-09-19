@@ -227,7 +227,8 @@ Establishes a Server-Sent Events stream. Events:
 | `request-end` | A request left the tracker: `{ id, statusCode, durationMs, backendId }` |
 | `live-tick` | Aggregate tick every 1 s while clients are connected: `{ point, inFlight, inFlightTotal, backends }` |
 
-Note: embeddings requests are not usage-tracked today, so they do not appear in live or historical metrics.
+Embeddings requests are usage-tracked the same way chat completions are — they appear in
+live events, metrics, and historical rollups with `endpoint: "/v1/embeddings"`.
 
 ---
 
@@ -235,10 +236,9 @@ Note: embeddings requests are not usage-tracked today, so they do not appear in 
 
 | Endpoint | Description |
 |---|---|
-| `GET /v1/models` | List all models (backend + v-models) |
-| `POST /v1/chat/completions` | Chat completion (streaming + non-streaming) |
-| `POST /v1/completions` | Legacy text completion |
-| `POST /v1/embeddings` | Embeddings |
+| `GET /v1/models` | List all models (backend + v-models); each entry has a `type`: `"llm"`, `"vlm"`, or `"embeddings"` |
+| `POST /v1/chat/completions` | Chat completion (streaming + non-streaming). Rejects embedding-kind models with `400 model_not_supported` |
+| `POST /v1/embeddings` | Embeddings. Accepts a pass-through model or an `embedding`-kind v-model alias; rejects chat-kind models with `400 model_not_supported` |
 | `GET /health` | Health check |
 | `GET /ready` | Readiness check |
 | `GET /metrics` | Prometheus metrics |

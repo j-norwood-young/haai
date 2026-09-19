@@ -2,6 +2,7 @@ export * from "./types/index.js";
 export * from "./config/index.js";
 export * from "./crypto/index.js";
 export * from "./db/index.js";
+export * from "./models/index.js";
 export * from "./http/index.js";
 export * from "./settings/index.js";
 export * from "./key-access.js";
