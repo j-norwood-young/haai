@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - ⚠️ `haai serve` now runs HAAI **in the background** by default: it starts the server detached, waits for it to become healthy, opens the admin UI and returns your shell. Output goes to `<data dir>/logs/haai.log` and the PID is kept in `<data dir>/haai.pid`. Pass `--no-daemon` for the previous foreground behaviour (needed under systemd, launchd or other process managers that expect the process to stay attached).
+- `isolated-vm` is now pinned to the 6.x line (`^6.2.0`) instead of 7.x. 7.x requires Node 24+ and ships no Node 22 binaries, so on Node 22 `npm i -g @jasony/haai` had to compile it from source (needing a C++ toolchain — Visual Studio on Windows). 6.2 ships prebuilt binaries for both Node 22 and 24, so no compiler is needed.
 - `better-sqlite3` is upgraded to 12.x: 11.x aborts on process teardown under Node 24. HAAI supports Node 22 and 24, and CI runs the unit, e2e, Playwright and packaged-install smoke tests on both.
 
 ### Fixed
