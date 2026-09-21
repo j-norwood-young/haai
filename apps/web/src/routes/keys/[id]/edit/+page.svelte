@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { api } from '$lib/api.js';
+	import { toDatetimeLocal } from '$lib/format.js';
 	import type { ApiKey } from '$lib/api.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SecretReveal from '$lib/components/SecretReveal.svelte';
@@ -49,11 +50,12 @@
 			name = key.name;
 			rpmLimit = key.rpm_limit != null ? String(key.rpm_limit) : '';
 			dayBudget = key.day_budget != null ? String(key.day_budget) : '';
-			expires = key.expires_at ? key.expires_at.slice(0, 16) : '';
+			expires = key.expires_at ? toDatetimeLocal(key.expires_at) : '';
 			enabled = key.enabled;
-			restrictVModels = !!key.allowed_vmodels?.length;
+			// An empty list means "None" (restricted, nothing allowed); only null/absent means "All".
+			restrictVModels = key.allowed_vmodels != null;
 			selectedVModelIds = key.allowed_vmodels ?? [];
-			restrictBackends = !!key.allowed_backends?.length;
+			restrictBackends = key.allowed_backends != null;
 			selectedBackendIds = key.allowed_backends ?? [];
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load key';
@@ -78,10 +80,14 @@
 		saving = true;
 		saveError = null;
 		try {
-			const update: Partial<ApiKey> = { name, enabled };
-			if (rpmLimit) update.rpm_limit = parseInt(rpmLimit);
-			if (dayBudget) update.day_budget = parseFloat(dayBudget);
-			if (expires) update.expires_at = expires;
+			// Blank fields are sent as null so a previously-set limit can be cleared.
+			const update: Partial<ApiKey> = {
+				name,
+				enabled,
+				rpm_limit: rpmLimit ? parseInt(rpmLimit) : null,
+				day_budget: dayBudget ? parseFloat(dayBudget) : null,
+				expires_at: expires || null
+			};
 			const allowed_vmodels = allowedVModelsPayload(
 				restrictVModels,
 				selectedVModelIds,

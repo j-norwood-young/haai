@@ -25,6 +25,15 @@ function normalizeAllowedList(value: unknown): string[] | null | undefined {
   return value.filter((entry): entry is string => typeof entry === "string");
 }
 
+/** Read an allow-list from a body, accepting camelCase or snake_case; an explicit `null` means "all". */
+function readAllowedList(
+  body: Record<string, unknown>,
+  camel: string,
+  snake: string,
+): string[] | null | undefined {
+  return normalizeAllowedList(body[camel] !== undefined ? body[camel] : body[snake]);
+}
+
 function validateAllowedLists(
   allowedModels: string[] | null | undefined,
   allowedBackends: string[] | null | undefined,
@@ -106,8 +115,8 @@ export async function keysRoutes(app: FastifyInstance, ctx: AppContext): Promise
     const showOnce = await getApiKeysShowOnce(ctx.db);
     const encryptedKey = showOnce ? null : encrypt(key, ctx.masterKey);
 
-    const allowedModels = normalizeAllowedList(body["allowedModels"] ?? body["allowed_models"]);
-    const allowedBackends = normalizeAllowedList(body["allowedBackends"] ?? body["allowed_backends"]);
+    const allowedModels = readAllowedList(body, "allowedModels", "allowed_models");
+    const allowedBackends = readAllowedList(body, "allowedBackends", "allowed_backends");
 
     const accessError = validateAllowedLists(allowedModels, allowedBackends);
     if (accessError) {
@@ -183,8 +192,8 @@ export async function keysRoutes(app: FastifyInstance, ctx: AppContext): Promise
       if (body["day_budget"] !== undefined) updates.tokenBudgetDay = body["day_budget"] as number | null;
       if (body["expires_at"] !== undefined) updates.expiresAt = body["expires_at"] as number | null;
 
-      const allowedModels = normalizeAllowedList(body["allowedModels"] ?? body["allowed_models"]);
-      const allowedBackends = normalizeAllowedList(body["allowedBackends"] ?? body["allowed_backends"]);
+      const allowedModels = readAllowedList(body, "allowedModels", "allowed_models");
+      const allowedBackends = readAllowedList(body, "allowedBackends", "allowed_backends");
 
       const nextAllowedModels =
         allowedModels !== undefined ? allowedModels : existing.allowedModels

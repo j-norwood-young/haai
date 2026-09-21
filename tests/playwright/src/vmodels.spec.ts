@@ -8,12 +8,15 @@ test.describe("virtual model CRUD", () => {
     const renamed = `${display} Renamed`;
 
     await page.goto("/vmodels/new");
-    await page.fill("#new-model-id", alias);
-    await page.fill("#new-display-name", display);
+    await page.fill("#vmodel-model-id", alias);
+    await page.fill("#vmodel-display-name", display);
 
-    const backendRow = page.locator("label").filter({ hasText: "pw-backend" });
-    await expect(backendRow).toBeVisible();
-    await backendRow.locator("select").selectOption("pw-model");
+    await expect(page.getByRole("button", { name: "Create" })).toBeDisabled();
+
+    await page.getByLabel("Backend", { exact: true }).selectOption({ label: "pw-backend" });
+    await page.getByLabel("Backend model").selectOption("pw-model");
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(page.getByText("pw-model", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Create" }).click();
 
     await expect(page).toHaveURL(/\/vmodels\/?$/);
@@ -21,8 +24,8 @@ test.describe("virtual model CRUD", () => {
     await expect(page.getByText(display, { exact: true })).toBeVisible();
 
     await page.locator("tr", { hasText: alias }).getByRole("link", { name: "Edit" }).click();
-    await expect(page.locator("#edit-model-id")).toHaveValue(alias);
-    await page.fill("#edit-display-name", renamed);
+    await expect(page.locator("#vmodel-model-id")).toHaveValue(alias);
+    await page.fill("#vmodel-display-name", renamed);
     await page.getByRole("button", { name: "Save Changes" }).click();
 
     await expect(page).toHaveURL(/\/vmodels\/?$/);

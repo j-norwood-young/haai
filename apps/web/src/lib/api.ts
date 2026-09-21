@@ -255,11 +255,11 @@ export interface ApiKey {
 	enabled: boolean;
 	suspended: boolean;
 	suspended_reason?: string;
-	rpm_limit?: number;
-	day_budget?: number;
+	rpm_limit?: number | null;
+	day_budget?: number | null;
 	allowed_vmodels?: string[] | null | undefined;
 	allowed_backends?: string[] | null | undefined;
-	expires_at?: string;
+	expires_at?: string | null;
 	last_used_at?: string;
 	created_at: string;
 	retrievable: boolean;

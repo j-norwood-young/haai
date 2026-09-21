@@ -42,3 +42,10 @@ export function deltaPct(current: number, previous: number | undefined | null): 
 	if (previous == null || previous === 0) return null;
 	return (current - previous) / previous;
 }
+
+/** Format an ISO timestamp for a `datetime-local` input (local time, minute precision). */
+export function toDatetimeLocal(iso: string): string {
+	const d = new Date(iso);
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

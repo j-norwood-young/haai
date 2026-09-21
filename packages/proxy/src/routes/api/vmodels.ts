@@ -160,16 +160,10 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
       enabled: boolean;
     }> = [];
     if (backendMappings) {
-      const seenBackendIds = new Set<string>();
+      const seenMappings = new Set<string>();
       for (const bm of backendMappings) {
         const backendId = (bm["backendId"] ?? bm["backend_id"]) as string | undefined;
         if (!backendId) continue;
-        if (seenBackendIds.has(backendId)) {
-          return reply.status(409).send({
-            error: `Backend '${backendId}' is listed more than once`,
-          });
-        }
-        seenBackendIds.add(backendId);
         const backendModelId = (
           (bm["backendModelId"] ?? bm["backend_model_id"]) as string | undefined
         )?.trim();
@@ -178,6 +172,15 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
             error: "backendModelId is required for each backend mapping",
           });
         }
+        // Several models from one backend may be mapped (as with POST .../backends);
+        // only an identical backend + model pair is a duplicate.
+        const mappingKey = `${backendId}::${backendModelId}`;
+        if (seenMappings.has(mappingKey)) {
+          return reply.status(409).send({
+            error: `Backend model '${backendModelId}' on backend '${backendId}' is listed more than once`,
+          });
+        }
+        seenMappings.add(mappingKey);
         normalizedMappings.push({
           backendId,
           backendModelId,
