@@ -105,6 +105,17 @@
 		saving = true;
 		saveError = null;
 		pendingTestError = null;
+		if (!enabled) {
+			// A disabled back-end isn't used, so there's nothing to health-check.
+			try {
+				await persistChanges();
+			} catch (err) {
+				saveError = err instanceof Error ? err.message : 'Failed to update backend';
+			} finally {
+				saving = false;
+			}
+			return;
+		}
 		testResult = { success: false, loading: true };
 		try {
 			let result;
