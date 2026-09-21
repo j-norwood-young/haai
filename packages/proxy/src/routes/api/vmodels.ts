@@ -5,6 +5,8 @@ import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
+  plugins as pluginsTable,
+  pluginBindings as pluginBindingsTable,
   parseVModelKind,
   modelKindRoutingClass,
   type VModelKind,
@@ -49,6 +51,42 @@ async function loadVmodelBackends(ctx: AppContext, vmodelId: string) {
     modelKind: backendKindResolver({ modelCatalog: row.backendModelCatalog })(row.backendModelId)
       .kind,
   }));
+}
+
+/**
+ * Plugin bindings scoped to v-models (`scope_type = "vmodel"`), grouped by v-model id
+ * and ordered the way they run. Global/backend/key-scoped bindings are not included.
+ */
+async function loadVmodelPluginBindings(ctx: AppContext, vmodelId?: string) {
+  const scope = and(
+    eq(pluginBindingsTable.scopeType, "vmodel"),
+    vmodelId ? eq(pluginBindingsTable.scopeId, vmodelId) : undefined,
+  );
+  const rows = await ctx.db.db
+    .select({
+      bindingId: pluginBindingsTable.id,
+      vmodelId: pluginBindingsTable.scopeId,
+      pluginId: pluginsTable.id,
+      pluginName: pluginsTable.name,
+      bindingEnabled: pluginBindingsTable.enabled,
+      pluginEnabled: pluginsTable.enabled,
+      order: pluginBindingsTable.order,
+    })
+    .from(pluginBindingsTable)
+    .innerJoin(pluginsTable, eq(pluginBindingsTable.pluginId, pluginsTable.id))
+    .where(scope)
+    .all();
+
+  rows.sort((a, b) => a.order - b.order || a.bindingId.localeCompare(b.bindingId));
+
+  const byVmodel = new Map<string, Omit<(typeof rows)[number], "vmodelId">[]>();
+  for (const { vmodelId: id, ...binding } of rows) {
+    if (!id) continue;
+    const list = byVmodel.get(id);
+    if (list) list.push(binding);
+    else byVmodel.set(id, [binding]);
+  }
+  return byVmodel;
 }
 
 interface MemberValidationFailure {
@@ -109,10 +147,11 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
   // List all v-models
   app.get("/api/v1/vmodels", async () => {
     const rows = await ctx.db.db.select().from(vmodelsTable).all();
+    const pluginsByVmodel = await loadVmodelPluginBindings(ctx);
     const result = await Promise.all(
       rows.map(async (vm) => {
         const backends = await loadVmodelBackends(ctx, vm.id);
-        return { ...vm, backends };
+        return { ...vm, backends, plugins: pluginsByVmodel.get(vm.id) ?? [] };
       }),
     );
     return result;
@@ -128,7 +167,8 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
     if (!vm) return reply.status(404).send({ error: "VModel not found" });
 
     const backends = await loadVmodelBackends(ctx, vm.id);
-    return { ...vm, backends };
+    const plugins = (await loadVmodelPluginBindings(ctx, vm.id)).get(vm.id) ?? [];
+    return { ...vm, backends, plugins };
   });
 
   // Create v-model

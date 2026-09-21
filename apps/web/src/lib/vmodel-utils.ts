@@ -1,4 +1,4 @@
-import type { VModel } from '$lib/api.js';
+import type { VModel, VModelPlugin } from '$lib/api.js';
 
 function hasModelSourceAccess(
 	allowedModels: string[] | null,
@@ -93,4 +93,11 @@ export function allowedBackendsPayload(
 		return mode === 'update' ? null : undefined;
 	}
 	return selectedIds;
+}
+
+/** Why a v-model's plugin binding will not run, or null when it will. */
+export function vModelPluginInactiveReason(plugin: VModelPlugin): string | null {
+	if (!plugin.plugin_enabled) return 'plugin disabled';
+	if (!plugin.binding_enabled) return 'binding disabled';
+	return null;
 }

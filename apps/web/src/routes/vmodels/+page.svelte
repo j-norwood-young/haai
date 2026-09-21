@@ -4,6 +4,8 @@
 	import type { VModel } from '$lib/api.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import VModelHealthDetailsModal from '$lib/components/VModelHealthDetailsModal.svelte';
+	import HoverList, { type HoverListItem } from '$lib/components/HoverList.svelte';
+	import { vModelPluginInactiveReason } from '$lib/vmodel-utils.js';
 	import {
 		hasHealthDetails,
 		healthBadgeClass,
@@ -65,6 +67,36 @@
 		healthDetails = null;
 	}
 
+	function backendItems(vm: VModel): HoverListItem[] {
+		return vm.backends.map((b) => {
+			const item: HoverListItem = {
+				label: b.backend_name || b.backend_id,
+				detail: b.backend_model_id
+			};
+			if (b.available === false) {
+				item.inactive = true;
+				item.note = 'unavailable';
+			}
+			return item;
+		});
+	}
+
+	function pluginItems(vm: VModel): HoverListItem[] {
+		return vm.plugins.map((p) => {
+			const item: HoverListItem = { label: p.plugin_name };
+			const reason = vModelPluginInactiveReason(p);
+			if (reason) {
+				item.inactive = true;
+				item.note = reason;
+			}
+			return item;
+		});
+	}
+
+	function activePluginCount(vm: VModel): number {
+		return vm.plugins.filter((p) => vModelPluginInactiveReason(p) === null).length;
+	}
+
 	onMount(load);
 </script>
 
@@ -107,6 +139,7 @@
 						<th>Health</th>
 						<th>Streaming</th>
 						<th>Backends</th>
+						<th>Plugins</th>
 						<th>Enabled</th>
 						<th class="text-right">Actions</th>
 					</tr>
@@ -143,7 +176,30 @@
 									{vm.streaming ? 'Yes' : 'No'}
 								</span>
 							</td>
-							<td class="text-gray-400">{vm.backends.length}</td>
+							<td class="text-gray-400">
+								{#if vm.backends.length > 0}
+									<HoverList heading="Backends" items={backendItems(vm)}>
+										<span class="cursor-default underline decoration-dotted decoration-gray-600 underline-offset-4">
+											{vm.backends.length}
+										</span>
+									</HoverList>
+								{:else}
+									0
+								{/if}
+							</td>
+							<td>
+								{#if vm.plugins.length > 0}
+									<HoverList heading="Plugins" items={pluginItems(vm)}>
+										<span
+											class="cursor-default {activePluginCount(vm) > 0 ? 'badge badge-cyan' : 'badge badge-gray'}"
+										>
+											{activePluginCount(vm)}
+										</span>
+									</HoverList>
+								{:else}
+									<span class="text-gray-600">—</span>
+								{/if}
+							</td>
 							<td>
 								<span class={vm.enabled ? 'badge badge-green' : 'badge badge-gray'}>
 									{vm.enabled ? 'Yes' : 'No'}

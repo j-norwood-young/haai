@@ -1,7 +1,8 @@
 import { config as loadEnv } from "dotenv";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { plugins as pluginsTable } from "@haai/core";
 import { recomputeAllVModelHealth } from "@haai/proxy/vmodel-health";
 import { startMockServer } from "@haai/e2e/helpers/mock-server";
 import { startTestProxy } from "@haai/e2e/helpers/proxy-server";
@@ -56,7 +57,43 @@ export default async function globalSetup() {
     displayName: "Playwright Chat",
     backends: [{ backendId, backendModelId: "pw-model" }],
   });
+  // Dedicated to vmodel-plugins.spec.ts, which binds and unbinds plugins on it.
+  await insertVModel(proxy, {
+    modelId: "pw-plugins-chat",
+    displayName: "Playwright Plugins Chat",
+    backends: [{ backendId, backendModelId: "pw-model" }],
+  });
   await recomputeAllVModelHealth(proxy.db);
+
+  // Plugins the v-model plugin specs can bind. Only their DB rows matter to the admin UI.
+  const pluginBundleDir = join(proxy.dataDir, "plugins");
+  mkdirSync(pluginBundleDir, { recursive: true });
+  const seedPlugin = (id: string, name: string, configSchema: object | null) => {
+    const bundlePath = join(pluginBundleDir, `${id}.js`);
+    writeFileSync(bundlePath, "globalThis.__haaiPluginDef = { hooks: {} };", "utf8");
+    const now = Date.now();
+    proxy.db.db
+      .insert(pluginsTable)
+      .values({
+        id,
+        name,
+        description: null,
+        source: "test",
+        version: "1.0.0",
+        manifest: JSON.stringify({ name, version: "1.0.0", hooks: ["onRequest"] }),
+        configSchema: configSchema ? JSON.stringify(configSchema) : null,
+        bundlePath,
+        needsResponseBuffer: false,
+        enabled: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+  };
+  seedPlugin("pw-plugin-plain", "PW Plain Plugin", null);
+  seedPlugin("pw-plugin-config", "PW Config Plugin", {
+    greeting: { type: "string", label: "Greeting", required: true },
+  });
 
   const now = Date.now();
   insertUsageEvent(proxy, { timestamp: now - 30 * 60 * 1000, totalTokens: 5 });

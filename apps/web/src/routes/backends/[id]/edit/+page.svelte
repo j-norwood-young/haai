@@ -239,7 +239,7 @@
 					<button
 						type="button"
 						onclick={() => (enabled = !enabled)}
-						class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
+						class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
 						class:bg-cyan-500={enabled}
 						class:bg-gray-700={!enabled}
 						role="switch"
@@ -306,7 +306,7 @@
 	</p>
 	{#if pendingTestError}
 		<pre
-			class="mt-3 whitespace-pre-wrap break-words rounded-lg bg-black/40 border border-gray-800 px-3 py-2 text-xs text-red-300 font-mono"
+			class="mt-3 whitespace-pre-wrap wrap-break-word rounded-lg bg-black/40 border border-gray-800 px-3 py-2 text-xs text-red-300 font-mono"
 		>{pendingTestError}</pre>
 	{/if}
 

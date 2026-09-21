@@ -124,7 +124,20 @@ export interface VModel {
 	health_error?: string;
 	health_checked_at?: number;
 	backends: VModelBackend[];
+	/** Plugin bindings scoped to this v-model (not global/backend/key-scoped ones). */
+	plugins: VModelPlugin[];
 	created_at: string;
+}
+
+/** A plugin bound to a single v-model. `id` is the binding ID, not the plugin ID. */
+export interface VModelPlugin {
+	id: string;
+	plugin_id: string;
+	plugin_name: string;
+	/** The binding itself is switched on. */
+	binding_enabled: boolean;
+	/** The plugin is switched on globally; a disabled plugin never runs whatever its bindings say. */
+	plugin_enabled: boolean;
 }
 
 export interface VModelBackend {
@@ -152,7 +165,26 @@ interface VModelApiRow {
 	lastHealthError?: string | null;
 	lastHealthCheck?: number | null;
 	backends?: VModelBackendApiRow[];
+	plugins?: VModelPluginApiRow[];
 	createdAt: number;
+}
+
+interface VModelPluginApiRow {
+	bindingId: string;
+	pluginId: string;
+	pluginName: string;
+	bindingEnabled: boolean;
+	pluginEnabled: boolean;
+}
+
+function mapVModelPlugin(row: VModelPluginApiRow): VModelPlugin {
+	return {
+		id: row.bindingId,
+		plugin_id: row.pluginId,
+		plugin_name: row.pluginName,
+		binding_enabled: row.bindingEnabled,
+		plugin_enabled: row.pluginEnabled
+	};
 }
 
 interface VModelBackendApiRow {
@@ -190,6 +222,7 @@ function mapVModel(row: VModelApiRow): VModel {
 		streaming: row.streaming,
 		enabled: row.enabled,
 		backends: (row.backends ?? []).map(mapVModelBackend),
+		plugins: (row.plugins ?? []).map(mapVModelPlugin),
 		created_at: new Date(row.createdAt).toISOString()
 	};
 	const status = row.lastHealthStatus;
