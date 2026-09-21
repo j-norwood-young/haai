@@ -21,7 +21,15 @@ haai serve --port 8080 --host 0.0.0.0
 
 # Skip auto-opening the browser:
 haai serve --no-open
+
+# Stop the background server:
+haai stop
+
+# Run in the foreground instead (logs to the terminal, Ctrl+C to stop):
+haai serve --no-daemon
 ```
+
+`haai serve` runs HAAI in the background and logs to `~/.haai/logs/haai.log`.
 
 ### Using pnpm?
 

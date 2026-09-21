@@ -14,13 +14,14 @@ One endpoint for your apps; behind it HAAI handles virtual models, load balancin
 npx @jasony/haai serve
 ```
 
-That's it — HAAI boots on **http://localhost:4000** with the admin UI, OpenAI-compatible API (`/v1/*`), management API (`/api/v1/*`), and Swagger docs (`/api/docs`) all on one port, and opens the browser for you.
+That's it — HAAI boots in the background on **http://localhost:4000** with the admin UI, OpenAI-compatible API (`/v1/*`), management API (`/api/v1/*`), and Swagger docs (`/api/docs`) all on one port, and opens the browser for you.
 
 Or install globally:
 
 ```bash
 npm i -g @jasony/haai
-haai serve          # boot server + admin UI
+haai serve          # boot server + admin UI (in the background)
+haai stop           # stop the background server
 haai status         # check a running instance
 haai --help         # full CLI
 ```
@@ -31,6 +32,7 @@ Useful `serve` flags:
 
 - `--port <n>` / `--host <addr>` — override the listen port/address
 - `--no-open` — don't open the browser
+- `--no-daemon` — run in the foreground (logs to the terminal) instead of the background; background output goes to `~/.haai/logs/haai.log`
 
 Data lives in `~/.haai/` (`%USERPROFILE%\.haai` on Windows). Configuration comes from `HAAI_*` environment variables and `~/.haai/config.yaml` — see the [configuration guide](https://github.com/j-norwood-young/haai/tree/main/docs/guide/configuration.md).
 

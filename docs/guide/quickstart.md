@@ -10,7 +10,7 @@ Requires **Node.js 22+** only:
 npx @jasony/haai serve
 ```
 
-HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you.
+HAAI boots in the background on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you. Stop it any time with `haai stop`.
 
 Or install globally:
 
@@ -25,6 +25,8 @@ Useful flags:
 
 - `haai serve --port 8080` — different port
 - `haai serve --no-open` — don't open browser
+- `haai serve --no-daemon` — stay in the foreground and log to the terminal
+- `haai stop` — stop the background server
 
 See [Installation](./installation.md) for all install methods and per-OS notes.
 

@@ -23,11 +23,20 @@ node packages/cli/dist/index.js --help
 
 ### Serve
 
+`haai serve` starts HAAI **in the background** (as a daemon), waits until it is healthy, opens the admin UI, and returns your shell. The server keeps running after you close the terminal.
+
 ```bash
-haai serve                 # boot the server (default port 4000) and open the admin UI
+haai serve                 # start in the background (default port 4000) and open the admin UI
 haai serve --port 5000     # custom listen port
 haai serve --no-open       # don't open the browser
+haai serve --no-daemon     # run in the foreground, logging to the terminal (Ctrl+C to stop)
+haai stop                  # stop the background server
+haai stop --force          # SIGKILL it if it's hung
 ```
+
+While running in the background, HAAI writes its output to `<data dir>/logs/haai.log` (`~/.haai/logs/haai.log` by default) and its PID to `<data dir>/haai.pid`. The log file is not rotated. `haai stop` only stops an instance started by `haai serve`; it refuses to signal a PID it can't confirm is answering as HAAI unless you pass `--force`. Running `haai serve` while an instance is already up just reports it (and opens the UI).
+
+Use `--no-daemon` under a process manager (systemd, launchd, Docker, …) or for debugging.
 
 ### Status & config
 

@@ -10,6 +10,7 @@ import {
 
 const TOP_LEVEL_COMMANDS = [
   "serve",
+  "stop",
   "status",
   "config",
   "backend",
@@ -25,7 +26,8 @@ const TOP_LEVEL_COMMANDS = [
 ];
 
 const PROMPT_FLAGS = ["-m", "--model", "-k", "--key", "-s", "--system", "--no-stream"];
-const SERVE_FLAGS = ["-p", "--port", "--host", "--no-open"];
+const SERVE_FLAGS = ["-p", "--port", "--host", "--no-open", "--no-daemon"];
+const STOP_FLAGS = ["-f", "--force"];
 
 function bashCompletionScript(): string {
   return `# haai bash completion
@@ -60,6 +62,10 @@ _haai() {
 
   if [[ "$cmd" == "serve" && "$cur" == -* ]]; then
     COMPREPLY=( $(compgen -W "${SERVE_FLAGS.join(" ")}" -- "$cur") )
+    return
+  fi
+  if [[ "$cmd" == "stop" && "$cur" == -* ]]; then
+    COMPREPLY=( $(compgen -W "${STOP_FLAGS.join(" ")}" -- "$cur") )
     return
   fi
   if [[ "$cmd" == "completion" && "$prev" == "completion" ]]; then
@@ -109,7 +115,13 @@ _haai() {
             '-p[Listen port]:port:' \\
             '--port[Listen port]:port:' \\
             '--host[Listen host/address]:host:' \\
-            '--no-open[Do not open the browser]'
+            '--no-open[Do not open the browser]' \\
+            '--no-daemon[Run in the foreground]'
+          ;;
+        stop)
+          _arguments \\
+            '-f[Kill the server even if it is not responding]' \\
+            '--force[Kill the server even if it is not responding]'
           ;;
       esac
       ;;

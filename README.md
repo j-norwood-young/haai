@@ -39,7 +39,7 @@ npx @jasony/haai serve
 npm i -g @jasony/haai && haai serve
 ```
 
-HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you.
+HAAI boots in the background on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you. Stop it with `haai stop`.
 
 Data lives in `~/.haai/` (`%USERPROFILE%\.haai` on Windows). Default login is `admin` / `admin` — change it immediately in **Settings**.
 
@@ -47,6 +47,8 @@ Useful flags:
 
 - `haai serve --port 8080` — change the listen port
 - `haai serve --no-open` — don't open a browser
+- `haai serve --no-daemon` — run in the foreground instead of the background
+- `haai stop` — stop the background server
 
 See [Installation](docs/guide/installation.md) for per-OS guidance and all available methods.
 

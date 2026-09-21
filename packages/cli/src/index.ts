@@ -14,7 +14,16 @@ import { registerUserCommands } from "./commands/users.js";
 import { registerAdminTokenCommands } from "./commands/admin-tokens.js";
 import { registerPromptCommands } from "./commands/prompt.js";
 import { registerCompletionCommands, runDynamicComplete } from "./commands/completion.js";
-import { serve, serveCommand, serveDescriptor } from "./commands/serve.js";
+import {
+  serve,
+  serveCommand,
+  serveDescriptor,
+  type ServeOptions,
+  type StopOptions,
+  stop,
+  stopCommand,
+  stopDescriptor,
+} from "./commands/serve.js";
 
 // Read from package.json instead of hardcoding (bundles resolve the published
 // package root; the tsc build resolves packages/cli/package.json).
@@ -63,9 +72,9 @@ async function main(): Promise<void> {
 
   const args = process.argv.slice(2);
   const explicitUrl = explicitUrlFromArgs(args);
-  // serve starts the server; skip the proxy probe it would hit (and the 300ms
-  // delay) — resolveDefaultProxyUrl auto-detects :4000/:4001 on its own.
-  const defaultUrl = args[0] === serveCommand
+  // serve/stop manage the server process; skip the proxy probe they would hit
+  // (and the 300ms delay) — resolveDefaultProxyUrl auto-detects :4000/:4001 on its own.
+  const defaultUrl = args[0] === serveCommand || args[0] === stopCommand
     ? undefined
     : await resolveDefaultProxyUrl({ ...(explicitUrl ? { explicitUrl } : {}) });
   const completeIndex = args.indexOf("__complete");
@@ -88,7 +97,7 @@ async function main(): Promise<void> {
     .option("-t, --token <token>", "Admin API token", process.env["HAAI_ADMIN_TOKEN"]);
 
   program.hook("preSubcommand", (thisCmd) => {
-    if (thisCmd.name() === serveCommand) return; // serve doesn't talk to a running proxy
+    if (thisCmd.name() === serveCommand || thisCmd.name() === stopCommand) return; // they manage the process, not talk to it
     const opts = thisCmd.opts() as { url: string; token?: string };
     const client = createApiClient(opts.url);
     if (opts.token) client["opts"].token = opts.token;
@@ -101,7 +110,13 @@ async function main(): Promise<void> {
     .option("-p, --port <port>", "Listen port (default: $HAAI_PORT or 4000)")
     .option("--host <host>", "Listen host/address (default: $HAAI_HOST or 0.0.0.0)")
     .option("--no-open", "Don't open the browser")
-    .action((options: { port?: string; host?: string; noOpen?: boolean }) => serve(options));
+    .option("--no-daemon", "Run in the foreground instead of in the background")
+    .action((options: ServeOptions) => serve(options));
+  program
+    .command(stopCommand)
+    .description(stopDescriptor)
+    .option("-f, --force", "Kill the server (SIGKILL) even if it isn't responding")
+    .action((options: StopOptions) => stop(options));
   // Status / health
   program
     .command("status")
