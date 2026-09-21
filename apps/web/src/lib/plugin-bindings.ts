@@ -1,5 +1,5 @@
 import type { ApiKey, Backend, Plugin, PluginBinding, PluginScopeType, VModel } from './api.js';
-import type { HoverListItem } from '$lib/components/HoverList.svelte';
+import type { HoverListItem } from '$lib/hover-list.js';
 
 export interface ScopeResources {
 	vmodels: VModel[];

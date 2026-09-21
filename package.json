@@ -1,6 +1,6 @@
 {
   "name": "haai-monorepo",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "description": "HAAI \u2014 High Availability AI: modern streaming reverse proxy for OpenAI-compatible LLMs",
   "license": "MIT",

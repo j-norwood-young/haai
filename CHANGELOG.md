@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-21
+
 ### Added
 
 - V-models and backend models now carry a **kind** (`chat` vs. `embedding`), fixing a security gap where an embedding model mapped into a v-model could be routed through `/v1/chat/completions`. Backend model kinds are classified from a provider-native probe where available (LM Studio's `GET /api/v0/models`, Ollama's `POST /api/show`) and fall back to a name heuristic (`bge-`, `gte-`, `e5-`, `*embed*`, etc.) for vLLM/OpenAI/generic backends; `GET /v1/models` now reports an LM Studio-style `type` (`llm`/`vlm`/`embeddings`) per model. Adding a backend model to a v-model of the wrong kind is rejected (`400`) at the admin API, and mismatched requests are rejected at request time on both `/v1/chat/completions` and `/v1/embeddings` (`400 model_not_supported`), so a pre-existing bad mapping can't route either.
@@ -17,11 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /v1/models` now advertises reasoning capability per model and v-model (`supported_parameters`, `capabilities`, and a precise `haai.reasoning` block distinguishing "enforces a budget" from "accepts but ignores one").
 - Backends gained an optional `reasoningCaps` override (`PATCH /api/v1/backends/:id`) for correcting a backend's reasoning capabilities without touching `provider`, which is part of the published model-id and can't be changed after creation.
 - The admin UI now shows a “Server disconnected” warning in the top-right corner when the live event stream drops, and clears it automatically once the server is reachable again
+- The admin UI now manages plugin bindings on **backends and API keys** as well as v-models, from each edit page (with a plugin count and hover list on the v-model, backend and key lists). Plugins run in scope order; a plugin can only be bound to a given scope once.
+- Plugin names are now unique (case-insensitive). Installing a name that already exists is refused unless it is a newer version, in which case you're asked to confirm the upgrade (a dialog in the web UI; `--upgrade` on the CLI) and the plugin is replaced in place, keeping its bindings. `haai plugin install` also gained `--name` to install a second copy under a different name. See [Plugin authoring](docs/guide/plugin-authoring.md#names-and-upgrades).
+- `haai models` prints the model IDs an API key can use (one per line, same list as `GET /v1/models`).
 
 ### Changed
 
 - The admin UI's **Create** and **Edit** virtual model pages now share one form (the Edit layout): backend mappings are added with the same backend/model/weight row, can be re-weighted or removed, and `enabled` can be set at creation. The form requires at least one backend mapping before it can be submitted (the API and CLI still allow an empty v-model), and `POST /api/v1/vmodels` now accepts several models from the same backend (only an identical backend + model pair is rejected as a duplicate), matching `POST /api/v1/vmodels/:id/backends`.
 - `haai serve` is now a first-class CLI subcommand (visible in `haai --help`) instead of a hidden entry point in the `haai` bin shim; the shim now only gates the Node version and delegates to the CLI
+- Saving a backend in the admin UI now only runs the connection test when the backend is enabled.
+- The API key **Connect** dialog was reworked: it now lists the models the key can actually use and generates connection snippets for them.
+- `/v1/models` and the admin available-models endpoint now read from cached model catalogs instead of querying every backend on each request.
 
 ### Fixed
 
@@ -31,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The admin UI's "Add Backend" / "Edit Backend" provider dropdown listed the wrong options (`OpenAI`/`Anthropic`/`Ollama`/`Other` — `Anthropic` and `Other` aren't valid providers, and `LM Studio`/`vLLM`/`Generic` were missing entirely) and didn't include the new `omlx` provider; it now lists the real provider set. The "Edit Backend" page also explains why Provider and Host can't be changed after creation.
 - Response-buffering plugins (`needsResponseBuffer: true`) no longer silently drop `reasoning`/`reasoning_content`, `tool_calls`, `refusal`, and `usage.completion_tokens_details` when reconstructing a streamed upstream response.
 - `haai serve` (and SIGTERM shutdowns) no longer hang when a client holds a long-lived connection open — the SSE event stream (`/api/v1/events`) kept `app.close()` waiting forever, so the process printed “Shutting down gracefully…” but never exited; open connections are now force-closed after the server stops accepting new ones, and a second signal forces an immediate exit
+- Deleting a v-model, backend or key now also deletes the plugin bindings scoped to it (they previously outlived it). ⚠️ **Migrations `0013`/`0014` clean up existing data:** orphaned plugin bindings are removed, and duplicate plugin bindings (same plugin + scope) and duplicate v-model backend mappings (same v-model + backend + model) are collapsed to the oldest row before unique indexes are added, so a duplicate can no longer make a plugin run twice per request.
 
 ## [0.2.3] - 2026-09-03
 
@@ -102,7 +111,8 @@ Initial public release of haai (HAAI): a streaming reverse proxy for OpenAI-comp
 - Example plugins (e.g. system-prompt injection, token compression, vLLM compatibility fixes)
 
 [0.2.3]: https://github.com/j-norwood-young/haai/compare/v0.2.2...v0.2.3
-[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.2.3...HEAD
+[0.3.0]: https://github.com/j-norwood-young/haai/compare/v0.2.3...v0.3.0
+[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.3.0...HEAD
 [0.2.2]: https://github.com/j-norwood-young/haai/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/j-norwood-young/haai/compare/v0.1.0...v0.2.1
 [0.1.0]: https://github.com/j-norwood-young/haai/releases/tag/v0.1.0

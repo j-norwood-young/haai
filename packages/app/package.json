@@ -1,6 +1,6 @@
 {
   "name": "haai",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "HAAI — High Availability AI: streaming reverse proxy for OpenAI-compatible LLMs with admin UI, CLI, and MCP server",
   "license": "MIT",
   "keywords": [
