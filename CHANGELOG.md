@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-21
+
+### Added
+
+- `haai stop` stops the background server started by `haai serve`. It won't signal a PID it can't confirm is answering as HAAI unless you pass `--force` (which sends SIGKILL).
+
+### Changed
+
+- ⚠️ `haai serve` now runs HAAI **in the background** by default: it starts the server detached, waits for it to become healthy, opens the admin UI and returns your shell. Output goes to `<data dir>/logs/haai.log` and the PID is kept in `<data dir>/haai.pid`. Pass `--no-daemon` for the previous foreground behaviour (needed under systemd, launchd or other process managers that expect the process to stay attached).
+
+### Fixed
+
+- `haai serve --no-open` now actually skips opening the browser (the flag was being read under the wrong name and had no effect).
+
 ## [0.3.0] - 2026-09-21
 
 ### Added
@@ -111,8 +125,9 @@ Initial public release of haai (HAAI): a streaming reverse proxy for OpenAI-comp
 - Example plugins (e.g. system-prompt injection, token compression, vLLM compatibility fixes)
 
 [0.2.3]: https://github.com/j-norwood-young/haai/compare/v0.2.2...v0.2.3
+[0.4.0]: https://github.com/j-norwood-young/haai/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/j-norwood-young/haai/compare/v0.2.3...v0.3.0
-[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.4.0...HEAD
 [0.2.2]: https://github.com/j-norwood-young/haai/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/j-norwood-young/haai/compare/v0.1.0...v0.2.1
 [0.1.0]: https://github.com/j-norwood-young/haai/releases/tag/v0.1.0
