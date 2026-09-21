@@ -106,7 +106,7 @@
 				<div>
 					<p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Details</p>
 					<pre
-						class="whitespace-pre-wrap break-words rounded-lg bg-black/40 border border-gray-800 px-3 py-2 text-xs text-red-300 font-mono"
+						class="whitespace-pre-wrap wrap-break-word rounded-lg bg-black/40 border border-gray-800 px-3 py-2 text-xs text-red-300 font-mono"
 					>{detailMessage}</pre>
 				</div>
 			{/if}

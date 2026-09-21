@@ -186,7 +186,7 @@
 						<button
 							type="button"
 							onclick={() => (enabled = !enabled)}
-							class="mt-0.5 relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none"
+							class="mt-0.5 relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none"
 							class:bg-cyan-500={enabled}
 							class:bg-gray-700={!enabled}
 							role="switch"

@@ -121,7 +121,7 @@
 
 <div class="card p-4" data-testid="perf-breakdown">
 	<div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
-		<h2 class="text-sm font-medium text-[var(--color-text-muted)]">Performance breakdown · {windowLabel}</h2>
+		<h2 class="text-sm font-medium text-(--color-text-muted)">Performance breakdown · {windowLabel}</h2>
 		<div class="flex items-center gap-2" role="tablist" aria-label="Breakdown dimension">
 			{#each TABS as t (t.id)}
 				<button
@@ -149,14 +149,14 @@
 			<button type="button" class="btn btn-secondary btn-sm" onclick={() => void load()}>Retry</button>
 		</div>
 	{:else if sorted.length === 0}
-		<p class="text-sm text-[var(--color-text-subtle)] text-center py-8">
+		<p class="text-sm text-(--color-text-subtle) text-center py-8">
 			No requests in this window
 		</p>
 	{:else}
 		<div class="overflow-x-auto -mx-1">
 			<table class="w-full text-sm">
 				<thead>
-					<tr class="text-left text-[10px] uppercase tracking-wider text-[var(--color-text-subtle)]">
+					<tr class="text-left text-[10px] uppercase tracking-wider text-(--color-text-subtle)">
 						<th>Name</th>
 						<th aria-sort={ariaSort('requests')}>
 							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('requests')}>
@@ -204,27 +204,27 @@
 				</thead>
 				<tbody>
 					{#each sorted as g (g.key)}
-						<tr class="hover:bg-[var(--color-surface-3)] cursor-pointer border-b border-[var(--color-border-subtle)] last:border-0">
+						<tr class="hover:bg-(--color-surface-3) cursor-pointer border-b border-(--color-border-subtle) last:border-0">
 							<td class="py-2 pr-3">
-								<a href={rowHref(g)} class="flex items-center gap-2 text-[var(--color-text)] hover:text-[var(--color-brand)] transition-colors">
+								<a href={rowHref(g)} class="flex items-center gap-2 text-(--color-text) hover:text-(--color-brand) transition-colors">
 									{#if tab === 'backend' && backendHealth?.get(g.key)}
 										<StatusDot status={backendHealth.get(g.key)!} />
 									{/if}
-									<span class="truncate max-w-[220px]">{g.name ?? g.key}</span>
+									<span class="truncate max-w-55">{g.name ?? g.key}</span>
 								</a>
 							</td>
 							<td class="py-2 pr-3 whitespace-nowrap">
 								<div class="flex items-center gap-2">
-									<span class="tabular-nums text-[var(--color-text)]">{formatNum(g.requests)}</span>
-									<span class="hidden xl:block h-1.5 w-16 rounded-full bg-[var(--color-surface-3)] overflow-hidden shrink-0">
-										<span class="block h-full bg-[var(--color-brand)]" style="width: {(g.requests / maxRequests) * 100}%"></span>
+									<span class="tabular-nums text-(--color-text)">{formatNum(g.requests)}</span>
+									<span class="hidden xl:block h-1.5 w-16 rounded-full bg-(--color-surface-3) overflow-hidden shrink-0">
+										<span class="block h-full bg-(--color-brand)" style="width: {(g.requests / maxRequests) * 100}%"></span>
 									</span>
 								</div>
 							</td>
-							<td class="py-2 pr-3 tabular-nums {g.error_rate > 0.05 ? 'text-red-400' : 'text-[var(--color-text-muted)]'}">
+							<td class="py-2 pr-3 tabular-nums {g.error_rate > 0.05 ? 'text-red-400' : 'text-(--color-text-muted)'}">
 								{formatPct(g.error_rate)}
 							</td>
-							<td class="py-2 pr-3 tabular-nums text-[var(--color-text-muted)]" title="prompt {formatNum(g.prompt_tokens)} / completion {formatNum(g.completion_tokens)}">
+							<td class="py-2 pr-3 tabular-nums text-(--color-text-muted)" title="prompt {formatNum(g.prompt_tokens)} / completion {formatNum(g.completion_tokens)}">
 								{formatNum(g.total_tokens)}
 							</td>
 							<td class="py-2 pr-3 tabular-nums text-amber-400 whitespace-nowrap">
@@ -234,7 +234,7 @@
 									—
 								{/if}
 							</td>
-							<td class="py-2 pr-3 tabular-nums text-[var(--color-text-muted)] whitespace-nowrap">
+							<td class="py-2 pr-3 tabular-nums text-(--color-text-muted) whitespace-nowrap">
 								{#if g.duration_p50_ms != null}
 									{formatMs(g.duration_p50_ms)} / {formatMs(g.duration_p95_ms ?? 0)}
 								{:else}
@@ -248,13 +248,13 @@
 								—
 							{/if}
 						</td>
-							<td class="py-2 pr-3 tabular-nums text-[var(--color-text-muted)]">{g.tool_calls}</td>
+							<td class="py-2 pr-3 tabular-nums text-(--color-text-muted)">{g.tool_calls}</td>
 							<td class="py-2 pr-3">
 								<div class="w-24 h-7">
 									<Sparkline values={g.sparkline} color="var(--color-brand)" ariaLabel="Request trend for {g.name ?? g.key}" />
 								</div>
 							</td>
-							<td class="py-2 text-[var(--color-text-subtle)] whitespace-nowrap">{relativeTime(g.last_seen)}</td>
+							<td class="py-2 text-(--color-text-subtle) whitespace-nowrap">{relativeTime(g.last_seen)}</td>
 						</tr>
 					{/each}
 				</tbody>

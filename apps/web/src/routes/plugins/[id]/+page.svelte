@@ -98,23 +98,23 @@
 
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
 				<div>
-					<p class="text-xs text-[var(--color-text-muted)] mb-0.5">Name</p>
-					<p class="text-[var(--color-text)] font-medium">{plugin.name}</p>
+					<p class="text-xs text-(--color-text-muted) mb-0.5">Name</p>
+					<p class="text-(--color-text) font-medium">{plugin.name}</p>
 				</div>
 				<div>
-					<p class="text-xs text-[var(--color-text-muted)] mb-0.5">Version</p>
-					<p class="text-[var(--color-text)] font-mono">{plugin.version ?? '—'}</p>
+					<p class="text-xs text-(--color-text-muted) mb-0.5">Version</p>
+					<p class="text-(--color-text) font-mono">{plugin.version ?? '—'}</p>
 				</div>
 				<div class="sm:col-span-2">
-					<p class="text-xs text-[var(--color-text-muted)] mb-0.5">Description</p>
-					<p class="text-[var(--color-text)]">{plugin.description ?? '—'}</p>
+					<p class="text-xs text-(--color-text-muted) mb-0.5">Description</p>
+					<p class="text-(--color-text)">{plugin.description ?? '—'}</p>
 				</div>
 				<div class="sm:col-span-2">
-					<p class="text-xs text-[var(--color-text-muted)] mb-0.5">Source</p>
-					<p class="text-[var(--color-text)] font-mono text-xs break-all">{plugin.source}</p>
+					<p class="text-xs text-(--color-text-muted) mb-0.5">Source</p>
+					<p class="text-(--color-text) font-mono text-xs break-all">{plugin.source}</p>
 				</div>
 				<div>
-					<p class="text-xs text-[var(--color-text-muted)] mb-0.5">Hooks</p>
+					<p class="text-xs text-(--color-text-muted) mb-0.5">Hooks</p>
 					<div class="flex flex-wrap gap-1 mt-1">
 						{#each plugin.manifest.hooks as hook (hook)}
 							<span class="badge badge-cyan">{hook}</span>
@@ -122,7 +122,7 @@
 					</div>
 				</div>
 				<div>
-					<p class="text-xs text-[var(--color-text-muted)] mb-0.5">Needs response buffer</p>
+					<p class="text-xs text-(--color-text-muted) mb-0.5">Needs response buffer</p>
 					<span class={plugin.needsResponseBuffer ? 'badge badge-yellow' : 'badge badge-gray'}>
 						{plugin.needsResponseBuffer ? 'Yes' : 'No'}
 					</span>
@@ -135,7 +135,7 @@
 					type="button"
 					onclick={toggleEnabled}
 					disabled={enablingToggle}
-					class="mt-0.5 relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50"
+					class="mt-0.5 relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50"
 					class:bg-cyan-500={plugin.enabled}
 					class:bg-gray-700={!plugin.enabled}
 					role="switch"
@@ -173,10 +173,10 @@
 									{#if field.required}
 										<span class="badge badge-red">required</span>
 									{/if}
-									<span class="text-[var(--color-text)]">{field.label}</span>
+									<span class="text-(--color-text)">{field.label}</span>
 								</div>
 								{#if field.description}
-									<p class="text-xs text-[var(--color-text-muted)] mt-0.5">{field.description}</p>
+									<p class="text-xs text-(--color-text-muted) mt-0.5">{field.description}</p>
 								{/if}
 							</div>
 						</div>

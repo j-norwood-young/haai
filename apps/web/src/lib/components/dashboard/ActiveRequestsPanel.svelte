@@ -40,13 +40,13 @@
 
 <div class="card p-4 flex flex-col" data-testid="active-requests">
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-sm font-medium text-[var(--color-text-muted)]">Active requests</h2>
-		<span class="text-xs text-[var(--color-text-subtle)] tabular-nums">{live.inFlightTotal}</span>
+		<h2 class="text-sm font-medium text-(--color-text-muted)">Active requests</h2>
+		<span class="text-xs text-(--color-text-subtle) tabular-nums">{live.inFlightTotal}</span>
 	</div>
 	{#if rows.length === 0}
 		<div class="flex-1 flex flex-col items-center justify-center py-10 gap-3">
 			<svg
-				class="w-12 h-12 text-[var(--color-text-subtle)] opacity-40"
+				class="w-12 h-12 text-(--color-text-subtle) opacity-40"
 				fill="none"
 				stroke="currentColor"
 				viewBox="0 0 24 24"
@@ -58,25 +58,25 @@
 				<circle cx="12" cy="12" r="8.25" />
 				<path d="M8.25 12h7.5m0 0-3-3m3 3-3 3" />
 			</svg>
-			<p class="text-sm text-[var(--color-text-subtle)]">No requests in flight</p>
+			<p class="text-sm text-(--color-text-subtle)">No requests in flight</p>
 		</div>
 	{:else}
-		<ul class="flex-1 overflow-y-auto space-y-1.5 max-h-[220px]">
+		<ul class="flex-1 overflow-y-auto space-y-1.5 max-h-55">
 			{#each rows as r (r.id)}
 				{@const phase = phaseOf(r)}
 				{@const meta = phaseMeta[phase]}
 				{@const rate = tokPerSec(r)}
-				<li class="dashboard-row flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-[var(--color-surface-3)] text-sm">
+				<li class="dashboard-row flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-(--color-surface-3) text-sm">
 					<StatusDot status={meta.dot} pulse={meta.pulse} />
-					<span class="font-mono text-xs text-[var(--color-text-muted)] shrink-0">{r.keyPrefix}</span>
-					<span class="min-w-0 flex-1 truncate text-[var(--color-text)]" title="{r.vmodelName} → {r.backendName} / {r.backendModelId}">
+					<span class="font-mono text-xs text-(--color-text-muted) shrink-0">{r.keyPrefix}</span>
+					<span class="min-w-0 flex-1 truncate text-(--color-text)" title="{r.vmodelName} → {r.backendName} / {r.backendModelId}">
 						{r.vmodelName} → {r.backendName} / {r.backendModelId}
 					</span>
 					{#if r.attempt > 1}
 						<span class="badge badge-yellow shrink-0">failover ×{r.attempt}</span>
 					{/if}
 					<span class="badge {meta.class} shrink-0 hidden md:inline-block">{meta.label}</span>
-					<span class="text-xs text-[var(--color-text-subtle)] tabular-nums shrink-0 w-14 text-right">
+					<span class="text-xs text-(--color-text-subtle) tabular-nums shrink-0 w-14 text-right">
 						{formatDuration(now - r.startedAt)}
 					</span>
 					<span class="text-xs tabular-nums text-violet-400 shrink-0 w-20 text-right">
@@ -90,7 +90,7 @@
 			{/each}
 		</ul>
 		{#if live.inFlightTotal > 50}
-			<p class="mt-2 text-xs text-[var(--color-text-subtle)] text-center">
+			<p class="mt-2 text-xs text-(--color-text-subtle) text-center">
 				+{live.inFlightTotal - 50} more
 			</p>
 		{/if}

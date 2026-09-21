@@ -149,23 +149,23 @@
 </script>
 
 <div class="space-y-4">
-	<p class="text-sm text-[var(--color-text-muted)]">
+	<p class="text-sm text-(--color-text-muted)">
 		Bindings decide <strong class="text-gray-300">when</strong> this plugin runs. Each row is one rule:
 		pick a scope (global, v-model, backend, or key), optionally set config values, then enable or disable it.
 	</p>
 
 	<!-- Existing bindings -->
 	{#if bindings.length > 0}
-		<div class="rounded-xl border border-[var(--color-border)] overflow-hidden">
+		<div class="rounded-xl border border-(--color-border) overflow-hidden">
 			{#each bindings as binding, i (binding.id)}
 				<div
-					class="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface-2)]"
+					class="flex items-center gap-3 px-4 py-3 bg-(--color-surface-2)"
 					class:border-t={i > 0}
 					style="border-color: var(--color-border-subtle)"
 				>
 					<div class="flex-1 min-w-0">
 						<div class="flex items-center gap-2 flex-wrap">
-							<p class="text-sm font-medium text-[var(--color-text)]">{scopeLabel(binding)}</p>
+							<p class="text-sm font-medium text-(--color-text)">{scopeLabel(binding)}</p>
 							{#if binding.order > 0}
 								<span class="badge badge-gray">order {binding.order}</span>
 							{/if}
@@ -173,7 +173,7 @@
 								{binding.enabled ? 'active' : 'inactive'}
 							</span>
 						</div>
-						<p class="text-xs text-[var(--color-text-muted)] mt-0.5">{scopeDescription(binding)}</p>
+						<p class="text-xs text-(--color-text-muted) mt-0.5">{scopeDescription(binding)}</p>
 						<p class="text-xs text-gray-500 truncate mt-0.5 font-mono">{configSummary(binding)}</p>
 					</div>
 
@@ -181,7 +181,7 @@
 					<button
 						type="button"
 						onclick={() => toggleEnabled(binding)}
-						class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none"
+						class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none"
 						class:bg-cyan-500={binding.enabled}
 						class:bg-gray-700={!binding.enabled}
 						role="switch"
@@ -215,17 +215,17 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="text-sm text-[var(--color-text-muted)]">No bindings yet.</p>
+		<p class="text-sm text-(--color-text-muted)">No bindings yet.</p>
 	{/if}
 
 	<!-- Add binding form -->
-	<div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4 space-y-4">
+	<div class="rounded-xl border border-(--color-border) bg-(--color-surface-2) p-4 space-y-4">
 		<h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Add Binding</h3>
 
 		<!-- Scope type selector -->
 		<div>
 			<p class="text-xs font-medium text-gray-300 mb-2">Scope</p>
-			<div class="flex rounded-lg overflow-hidden border border-[var(--color-border)] text-xs w-fit">
+			<div class="flex rounded-lg overflow-hidden border border-(--color-border) text-xs w-fit">
 				{#each scopeOptions as opt, i (opt.value)}
 					<button
 						type="button"

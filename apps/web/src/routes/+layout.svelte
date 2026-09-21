@@ -176,7 +176,7 @@
 	<div class="flex h-screen overflow-hidden">
 		<!-- Mobile header -->
 		<header
-			class="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3 bg-[var(--color-surface-2)] border-b border-[var(--color-border-subtle)]"
+			class="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3 bg-(--color-surface-2) border-b border-(--color-border-subtle)"
 		>
 			<button
 				type="button"
@@ -230,11 +230,11 @@
 
 		<!-- Sidebar -->
 		<aside
-			class={`app-sidebar fixed md:relative inset-y-0 left-0 z-50 flex w-52 flex-shrink-0 flex-col bg-[var(--color-surface-2)] border-r border-[var(--color-border-subtle)] transition-transform duration-200 ease-in-out ${sidebarOpen ? 'is-open' : ''}`}
+			class={`app-sidebar fixed md:relative inset-y-0 left-0 z-50 flex w-52 shrink-0 flex-col bg-(--color-surface-2) border-r border-(--color-border-subtle) transition-transform duration-200 ease-in-out ${sidebarOpen ? 'is-open' : ''}`}
 		>
 			<!-- Logo (desktop) -->
 			<div
-				class="hidden md:flex items-center gap-2.5 px-4 py-4 border-b border-[var(--color-border-subtle)]"
+				class="hidden md:flex items-center gap-2.5 px-4 py-4 border-b border-(--color-border-subtle)"
 			>
 				<BrandLogo variant="fin" class="w-6 h-6 text-cyan-400" label="" />
 				<span class="text-sm font-bold text-white tracking-tight">HAAI</span>
@@ -251,7 +251,7 @@
 
 			<!-- Mobile sidebar header -->
 			<div
-				class="md:hidden flex items-center justify-between px-4 py-4 border-b border-[var(--color-border-subtle)]"
+				class="md:hidden flex items-center justify-between px-4 py-4 border-b border-(--color-border-subtle)"
 			>
 				<div class="flex items-center gap-2">
 					<BrandLogo variant="fin" class="w-5 h-5 text-cyan-400" label="" />
@@ -308,7 +308,7 @@
 			</nav>
 
 			<!-- Footer -->
-			<div class="border-t border-[var(--color-border-subtle)] p-3">
+			<div class="border-t border-(--color-border-subtle) p-3">
 				{#if auth.user}
 					<div class="flex items-center gap-2 px-2 py-1.5 mb-1">
 						<div
@@ -318,7 +318,7 @@
 						</div>
 						<div class="flex-1 min-w-0">
 							<p class="text-sm font-medium text-gray-200 truncate">{auth.user.username}</p>
-							<p class="text-xs text-[var(--color-text-subtle)] truncate">{auth.user.role}</p>
+							<p class="text-xs text-(--color-text-subtle) truncate">{auth.user.role}</p>
 						</div>
 					</div>
 				{/if}
@@ -346,7 +346,7 @@
 		</aside>
 
 		<!-- Main content -->
-		<main class="flex-1 min-w-0 overflow-y-auto bg-[var(--color-surface)] pt-14 md:pt-0">
+		<main class="flex-1 min-w-0 overflow-y-auto bg-(--color-surface) pt-14 md:pt-0">
 			{@render children()}
 		</main>
 

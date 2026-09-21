@@ -74,12 +74,12 @@
 	{#if backend}
 		<div class="space-y-4 text-sm">
 			<div>
-				<p class="text-[var(--color-text-muted)] text-xs uppercase tracking-wider mb-2">
+				<p class="text-(--color-text-muted) text-xs uppercase tracking-wider mb-2">
 					Available models
 				</p>
 
 				{#if loading}
-					<p class="text-[var(--color-text-subtle)] py-6 text-center">Loading models…</p>
+					<p class="text-(--color-text-subtle) py-6 text-center">Loading models…</p>
 				{:else if error}
 					<div
 						class="rounded-lg bg-red-900/20 border border-red-800/50 px-3 py-2 text-red-300 text-sm"
@@ -87,24 +87,24 @@
 						{error}
 					</div>
 				{:else if models.length === 0}
-					<p class="text-[var(--color-text-subtle)]">
+					<p class="text-(--color-text-subtle)">
 						No models found. Ensure the backend is enabled and reachable, then try Refresh.
 					</p>
 				{:else}
 					<ul class="space-y-2 max-h-[60vh] overflow-y-auto">
 						{#each models as model (model.id)}
 							<li
-								class="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] px-3 py-2"
+								class="rounded-lg border border-(--color-border-subtle) bg-(--color-surface-3) px-3 py-2"
 							>
 								<div class="flex items-start justify-between gap-2">
-									<p class="text-[var(--color-text)] font-mono text-sm break-all">
+									<p class="text-(--color-text) font-mono text-sm break-all">
 										{rawBackendModelId(model.id, backend)}
 									</p>
 									<span class="badge {KIND_BADGE[model.modelKind]} shrink-0">
 										{KIND_LABEL[model.modelKind]}
 									</span>
 								</div>
-								<p class="text-xs text-[var(--color-text-subtle)] font-mono break-all mt-0.5">
+								<p class="text-xs text-(--color-text-subtle) font-mono break-all mt-0.5">
 									{model.id}
 								</p>
 							</li>

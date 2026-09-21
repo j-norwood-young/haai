@@ -112,7 +112,7 @@
 			type="button"
 			onclick={copy}
 			disabled={!displaySecret}
-			class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-white rounded-md transition-colors min-w-[7.5rem]"
+			class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-white rounded-md transition-colors min-w-30"
 		>
 			{copied ? 'Copied' : 'Copy to clipboard'}
 		</button>

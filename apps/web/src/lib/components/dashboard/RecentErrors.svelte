@@ -65,7 +65,7 @@
 
 <div class="card p-4 flex flex-col" data-testid="recent-errors">
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-sm font-medium text-[var(--color-text-muted)]">Recent errors · {windowLabel}</h2>
+		<h2 class="text-sm font-medium text-(--color-text-muted)">Recent errors · {windowLabel}</h2>
 		{#if liveErrors > 0}
 			<span class="badge badge-red">{liveErrors} live</span>
 		{/if}
@@ -84,21 +84,21 @@
 		</div>
 	{:else if rows.length === 0}
 		<div class="flex-1 flex flex-col items-center justify-center py-10 gap-2">
-			<svg class="w-10 h-10 text-[var(--color-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<svg class="w-10 h-10 text-(--color-success)" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 				<path d="m4.5 12.75 6 6 9-13.5" />
 			</svg>
-			<p class="text-sm text-[var(--color-text-subtle)]">No errors in the last {windowLabel}</p>
+			<p class="text-sm text-(--color-text-subtle)">No errors in the last {windowLabel}</p>
 		</div>
 	{:else}
-		<ul class="space-y-1.5 max-h-[220px] overflow-y-auto">
+		<ul class="space-y-1.5 max-h-55 overflow-y-auto">
 			{#each rows as ev (ev.id)}
-				<li class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-[var(--color-surface-3)] text-sm">
-					<span class="text-xs text-[var(--color-text-subtle)] tabular-nums shrink-0 w-14">{relativeTime(ev.created_at)}</span>
+				<li class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-(--color-surface-3) text-sm">
+					<span class="text-xs text-(--color-text-subtle) tabular-nums shrink-0 w-14">{relativeTime(ev.created_at)}</span>
 					<span class="badge {ev.status_code >= 500 ? 'badge-red' : 'badge-yellow'} shrink-0">{ev.status_code}</span>
-					<span class="min-w-0 flex-1 truncate text-[var(--color-text)]" title={ev.error ?? ''}>
+					<span class="min-w-0 flex-1 truncate text-(--color-text)" title={ev.error ?? ''}>
 						{ev.vmodel}{ev.backend_name ? ` → ${ev.backend_name}` : ''}
 					</span>
-					<span class="font-mono text-xs text-[var(--color-text-muted)] shrink-0">{ev.key_prefix}</span>
+					<span class="font-mono text-xs text-(--color-text-muted) shrink-0">{ev.key_prefix}</span>
 					<span class="text-xs text-red-400 truncate max-w-[40%]" title={ev.error ?? ''}>
 						{ev.error ?? 'Request failed'}
 					</span>
@@ -108,6 +108,6 @@
 	{/if}
 
 	<div class="mt-3 text-right">
-		<a href="/logs" class="text-xs text-[var(--color-brand)] hover:underline transition-colors">Open Live Logs →</a>
+		<a href="/logs" class="text-xs text-(--color-brand) hover:underline transition-colors">Open Live Logs →</a>
 	</div>
 </div>

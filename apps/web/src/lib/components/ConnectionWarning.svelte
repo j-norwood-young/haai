@@ -39,7 +39,7 @@
 
 {#if visible}
 	<div
-		class="fixed top-16 right-3 z-30 flex w-72 max-w-[calc(100vw-1.5rem)] items-start gap-2.5 rounded-lg border border-amber-500/40 bg-[var(--color-surface-3)] p-3 shadow-lg md:top-4 md:right-4"
+		class="fixed top-16 right-3 z-30 flex w-72 max-w-[calc(100vw-1.5rem)] items-start gap-2.5 rounded-lg border border-amber-500/40 bg-(--color-surface-3) p-3 shadow-lg md:top-4 md:right-4"
 		role="status"
 		aria-live="polite"
 		data-testid="connection-warning"
@@ -59,8 +59,8 @@
 			/>
 		</svg>
 		<div class="min-w-0">
-			<p class="text-sm font-medium text-[var(--color-text)]">Server disconnected</p>
-			<p class="mt-0.5 text-xs text-[var(--color-text-muted)]">
+			<p class="text-sm font-medium text-(--color-text)">Server disconnected</p>
+			<p class="mt-0.5 text-xs text-(--color-text-muted)">
 				Live updates paused. Trying to reconnect…
 			</p>
 		</div>

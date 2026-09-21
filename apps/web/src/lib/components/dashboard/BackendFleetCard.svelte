@@ -107,9 +107,9 @@
 			<!-- Header -->
 			<div class="flex items-center gap-2">
 				<StatusDot status={entry.summary.health} pulse={entry.summary.health === 'healthy'} />
-				<span class="font-medium text-[var(--color-text)] truncate">{entry.summary.name}</span>
+				<span class="font-medium text-(--color-text) truncate">{entry.summary.name}</span>
 				{#if entry.detail?.provider}
-					<span class="text-xs text-[var(--color-text-subtle)] shrink-0">{entry.detail.provider}</span>
+					<span class="text-xs text-(--color-text-subtle) shrink-0">{entry.detail.provider}</span>
 				{/if}
 				<span class="ml-auto {healthBadge(entry.summary.health)} shrink-0">{entry.summary.health}</span>
 				{#if entry.summary.enabled === false}
@@ -120,8 +120,8 @@
 			<!-- Probe latency -->
 			<div>
 				<div class="flex items-center justify-between text-xs mb-1">
-					<span class="text-[var(--color-text-subtle)]">Probe latency</span>
-					<span class="text-[var(--color-text-muted)] tabular-nums">
+					<span class="text-(--color-text-subtle)">Probe latency</span>
+					<span class="text-(--color-text-muted) tabular-nums">
 						{#if liveState && liveState.probes.length > 0}
 							{liveState.probes[liveState.probes.length - 1]!.latencyMs}ms · {live.uptimePct(entry.summary.id) != null ? `${(live.uptimePct(entry.summary.id)! * 100).toFixed(0)}% up` : ''}
 						{:else if entry.summary.latency_ms != null}
@@ -138,7 +138,7 @@
 						ariaLabel="Probe latency history for {entry.summary.name}"
 					/>
 				</div>
-				<div class="flex justify-between mt-0.5 text-[10px] text-[var(--color-text-subtle)]">
+				<div class="flex justify-between mt-0.5 text-[10px] text-(--color-text-subtle)">
 					<span>
 						{liveState?.probes.length ?? 0} probes
 					</span>
@@ -167,7 +167,7 @@
 				{#if entry.detail}
 					<button
 						type="button"
-						class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+						class="text-(--color-text-muted) hover:text-(--color-text) transition-colors"
 						onclick={() => (modalBackend = entry.detail!)}
 					>
 						{modelsCount.get(entry.summary.id) ?? 0} models

@@ -101,7 +101,7 @@
 						id="cfg-{key}"
 						type="button"
 						onclick={() => setValue(key, !checked)}
-						class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none"
+						class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none"
 						class:bg-cyan-500={checked}
 						class:bg-gray-700={!checked}
 						role="switch"

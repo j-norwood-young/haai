@@ -25,8 +25,8 @@
 
 <div class="card p-4" data-testid="live-throughput">
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-sm font-medium text-[var(--color-text-muted)]">Requests per second</h2>
-		<span class="text-xs text-[var(--color-text-subtle)]">Last 10 minutes · 1s resolution</span>
+		<h2 class="text-sm font-medium text-(--color-text-muted)">Requests per second</h2>
+		<span class="text-xs text-(--color-text-subtle)">Last 10 minutes · 1s resolution</span>
 	</div>
 	<div class="pb-4">
 		<AreaChart

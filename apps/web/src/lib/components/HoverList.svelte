@@ -70,20 +70,20 @@
 	<div
 		id={popoverId}
 		role="tooltip"
-		class="fixed z-60 min-w-48 max-w-xs rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs shadow-2xl pointer-events-none"
+		class="fixed z-60 min-w-48 max-w-xs rounded-lg border border-(--color-border) bg-(--color-surface-2) text-xs shadow-2xl pointer-events-none"
 		style="top: {top}px; left: {left}px"
 	>
 		<p
-			class="px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--color-text-subtle)] border-b border-[var(--color-border-subtle)]"
+			class="px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-wider text-(--color-text-subtle) border-b border-(--color-border-subtle)"
 		>
 			{heading}
 		</p>
 		<ul class="py-1.5">
 			{#each items as item, i (i)}
 				<li class="flex items-baseline gap-2 px-3 py-1" class:opacity-60={item.inactive}>
-					<span class="text-[var(--color-text)] truncate">{item.label}</span>
+					<span class="text-(--color-text) truncate">{item.label}</span>
 					{#if item.detail}
-						<span class="font-mono text-[var(--color-text-muted)] truncate">{item.detail}</span>
+						<span class="font-mono text-(--color-text-muted) truncate">{item.detail}</span>
 					{/if}
 					{#if item.note}
 						<span class="ml-auto shrink-0 text-amber-400">{item.note}</span>

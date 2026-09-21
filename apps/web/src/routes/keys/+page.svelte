@@ -110,7 +110,7 @@
 									/>
 								</div>
 							</td>
-							<td class="text-[var(--color-text)]">{key.name}</td>
+							<td class="text-(--color-text)">{key.name}</td>
 							<td>
 								{#if key.suspended}
 									<span class="badge badge-yellow">Suspended</span>
@@ -120,16 +120,16 @@
 									<span class="badge badge-gray">Disabled</span>
 								{/if}
 							</td>
-							<td class="text-[var(--color-text-muted)] hidden md:table-cell">
+							<td class="text-(--color-text-muted) hidden md:table-cell">
 								{key.rpm_limit != null ? key.rpm_limit : '—'}
 							</td>
-							<td class="text-[var(--color-text-muted)] hidden md:table-cell">
+							<td class="text-(--color-text-muted) hidden md:table-cell">
 								{key.day_budget != null ? `$${key.day_budget}` : '—'}
 							</td>
 							<td class="text-gray-400 hidden md:table-cell">
 								<HoverCount heading="Plugins" items={scopedPluginItems(plugins, 'key', key.id)} />
 							</td>
-							<td class="text-[var(--color-text-muted)] hidden lg:table-cell">{formatDate(key.last_used_at)}</td>
+							<td class="text-(--color-text-muted) hidden lg:table-cell">{formatDate(key.last_used_at)}</td>
 							<td class="text-right">
 								<div class="flex items-center justify-end gap-2 flex-wrap">
 									<a href="/keys/{key.id}/logs" class="btn btn-sm btn-secondary">

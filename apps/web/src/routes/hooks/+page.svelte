@@ -93,14 +93,14 @@
 				<tbody>
 					{#each hooks as hook (hook.id)}
 						<tr>
-							<td class="text-[var(--color-text)] font-medium">{hook.name}</td>
+							<td class="text-(--color-text) font-medium">{hook.name}</td>
 							<td>
 								<span class="{hook.type === 'webhook' ? 'badge badge-cyan' : 'badge badge-gray'}">
 									{hook.type}
 								</span>
 							</td>
-							<td class="text-[var(--color-text-muted)] font-mono text-xs">{hook.trigger}</td>
-							<td class="text-[var(--color-text-muted)] text-xs truncate max-w-[200px] hidden md:table-cell">
+							<td class="text-(--color-text-muted) font-mono text-xs">{hook.trigger}</td>
+							<td class="text-(--color-text-muted) text-xs truncate max-w-50 hidden md:table-cell">
 								{hook.url ?? hook.module ?? '—'}
 							</td>
 							<td>

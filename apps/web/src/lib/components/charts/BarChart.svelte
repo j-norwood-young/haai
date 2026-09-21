@@ -48,7 +48,7 @@
 <div class="w-full" style="height: {height}px">
 	{#if buckets.length > 0}
 		<div class="relative w-full h-full">
-			<span class="absolute top-0 left-1 text-[10px] leading-none text-[var(--color-text-subtle)] tabular-nums pointer-events-none z-10">
+			<span class="absolute top-0 left-1 text-[10px] leading-none text-(--color-text-subtle) tabular-nums pointer-events-none z-10">
 				{yFormat(maxValue)}
 			</span>
 			<svg
@@ -108,20 +108,20 @@
 					>
 						{#if hoverIndex === i}
 							<div
-								class="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-1 text-xs shadow-lg whitespace-nowrap"
+								class="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 pointer-events-none rounded-lg border border-(--color-border) bg-(--color-surface-2) px-2 py-1 text-xs shadow-lg whitespace-nowrap"
 							>
-								<p class="text-[var(--color-text-subtle)]">{xFormat(bucket.t)}</p>
+								<p class="text-(--color-text-subtle)">{xFormat(bucket.t)}</p>
 								{#if tooltip}
-									<p class="text-[var(--color-text)]">{tooltip(bucket)}</p>
+									<p class="text-(--color-text)">{tooltip(bucket)}</p>
 								{:else}
-									<p class="text-[var(--color-text)]">{yFormat(bucket.value)}</p>
+									<p class="text-(--color-text)">{yFormat(bucket.value)}</p>
 								{/if}
 							</div>
 						{/if}
 					</div>
 				{/each}
 			</div>
-			<div class="absolute -bottom-4 inset-x-0 flex justify-between text-[10px] text-[var(--color-text-subtle)] tabular-nums pointer-events-none">
+			<div class="absolute -bottom-4 inset-x-0 flex justify-between text-[10px] text-(--color-text-subtle) tabular-nums pointer-events-none">
 				<span>{xFormat(buckets[0]!.t)}</span>
 				{#if buckets.length > 2}
 					<span>{xFormat(buckets[Math.floor(buckets.length / 2)]!.t)}</span>
@@ -130,7 +130,7 @@
 			</div>
 		</div>
 	{:else}
-		<div class="flex items-center justify-center h-full text-[var(--color-text-subtle)] text-sm">
+		<div class="flex items-center justify-center h-full text-(--color-text-subtle) text-sm">
 			No data
 		</div>
 	{/if}

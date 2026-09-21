@@ -211,9 +211,9 @@
 				<tbody>
 					{#each backends as backend (backend.id)}
 						<tr>
-							<td class="font-medium text-[var(--color-text)]">{backend.name}</td>
-							<td class="text-[var(--color-text-muted)] capitalize">{backend.provider}</td>
-							<td class="text-[var(--color-text-muted)] hidden md:table-cell font-mono text-xs truncate max-w-[200px]">{backend.url}</td>
+							<td class="font-medium text-(--color-text)">{backend.name}</td>
+							<td class="text-(--color-text-muted) capitalize">{backend.provider}</td>
+							<td class="text-(--color-text-muted) hidden md:table-cell font-mono text-xs truncate max-w-50">{backend.url}</td>
 							<td>
 								{#if hasHealthDetails(backend.health)}
 									<button
@@ -230,7 +230,7 @@
 									</span>
 								{/if}
 							</td>
-							<td class="text-[var(--color-text-muted)] hidden lg:table-cell">
+							<td class="text-(--color-text-muted) hidden lg:table-cell">
 								{backend.latency_ms != null ? `${backend.latency_ms}ms` : '—'}
 							</td>
 							<td class="text-gray-400">

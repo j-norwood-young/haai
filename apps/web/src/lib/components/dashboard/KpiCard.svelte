@@ -22,7 +22,7 @@
 	let {
 		label,
 		value,
-		valueClass = 'text-[var(--color-text)]',
+		valueClass = 'text-(--color-text)',
 		icon,
 		window,
 		current,
@@ -51,7 +51,7 @@
 
 <a
 	href={href}
-	class="card p-4 flex items-start gap-3 hover:border-[var(--color-border)] transition-colors"
+	class="card p-4 flex items-start gap-3 hover:border-(--color-border) transition-colors"
 	data-testid={testid}
 >
 	<div class="{iconWrapClass} p-1.5 rounded-lg shrink-0">
@@ -78,7 +78,7 @@
 		{/if}
 	</div>
 	<div class="min-w-0 flex-1">
-		<p class="text-xs text-[var(--color-text-subtle)] uppercase tracking-wider mb-1 truncate">
+		<p class="text-xs text-(--color-text-subtle) uppercase tracking-wider mb-1 truncate">
 			{label} · {window}
 		</p>
 		<div class="flex items-center gap-2">

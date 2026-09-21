@@ -179,7 +179,7 @@
 						<button
 							type="button"
 							onclick={() => copyField('base', baseUrl)}
-							class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
+							class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-10 text-right"
 						>
 							{copyLabel('base')}
 						</button>
@@ -198,7 +198,7 @@
 							<button
 								type="button"
 								onclick={() => copyField('key', apiKeyDisplay)}
-								class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
+								class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-10 text-right"
 							>
 								{copyLabel('key')}
 							</button>
@@ -253,7 +253,7 @@
 								<button
 									type="button"
 									onclick={() => copyField('model', activeModelId)}
-									class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
+									class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-10 text-right"
 								>
 									{copyLabel('model')}
 								</button>
@@ -332,7 +332,7 @@
 							<button
 								type="button"
 								onclick={() => copyField('example', example)}
-								class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
+								class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-10 text-right"
 							>
 								{copyLabel('example')}
 							</button>
@@ -358,7 +358,7 @@
 			<button
 				type="button"
 				onclick={() => copyField('example-footer', example)}
-				class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 text-white rounded-md transition-colors min-w-[7.5rem]"
+				class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 text-white rounded-md transition-colors min-w-30"
 			>
 				{copyLabel('example-footer') === 'Copied' ? 'Copied' : 'Copy example'}
 			</button>

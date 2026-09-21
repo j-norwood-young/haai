@@ -83,33 +83,33 @@
 	<div class="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-violet-500/5 blur-3xl"></div>
 </div>
 
-<div class="min-h-screen bg-[var(--color-surface)] flex items-center justify-center px-4">
+<div class="min-h-screen bg-(--color-surface) flex items-center justify-center px-4">
 	<div class="w-full max-w-sm">
 		<!-- Logo / branding -->
 		<div class="text-center mb-8">
 			<div class="flex items-center justify-center gap-2.5 mb-3">
-				<BrandLogo variant="full" class="h-10 max-w-[12rem] text-cyan-400" />
+				<BrandLogo variant="full" class="h-10 max-w-48 text-cyan-400" />
 			</div>
-			<p class="text-[var(--color-text-muted)] text-sm">
+			<p class="text-(--color-text-muted) text-sm">
 				High Availability AI · LLM Reverse Proxy Admin
 			</p>
 		</div>
 
 		<!-- Card -->
 		<div
-			class="bg-[var(--color-surface-2)] rounded-2xl border border-[var(--color-border-subtle)] p-7 shadow-2xl shadow-black/50"
+			class="bg-(--color-surface-2) rounded-2xl border border-(--color-border-subtle) p-7 shadow-2xl shadow-black/50"
 		>
 			{#if showTotpStep}
-				<h2 class="text-lg font-semibold text-[var(--color-text)] mb-2">
+				<h2 class="text-lg font-semibold text-(--color-text) mb-2">
 					Two-factor authentication
 				</h2>
-				<p class="text-sm text-[var(--color-text-muted)] mb-6">
+				<p class="text-sm text-(--color-text-muted) mb-6">
 					Enter the 6-digit code from your authenticator app.
 				</p>
 
 				<form onsubmit={handleTotp} class="space-y-4">
 					<div>
-						<label for="totp" class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">
+						<label for="totp" class="block text-sm font-medium text-(--color-text-muted) mb-1.5">
 							Verification code
 						</label>
 						<input
@@ -159,7 +159,7 @@
 					<button
 						type="button"
 						onclick={() => auth.cancelTotp()}
-						class="w-full py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors flex items-center justify-center gap-1.5"
+						class="w-full py-2 text-sm text-(--color-text-muted) hover:text-(--color-text) transition-colors flex items-center justify-center gap-1.5"
 					>
 						<svg
 							class="w-3.5 h-3.5"
@@ -177,13 +177,13 @@
 					</button>
 				</form>
 			{:else}
-				<h2 class="text-lg font-semibold text-[var(--color-text)] mb-6">Sign in to your account</h2>
+				<h2 class="text-lg font-semibold text-(--color-text) mb-6">Sign in to your account</h2>
 
 				<form onsubmit={handleLogin} class="space-y-4">
 					<div>
 						<label
 							for="username"
-							class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5"
+							class="block text-sm font-medium text-(--color-text-muted) mb-1.5"
 						>
 							Username
 						</label>
@@ -201,7 +201,7 @@
 					<div>
 						<label
 							for="password"
-							class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5"
+							class="block text-sm font-medium text-(--color-text-muted) mb-1.5"
 						>
 							Password
 						</label>
@@ -250,10 +250,10 @@
 				{#if passkeySupported}
 					<div class="relative my-6">
 						<div class="absolute inset-0 flex items-center" aria-hidden="true">
-							<div class="w-full border-t border-[var(--color-border-subtle)]"></div>
+							<div class="w-full border-t border-(--color-border-subtle)"></div>
 						</div>
 						<div class="relative flex justify-center text-xs uppercase">
-							<span class="bg-[var(--color-surface-2)] px-2 text-[var(--color-text-subtle)]">or</span>
+							<span class="bg-(--color-surface-2) px-2 text-(--color-text-subtle)">or</span>
 						</div>
 					</div>
 
@@ -281,7 +281,7 @@
 					</button>
 
 					{#if username.trim() && !passkeysAvailable}
-						<p class="mt-2 text-xs text-[var(--color-text-subtle)] text-center">
+						<p class="mt-2 text-xs text-(--color-text-subtle) text-center">
 							No passkey registered for this account yet.
 						</p>
 					{/if}

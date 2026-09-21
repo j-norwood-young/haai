@@ -54,7 +54,7 @@
 	<div class="w-full max-w-sm">
 		<div class="text-center mb-8">
 			<div class="flex items-center justify-center mb-3">
-				<BrandLogo variant="full" class="h-10 max-w-[12rem] text-cyan-400" />
+				<BrandLogo variant="full" class="h-10 max-w-48 text-cyan-400" />
 			</div>
 		</div>
 

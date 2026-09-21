@@ -102,7 +102,7 @@
 					<button
 						type="button"
 						onclick={() => (enabled = !enabled)}
-						class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
+						class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors"
 						class:bg-cyan-500={enabled}
 						class:bg-gray-700={!enabled}
 						role="switch"

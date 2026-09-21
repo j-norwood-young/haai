@@ -116,15 +116,15 @@
 						<tr>
 							<td>
 								<div>
-									<p class="font-medium text-[var(--color-text)]">{plugin.name}</p>
+									<p class="font-medium text-(--color-text)">{plugin.name}</p>
 									{#if plugin.description}
-										<p class="text-xs text-[var(--color-text-muted)] mt-0.5 truncate max-w-[240px]">
+										<p class="text-xs text-(--color-text-muted) mt-0.5 truncate max-w-60">
 											{plugin.description}
 										</p>
 									{/if}
 								</div>
 							</td>
-							<td class="text-[var(--color-text-muted)] font-mono text-xs hidden sm:table-cell">
+							<td class="text-(--color-text-muted) font-mono text-xs hidden sm:table-cell">
 								{plugin.version ?? '—'}
 							</td>
 							<td class="hidden md:table-cell">
@@ -142,7 +142,7 @@
 									type="button"
 									onclick={() => toggleEnabled(plugin)}
 									disabled={togglingId === plugin.id}
-									class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50"
+									class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50"
 									class:bg-cyan-500={plugin.enabled}
 									class:bg-gray-700={!plugin.enabled}
 									role="switch"

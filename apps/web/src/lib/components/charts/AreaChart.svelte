@@ -100,17 +100,17 @@
 	{#if hasData}
 		<div class="relative w-full h-full">
 			<!-- y labels -->
-			<span class="absolute top-0 left-1 text-[10px] leading-none text-[var(--color-text-subtle)] tabular-nums pointer-events-none">
+			<span class="absolute top-0 left-1 text-[10px] leading-none text-(--color-text-subtle) tabular-nums pointer-events-none">
 				{yFormat(gridValue(0, leftDomain))}
 			</span>
-			<span class="absolute top-1/2 left-1 -translate-y-1/2 text-[10px] leading-none text-[var(--color-text-subtle)] tabular-nums pointer-events-none">
+			<span class="absolute top-1/2 left-1 -translate-y-1/2 text-[10px] leading-none text-(--color-text-subtle) tabular-nums pointer-events-none">
 				{yFormat(gridValue(0.5, leftDomain))}
 			</span>
-			<span class="absolute bottom-0 left-1 text-[10px] leading-none text-[var(--color-text-subtle)] tabular-nums pointer-events-none">
+			<span class="absolute bottom-0 left-1 text-[10px] leading-none text-(--color-text-subtle) tabular-nums pointer-events-none">
 				{yFormat(gridValue(1, leftDomain))}
 			</span>
 			{#if rightSeries.length > 0}
-				<span class="absolute top-0 right-1 text-[10px] leading-none text-[var(--color-text-subtle)] tabular-nums pointer-events-none">
+				<span class="absolute top-0 right-1 text-[10px] leading-none text-(--color-text-subtle) tabular-nums pointer-events-none">
 					{yFormat(gridValue(0, rightDomain))}
 				</span>
 			{/if}
@@ -157,7 +157,7 @@
 				</svg>
 				{#if hoverIndex != null}
 					<div
-						class="absolute top-0 bottom-0 w-px bg-[var(--color-border)] pointer-events-none"
+						class="absolute top-0 bottom-0 w-px bg-(--color-border) pointer-events-none"
 						style="left: {hoverX}%"
 					></div>
 				{/if}
@@ -166,22 +166,22 @@
 			<!-- tooltip -->
 			{#if hoverPoint}
 				<div
-					class="absolute z-20 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs shadow-lg"
+					class="absolute z-20 pointer-events-none rounded-lg border border-(--color-border) bg-(--color-surface-2) px-2.5 py-1.5 text-xs shadow-lg"
 					style="left: {Math.min(85, Math.max(0, hoverX))}%; top: 4px; transform: translateX(-50%)"
 				>
-					<p class="text-[var(--color-text-subtle)] mb-1">{xFormat(hoverPoint.ts)}</p>
+					<p class="text-(--color-text-subtle) mb-1">{xFormat(hoverPoint.ts)}</p>
 					{#each hoverPoint.values as v (v.label)}
 						<div class="flex items-center gap-2 whitespace-nowrap">
 							<span class="w-2 h-2 rounded-full shrink-0" style="background: {v.color}"></span>
-							<span class="text-[var(--color-text-muted)]">{v.label}</span>
-							<span class="ml-auto tabular-nums text-[var(--color-text)]">{yFormat(v.value)}</span>
+							<span class="text-(--color-text-muted)">{v.label}</span>
+							<span class="ml-auto tabular-nums text-(--color-text)">{yFormat(v.value)}</span>
 						</div>
 					{/each}
 				</div>
 			{/if}
 
 			<!-- x labels -->
-			<div class="absolute -bottom-4 inset-x-0 flex justify-between text-[10px] text-[var(--color-text-subtle)] tabular-nums pointer-events-none">
+			<div class="absolute -bottom-4 inset-x-0 flex justify-between text-[10px] text-(--color-text-subtle) tabular-nums pointer-events-none">
 				<span>{xFormat(timestamps[0] ?? 0)}</span>
 				{#if timestamps.length > 2}
 					<span>{xFormat(timestamps[Math.floor(timestamps.length / 2)] ?? 0)}</span>
@@ -196,8 +196,8 @@
 						<button
 							type="button"
 							class="flex items-center gap-1.5 text-[11px] {hidden.has(s.key)
-								? 'text-[var(--color-text-subtle)] opacity-50'
-								: 'text-[var(--color-text-muted)]'} hover:opacity-100 transition-opacity"
+								? 'text-(--color-text-subtle) opacity-50'
+								: 'text-(--color-text-muted)'} hover:opacity-100 transition-opacity"
 							onclick={() => toggle(s.key)}
 						>
 							<span
@@ -211,7 +211,7 @@
 			{/if}
 		</div>
 	{:else}
-		<div class="flex items-center justify-center h-full text-[var(--color-text-subtle)] text-sm">
+		<div class="flex items-center justify-center h-full text-(--color-text-subtle) text-sm">
 			Waiting for data…
 		</div>
 	{/if}

@@ -51,7 +51,7 @@
 	<span
 		use:portal
 		role="tooltip"
-		class="pointer-events-none fixed z-[9999] w-64 -translate-x-1/2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left text-xs font-normal leading-relaxed text-gray-300 shadow-lg"
+		class="pointer-events-none fixed z-9999 w-64 -translate-x-1/2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left text-xs font-normal leading-relaxed text-gray-300 shadow-lg"
 		style="top: {top}px; left: {left}px;"
 	>
 		{text}

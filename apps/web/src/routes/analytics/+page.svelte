@@ -184,8 +184,8 @@
 <div class="page">
 	<div class="flex items-center justify-between mb-6">
 		<div>
-			<h1 class="text-2xl font-bold text-[var(--color-text)]">Metrics</h1>
-			<p class="text-sm text-[var(--color-text-muted)] mt-1">Usage statistics and performance data</p>
+			<h1 class="text-2xl font-bold text-(--color-text)">Metrics</h1>
+			<p class="text-sm text-(--color-text-muted) mt-1">Usage statistics and performance data</p>
 		</div>
 		<div class="flex items-center gap-2">
 			{#each (['hour', 'day', 'week', 'month'] as const) as p (p)}
@@ -201,8 +201,8 @@
 	</div>
 
 	<div class="flex flex-wrap items-end gap-3 mb-6">
-		<div class="min-w-[140px] flex-1">
-			<label for="filter-backend" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Backend</label>
+		<div class="min-w-35 flex-1">
+			<label for="filter-backend" class="block text-xs font-medium text-(--color-text-muted) mb-1">Backend</label>
 			<select id="filter-backend" class="input" bind:value={filterBackendId}>
 				<option value="">All</option>
 				{#each backends as b (b.id)}
@@ -210,8 +210,8 @@
 				{/each}
 			</select>
 		</div>
-		<div class="min-w-[140px] flex-1">
-			<label for="filter-vmodel" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Virtual model</label>
+		<div class="min-w-35 flex-1">
+			<label for="filter-vmodel" class="block text-xs font-medium text-(--color-text-muted) mb-1">Virtual model</label>
 			<select id="filter-vmodel" class="input" bind:value={filterVmodelId}>
 				<option value="">All</option>
 				{#each vmodels as v (v.id)}
@@ -219,8 +219,8 @@
 				{/each}
 			</select>
 		</div>
-		<div class="min-w-[140px] flex-1">
-			<label for="filter-model" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Model</label>
+		<div class="min-w-35 flex-1">
+			<label for="filter-model" class="block text-xs font-medium text-(--color-text-muted) mb-1">Model</label>
 			<select id="filter-model" class="input" bind:value={filterModelId}>
 				<option value="">All</option>
 				{#each modelOptions as mid (mid)}
@@ -228,8 +228,8 @@
 				{/each}
 			</select>
 		</div>
-		<div class="min-w-[140px] flex-1">
-			<label for="filter-key" class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">API key</label>
+		<div class="min-w-35 flex-1">
+			<label for="filter-key" class="block text-xs font-medium text-(--color-text-muted) mb-1">API key</label>
 			<select id="filter-key" class="input" bind:value={filterKeyId}>
 				<option value="">All</option>
 				{#each keys as k (k.id)}
@@ -240,7 +240,7 @@
 		{#if hasFilters}
 			<button
 				type="button"
-				class="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors pb-2"
+				class="text-sm text-(--color-text-muted) hover:text-(--color-text) transition-colors pb-2"
 				onclick={clearFilters}
 			>
 				Clear filters
@@ -258,31 +258,31 @@
 		<!-- Summary Cards -->
 		<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 			<div class="card p-4">
-				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Requests</p>
-				<p class="text-2xl font-bold text-[var(--color-text)]" data-testid="metrics-total-requests">{formatNum(summary.total_requests_24h)}</p>
-				<p class="text-xs text-[var(--color-text-subtle)] mt-1" data-testid="metrics-window-label">{windowLabel}</p>
+				<p class="text-xs text-(--color-text-muted) uppercase tracking-wider mb-1">Requests</p>
+				<p class="text-2xl font-bold text-(--color-text)" data-testid="metrics-total-requests">{formatNum(summary.total_requests_24h)}</p>
+				<p class="text-xs text-(--color-text-subtle) mt-1" data-testid="metrics-window-label">{windowLabel}</p>
 			</div>
 			<div class="card p-4">
-				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Tokens</p>
-				<p class="text-2xl font-bold text-[var(--color-text)]">{formatNum(summary.total_tokens_24h)}</p>
-				<p class="text-xs text-[var(--color-text-subtle)] mt-1">{windowLabel}</p>
+				<p class="text-xs text-(--color-text-muted) uppercase tracking-wider mb-1">Tokens</p>
+				<p class="text-2xl font-bold text-(--color-text)">{formatNum(summary.total_tokens_24h)}</p>
+				<p class="text-xs text-(--color-text-subtle) mt-1">{windowLabel}</p>
 			</div>
 			<div class="card p-4">
-				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Error Rate</p>
-				<p class="text-2xl font-bold {summary.error_rate_24h > 0.05 ? 'text-red-400' : 'text-[var(--color-text)]'}">
+				<p class="text-xs text-(--color-text-muted) uppercase tracking-wider mb-1">Error Rate</p>
+				<p class="text-2xl font-bold {summary.error_rate_24h > 0.05 ? 'text-red-400' : 'text-(--color-text)'}">
 					{formatPct(summary.error_rate_24h)}
 				</p>
-				<p class="text-xs text-[var(--color-text-subtle)] mt-1">{windowLabel}</p>
+				<p class="text-xs text-(--color-text-subtle) mt-1">{windowLabel}</p>
 			</div>
 			<div class="card p-4">
-				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Avg TTFT</p>
-				<p class="text-2xl font-bold text-[var(--color-text)]">
+				<p class="text-xs text-(--color-text-muted) uppercase tracking-wider mb-1">Avg TTFT</p>
+				<p class="text-2xl font-bold text-(--color-text)">
 					{summary.avg_ttft_ms != null ? `${summary.avg_ttft_ms.toFixed(0)}ms` : '—'}
 				</p>
 			</div>
 			<div class="card p-4">
-				<p class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Avg TPS</p>
-				<p class="text-2xl font-bold text-[var(--color-text)]">
+				<p class="text-xs text-(--color-text-muted) uppercase tracking-wider mb-1">Avg TPS</p>
+				<p class="text-2xl font-bold text-(--color-text)">
 					{summary.avg_tps != null ? summary.avg_tps.toFixed(1) : '—'}
 				</p>
 			</div>
@@ -292,7 +292,7 @@
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 			<!-- Requests Chart -->
 			<div class="card p-4">
-				<h2 class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Requests Over Time</h2>
+				<h2 class="text-sm font-medium text-(--color-text-muted) mb-4">Requests Over Time</h2>
 				{#if rollups.length > 0}
 					<div class="flex items-end gap-0.5 h-36">
 						{#each rollups as rollup, i (i)}
@@ -304,18 +304,18 @@
 							></div>
 						{/each}
 					</div>
-					<div class="flex justify-between mt-2 text-xs text-[var(--color-text-subtle)]" data-testid="metrics-chart-range">
+					<div class="flex justify-between mt-2 text-xs text-(--color-text-subtle)" data-testid="metrics-chart-range">
 						<span>{formatTime(rollups[0]?.timestamp ?? '')}</span>
 						<span>{formatTime(rollups[rollups.length - 1]?.timestamp ?? '')}</span>
 					</div>
 				{:else}
-					<div class="flex items-center justify-center h-36 text-[var(--color-text-subtle)] text-sm">No data</div>
+					<div class="flex items-center justify-center h-36 text-(--color-text-subtle) text-sm">No data</div>
 				{/if}
 			</div>
 
 			<!-- Tokens Chart -->
 			<div class="card p-4">
-				<h2 class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Tokens Over Time</h2>
+				<h2 class="text-sm font-medium text-(--color-text-muted) mb-4">Tokens Over Time</h2>
 				{#if rollups.length > 0}
 					<div class="flex items-end gap-0.5 h-36">
 						{#each rollups as rollup, i (i)}
@@ -327,20 +327,20 @@
 							></div>
 						{/each}
 					</div>
-					<div class="flex justify-between mt-2 text-xs text-[var(--color-text-subtle)]">
+					<div class="flex justify-between mt-2 text-xs text-(--color-text-subtle)">
 						<span>{formatTime(rollups[0]?.timestamp ?? '')}</span>
 						<span>{formatTime(rollups[rollups.length - 1]?.timestamp ?? '')}</span>
 					</div>
 				{:else}
-					<div class="flex items-center justify-center h-36 text-[var(--color-text-subtle)] text-sm">No data</div>
+					<div class="flex items-center justify-center h-36 text-(--color-text-subtle) text-sm">No data</div>
 				{/if}
 			</div>
 		</div>
 
 		<!-- Backend Health Table -->
 		<div class="table-container">
-			<div class="px-4 py-3 border-b border-[var(--color-border-subtle)]">
-				<h2 class="text-sm font-medium text-[var(--color-text-muted)]">Backend Status</h2>
+			<div class="px-4 py-3 border-b border-(--color-border-subtle)">
+				<h2 class="text-sm font-medium text-(--color-text-muted)">Backend Status</h2>
 			</div>
 			<table>
 				<thead>
@@ -353,14 +353,14 @@
 				<tbody>
 					{#each summary.backends as b (b.id)}
 						<tr>
-							<td class="text-[var(--color-text)]">{b.name}</td>
+							<td class="text-(--color-text)">{b.name}</td>
 							<td>
 								<div class="flex items-center gap-2">
 									<span class="w-2 h-2 rounded-full {b.health === 'healthy' ? 'bg-green-500' : b.health === 'degraded' ? 'bg-yellow-500' : b.health === 'unhealthy' ? 'bg-red-500' : 'bg-gray-500'}"></span>
-									<span class="text-[var(--color-text-muted)] capitalize">{b.health}</span>
+									<span class="text-(--color-text-muted) capitalize">{b.health}</span>
 								</div>
 							</td>
-							<td class="text-[var(--color-text-muted)]">
+							<td class="text-(--color-text-muted)">
 								{b.latency_ms != null ? `${b.latency_ms}ms` : '—'}
 							</td>
 						</tr>

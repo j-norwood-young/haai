@@ -158,7 +158,7 @@
 	<PageHeader title="Dashboard" subtitle={subtitle()}>
 		{#snippet actions()}
 			<div class="flex items-center gap-3">
-				<div class="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
+				<div class="flex items-center gap-1.5 text-sm text-(--color-text-muted)">
 					<StatusDot status={sse.connected ? 'healthy' : 'degraded'} pulse={sse.connected} />
 					<span>{sse.connected ? 'Live' : 'Reconnecting'}</span>
 				</div>
@@ -284,7 +284,7 @@
 					href="/analytics"
 					testid="kpi-card-ttft"
 				/>
-				<p class="text-[10px] text-[var(--color-text-subtle)] mt-1 px-1">
+				<p class="text-[10px] text-(--color-text-subtle) mt-1 px-1">
 					p95 {summary.p95_ttft_ms != null ? formatMs(summary.p95_ttft_ms) : '—'}
 				</p>
 			</div>
@@ -300,7 +300,7 @@
 					href="/analytics"
 					testid="kpi-card-tps"
 				/>
-				<p class="text-[10px] text-[var(--color-text-subtle)] mt-1 px-1">
+				<p class="text-[10px] text-(--color-text-subtle) mt-1 px-1">
 					p50 {summary.p50_tps != null ? summary.p50_tps.toFixed(1) : '—'} · max {summary.max_tps != null ? summary.max_tps.toFixed(1) : '—'}
 				</p>
 			</div>
@@ -315,7 +315,7 @@
 
 		<div class="mb-6">
 			<div class="flex items-center justify-between mb-2">
-				<h2 class="text-sm font-medium text-[var(--color-text-muted)]">Backend fleet</h2>
+				<h2 class="text-sm font-medium text-(--color-text-muted)">Backend fleet</h2>
 				<InfoTip text="Health, probe history, concurrency and circuit state for each backend. maxConcurrency is capacity as configured (not enforced)." />
 			</div>
 			<BackendFleetCard

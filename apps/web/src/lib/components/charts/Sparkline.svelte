@@ -56,7 +56,7 @@
 			d={baselineY}
 			fill="none"
 			stroke="currentColor"
-			class="text-[var(--color-text-subtle)]"
+			class="text-(--color-text-subtle)"
 			stroke-width={strokeWidth}
 			stroke-dasharray="4 3"
 			vector-effect="non-scaling-stroke"

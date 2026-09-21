@@ -32,20 +32,20 @@
 		<div class="space-y-4 text-sm">
 			<div class="flex items-center justify-between gap-3">
 				<div>
-					<p class="text-[var(--color-text-muted)] text-xs uppercase tracking-wider">Status</p>
+					<p class="text-(--color-text-muted) text-xs uppercase tracking-wider">Status</p>
 					<span class={healthBadgeClass(vmodel.health)}>{vmodel.health}</span>
 				</div>
 				{#if checkedLabel}
 					<div class="text-right">
-						<p class="text-[var(--color-text-muted)] text-xs uppercase tracking-wider">Checked</p>
-						<p class="text-[var(--color-text)]">{checkedLabel}</p>
+						<p class="text-(--color-text-muted) text-xs uppercase tracking-wider">Checked</p>
+						<p class="text-(--color-text)">{checkedLabel}</p>
 					</div>
 				{/if}
 			</div>
 
 			<div>
-				<p class="text-[var(--color-text-muted)] text-xs uppercase tracking-wider mb-1">Model ID</p>
-				<p class="text-[var(--color-text)] font-mono text-xs">{vmodel.modelId}</p>
+				<p class="text-(--color-text-muted) text-xs uppercase tracking-wider mb-1">Model ID</p>
+				<p class="text-(--color-text) font-mono text-xs">{vmodel.modelId}</p>
 			</div>
 
 			{#if vmodel.error}
@@ -55,19 +55,19 @@
 			{/if}
 
 			<div>
-				<p class="text-[var(--color-text-muted)] text-xs uppercase tracking-wider mb-2">Mappings</p>
+				<p class="text-(--color-text-muted) text-xs uppercase tracking-wider mb-2">Mappings</p>
 				{#if vmodel.mappings.length === 0}
-					<p class="text-[var(--color-text-subtle)]">No backends configured</p>
+					<p class="text-(--color-text-subtle)">No backends configured</p>
 				{:else}
 					<ul class="space-y-2">
 						{#each vmodel.mappings as mapping (mapping.id)}
 							<li
-								class="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] px-3 py-2"
+								class="rounded-lg border border-(--color-border-subtle) bg-(--color-surface-3) px-3 py-2"
 							>
 								<div class="flex items-start justify-between gap-2">
 									<div class="min-w-0">
-										<p class="text-[var(--color-text)] truncate">{mapping.backendName}</p>
-										<p class="text-xs text-[var(--color-text-subtle)] font-mono truncate">
+										<p class="text-(--color-text) truncate">{mapping.backendName}</p>
+										<p class="text-xs text-(--color-text-subtle) font-mono truncate">
 											{mapping.backendModelId}
 										</p>
 									</div>
