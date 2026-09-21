@@ -19,7 +19,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter haai package
+      - run: pnpm --filter @haai/haai package
       - working-directory: packages/app
         run: npm pack
       - shell: bash

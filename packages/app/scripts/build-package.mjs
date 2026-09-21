@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Builds the publishable `haai` npm package from the workspace.
+ * Builds the publishable `@haai/haai` npm package from the workspace.
  *
  * Steps:
  *  1. Sync packages/app/package.json (version + generated runtime deps).
@@ -11,7 +11,7 @@
  *     are fetched per-platform by npm at install time.
  *  4. Copy static assets (openapi.yaml, web build) and verify the package.
  *
- * Run via: pnpm --filter haai package
+ * Run via: pnpm --filter @haai/haai package
  */
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";

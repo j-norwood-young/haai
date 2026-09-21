@@ -1,5 +1,5 @@
 {
-  "name": "haai",
+  "name": "@haai/haai",
   "version": "0.3.0",
   "description": "HAAI — High Availability AI: streaming reverse proxy for OpenAI-compatible LLMs with admin UI, CLI, and MCP server",
   "license": "MIT",
@@ -24,6 +24,9 @@
   },
   "homepage": "https://github.com/j-norwood-young/haai#readme",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "engines": {
     "node": ">=22.0.0"

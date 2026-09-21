@@ -25,7 +25,7 @@ if (missing.length > 0) {
   console.error(
     `[verify-package] Refusing to pack: built artifacts missing:\n` +
       missing.map((rel) => `  - ${rel}`).join("\n") +
-      `\nRun \`pnpm --filter haai package\` first.`,
+      `\nRun \`pnpm --filter @haai/haai package\` first.`,
   );
   process.exit(1);
 }
