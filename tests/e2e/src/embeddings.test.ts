@@ -235,9 +235,8 @@ describe("embeddings routing and kind enforcement", () => {
         await insertVModel(proxy, {
           modelId: failoverAlias,
           kind: "embedding",
-          // round-robin with a fresh counter always tries index 0 first, making
-          // which member fails first (and thus that failover actually happens)
-          // deterministic instead of depending on session-pin's key hash.
+          // round-robin (rather than session-pin's key hash) so the first pick is
+          // predictable in *position*: a fresh counter starts at index 0.
           balancingStrategy: "round-robin",
           backends: [
             { backendId: failingBackendId, backendModelId: "text-embed-nomic" },
@@ -245,9 +244,22 @@ describe("embeddings routing and kind enforcement", () => {
           ],
         });
 
+        // Which member sits at index 0 is NOT under our control: resolveModelRoute()
+        // reads vmodel_backends with no ORDER BY, and SQLite walks the
+        // (vmodel_id, backend_id, ...) unique index, so members come back sorted by their
+        // random backend id. Insertion order is irrelevant. A single request would only
+        // exercise failover ~50% of the time.
+        //
+        // Two requests make it deterministic regardless of order: the counter advances
+        // on every select() call, so if the healthy member leads request 1 (counter 0->1),
+        // the failing one leads request 2; if the failing one leads request 1, failover
+        // happens there. Either way at least one request must fail over and still succeed.
         const before = Date.now();
-        const res = await embeddingsRequest(proxy.url, apiKey, failoverAlias);
-        expect(res.status).toBe(200);
+        const responses = [
+          await embeddingsRequest(proxy.url, apiKey, failoverAlias),
+          await embeddingsRequest(proxy.url, apiKey, failoverAlias),
+        ];
+        expect(responses.map((r) => r.status)).toEqual([200, 200]);
 
         const rows = await proxy.db.db
           .select()
@@ -255,9 +267,14 @@ describe("embeddings routing and kind enforcement", () => {
           .where(eq(usageEventsTable.endpoint, "/v1/embeddings"))
           .all();
         const recent = rows.filter((r) => r.timestamp >= before);
-        // One failing attempt against the down backend, one successful attempt against the healthy one.
-        expect(recent.some((r) => r.statusCode >= 500)).toBe(true);
-        expect(recent.some((r) => r.statusCode === 200)).toBe(true);
+        const failedAttempts = recent.filter((r) => r.statusCode >= 500);
+        const successfulAttempts = recent.filter((r) => r.statusCode === 200);
+        // At least one attempt hit the down backend, and every attempt against it failed...
+        expect(failedAttempts.length).toBeGreaterThan(0);
+        expect(failedAttempts.every((r) => r.backendId === failingBackendId)).toBe(true);
+        // ...while both client requests were ultimately served by the healthy backend.
+        expect(successfulAttempts).toHaveLength(2);
+        expect(successfulAttempts.every((r) => r.backendId === backend2)).toBe(true);
       } finally {
         await failingMock.stop();
       }
