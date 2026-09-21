@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- ⚠️ HAAI now requires **Node.js 24 or newer** (previously 22). The `haai` bin refuses to start on older versions, `engines` is `>=24.0.0`, the Docker images use `node:24-alpine`, and the package is built for the `node24` target.
+- ⚠️ HAAI now requires **Node.js 24 or newer** (previously 22). The `haai` bin refuses to start on older versions, `engines` is `>=24.0.0`, the Docker images use `node:24-alpine`, the package is built for the `node24` target, and `better-sqlite3` is upgraded to 12.x (11.x aborts on process teardown under Node 24).
 
 ### Fixed
 

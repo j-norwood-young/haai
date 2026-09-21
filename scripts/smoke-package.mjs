@@ -233,7 +233,7 @@ try {
   await step("haai vmodel create", () => {
     const res = runBin(
       "haai",
-      ["-u", BASE_URL, "vmodel", "create", "--model-id", vmodelName, "--display-name", "Smoke Test"],
+      ["-u", BASE_URL, "vmodel", "create", "--model-id", vmodelName, "--display-name", "SmokeTest"],
       cliEnv,
       { cwd: dataDir },
     );
@@ -307,5 +307,10 @@ try {
   if (server && server.exitCode === null && !IS_WIN) server.kill("SIGKILL");
   process.exitCode = 1;
 } finally {
-  rmSync(dataDir, { recursive: true, force: true });
+  try {
+    // Windows can still hold the SQLite file for a moment after the server is killed.
+    rmSync(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  } catch (err) {
+    console.warn(`(could not remove ${dataDir}: ${err instanceof Error ? err.message : err})`);
+  }
 }
