@@ -1,11 +1,12 @@
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
-import { backends as backendsTable, vmodels as vmodelsTable, modelKindWireValue } from "@haai/core";
-import { buildBackendApiUrl, decrypt } from "@haai/core";
-import { fetch } from "undici";
+import {
+  backends as backendsTable,
+  vmodels as vmodelsTable,
+  modelKindWireValue,
+  parseModelCatalogJson,
+} from "@haai/core";
 import type { AppContext } from "../../context.js";
-import { getLogger } from "../../logger.js";
-import { backendKindResolver } from "../../model-catalog.js";
 
 interface ModelEntry {
   id: string;
@@ -21,53 +22,35 @@ interface ModelEntry {
 
 /**
  * GET /api/v1/available-models
- * Returns all live models from enabled backends plus all enabled v-models.
- * Used by the plugin config UI for the model field picker.
+ * Returns all models from enabled backends' cached catalogs plus all enabled
+ * v-models. Reads only from the DB — the catalog is kept fresh by the
+ * background health poll (see health.ts), never fetched live on this path,
+ * so this route stays fast regardless of backend latency.
  */
 export async function availableModelsRoute(app: FastifyInstance, ctx: AppContext): Promise<void> {
   app.get("/api/v1/available-models", async (_req, reply) => {
-    const log = getLogger();
     const models: ModelEntry[] = [];
 
-    // Fetch live models from each enabled backend
     const backends = await ctx.db.db
       .select()
       .from(backendsTable)
       .where(eq(backendsTable.enabled, true))
       .all();
 
-    await Promise.allSettled(
-      backends.map(async (backend) => {
-        try {
-          let apiKey: string | null = null;
-          if (backend.keyMode === "abstraction" && backend.encryptedApiKey) {
-            apiKey = decrypt(backend.encryptedApiKey, ctx.masterKey);
-          }
-
-          const res = await fetch(buildBackendApiUrl(backend.baseUrl, "/v1/models"), {
-            headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
-            signal: AbortSignal.timeout(5_000),
-          });
-
-          if (!res.ok) return;
-
-          const data = await res.json() as { data?: Array<{ id: string }> };
-          const resolveKind = backendKindResolver(backend);
-          for (const model of data.data ?? []) {
-            models.push({
-              id: `${model.id}:${backend.hostName}:${backend.provider}`,
-              ownedBy: `${backend.hostName}:${backend.provider}`,
-              backendId: backend.id,
-              backendName: backend.displayName,
-              type: "backend-model",
-              modelKind: modelKindWireValue(resolveKind(model.id).kind),
-            });
-          }
-        } catch (err) {
-          log.debug({ err, backendId: backend.id }, "Failed to fetch models from backend — skipping");
-        }
-      }),
-    );
+    for (const backend of backends) {
+      const catalog = parseModelCatalogJson(backend.modelCatalog);
+      if (!catalog) continue;
+      for (const entry of catalog) {
+        models.push({
+          id: `${entry.id}:${backend.hostName}:${backend.provider}`,
+          ownedBy: `${backend.hostName}:${backend.provider}`,
+          backendId: backend.id,
+          backendName: backend.displayName,
+          type: "backend-model",
+          modelKind: modelKindWireValue(entry.kind),
+        });
+      }
+    }
 
     // Add all enabled v-models
     const vmodels = await ctx.db.db

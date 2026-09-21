@@ -1,21 +1,18 @@
 import type { FastifyInstance } from "fastify";
 import { eq, and } from "drizzle-orm";
-import { fetch } from "undici";
 import {
   backends as backendsTable,
   vmodels as vmodelsTable,
   vmodelBackends as vmodelBackendsTable,
-  buildBackendApiUrl,
-  decrypt,
   isBackendAllowed,
   isVModelAllowed,
   parseAllowedList,
+  parseModelCatalogJson,
   resolveReasoningCaps,
   modelKindWireValue,
 } from "@haai/core";
 import type { Backend, ResolvedReasoningCaps } from "@haai/core";
 import type { AppContext } from "../../context.js";
-import { backendKindResolver } from "../../model-catalog.js";
 
 interface ModelEntry {
   id: string;
@@ -86,65 +83,44 @@ export async function modelsRoutes(app: FastifyInstance, ctx: AppContext): Promi
       isBackendAllowed(allowedBackendIds, backend.id),
     );
 
-    await Promise.allSettled(
-      visibleBackends.map(async (backend) => {
-        try {
-          const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-          };
-          if (backend.keyMode === "abstraction" && backend.encryptedApiKey) {
-            const apiKey = decrypt(backend.encryptedApiKey, ctx.masterKey);
-            headers["Authorization"] = `Bearer ${apiKey}`;
-          }
+    // Model catalogs are read from the DB, never fetched live here — they're kept
+    // fresh by the background health poll (see health.ts), which is what makes
+    // this endpoint fast regardless of backend latency.
+    const fetchedAt = Math.floor(Date.now() / 1000);
+    for (const backend of visibleBackends) {
+      const catalog = parseModelCatalogJson(backend.modelCatalog);
+      if (!catalog) continue;
 
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 5000);
-          const res = await fetch(buildBackendApiUrl(backend.baseUrl, "/v1/models"), {
-            headers,
-            signal: controller.signal,
-          });
-          clearTimeout(timer);
+      const caps = resolveReasoningCaps(backend as unknown as Backend);
+      const { supportedParameters, capabilities } = reasoningAdvertisement(caps);
 
-          if (!res.ok) return;
-
-          const caps = resolveReasoningCaps(backend as unknown as Backend);
-          const { supportedParameters, capabilities } = reasoningAdvertisement(caps);
-          const resolveKind = backendKindResolver(backend);
-
-          const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
-          for (const model of data.data ?? []) {
-            const rawId = model["id"] as string;
-            const namespacedId = `${rawId}:${backend.hostName}:${backend.provider}`;
-            const { kind } = resolveKind(rawId);
-            models.push({
-              id: namespacedId,
-              object: "model",
-              created: (model["created"] as number) ?? Math.floor(Date.now() / 1000),
-              owned_by: `${backend.hostName}:${backend.provider}`,
-              context_length: model["context_length"] as number | undefined,
-              type: modelKindWireValue(kind),
-              ...(supportedParameters.length ? { supported_parameters: supportedParameters } : {}),
-              ...(capabilities.length ? { capabilities } : {}),
-              haai: {
-                provider: backend.provider,
-                reasoning: {
-                  supported: capabilities.includes("thinking"),
-                  toggle: caps.toggle,
-                  budget: caps.budget,
-                  channel: caps.channel,
-                  usage_reasoning_tokens: caps.usageReasoningTokens,
-                  stream_usage: caps.streamUsage,
-                  normalized_fields: ["reasoning", "reasoning_content"],
-                  source: caps.source,
-                },
-              },
-            });
-          }
-        } catch {
-          // Backend unavailable — skip it
-        }
-      }),
-    );
+      for (const entry of catalog) {
+        const namespacedId = `${entry.id}:${backend.hostName}:${backend.provider}`;
+        models.push({
+          id: namespacedId,
+          object: "model",
+          created: fetchedAt,
+          owned_by: `${backend.hostName}:${backend.provider}`,
+          context_length: entry.contextLength,
+          type: modelKindWireValue(entry.kind),
+          ...(supportedParameters.length ? { supported_parameters: supportedParameters } : {}),
+          ...(capabilities.length ? { capabilities } : {}),
+          haai: {
+            provider: backend.provider,
+            reasoning: {
+              supported: capabilities.includes("thinking"),
+              toggle: caps.toggle,
+              budget: caps.budget,
+              channel: caps.channel,
+              usage_reasoning_tokens: caps.usageReasoningTokens,
+              stream_usage: caps.streamUsage,
+              normalized_fields: ["reasoning", "reasoning_content"],
+              source: caps.source,
+            },
+          },
+        });
+      }
+    }
 
     const allVModels = await ctx.db.db
       .select()
