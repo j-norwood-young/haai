@@ -15,6 +15,7 @@ import type { AppContext } from "../../context.js";
 import { recomputeAllVModelHealth } from "../../vmodel-health.js";
 import { backendKindResolver } from "../../model-catalog.js";
 import { getLogger } from "../../logger.js";
+import { isUniqueViolation, removeScopedBindings } from "../../plugins/bindings.js";
 
 async function loadVmodelBackends(ctx: AppContext, vmodelId: string) {
   const rows = await ctx.db.db
@@ -376,10 +377,10 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
 
   // Delete v-model
   app.delete<{ Params: { id: string } }>("/api/v1/vmodels/:id", async (req, reply) => {
-    await ctx.db.db
-      .delete(vmodelsTable)
-      .where(eq(vmodelsTable.id, req.params.id))
-      .run();
+    ctx.db.db.transaction((tx) => {
+      tx.delete(vmodelsTable).where(eq(vmodelsTable.id, req.params.id)).run();
+      removeScopedBindings(tx, "vmodel", req.params.id);
+    });
     await recomputeAllVModelHealth(ctx.db, ctx.sse);
     return reply.status(204).send();
   });
@@ -433,18 +434,28 @@ export async function vmodelsRoutes(app: FastifyInstance, ctx: AppContext): Prom
       }
 
       const now = Date.now();
-      await ctx.db.db
-        .insert(vmodelBackendsTable)
-        .values({
-          id: `vmb-${nanoid(8)}`,
-          vmodelId: req.params.id,
-          backendId,
-          backendModelId,
-          weight: (body["weight"] as number) ?? 1,
-          enabled: (body["enabled"] as boolean) ?? true,
-          createdAt: now,
-        })
-        .run();
+      try {
+        await ctx.db.db
+          .insert(vmodelBackendsTable)
+          .values({
+            id: `vmb-${nanoid(8)}`,
+            vmodelId: req.params.id,
+            backendId,
+            backendModelId,
+            weight: (body["weight"] as number) ?? 1,
+            enabled: (body["enabled"] as boolean) ?? true,
+            createdAt: now,
+          })
+          .run();
+      } catch (err) {
+        // Lost a race with a concurrent request; the unique index is the real guard.
+        if (isUniqueViolation(err)) {
+          return reply.status(409).send({
+            error: "This backend model is already mapped to this virtual model",
+          });
+        }
+        throw err;
+      }
       await recomputeAllVModelHealth(ctx.db, ctx.sse);
       return reply.status(201).send({ success: true });
     },

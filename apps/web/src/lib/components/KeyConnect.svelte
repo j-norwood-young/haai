@@ -1,19 +1,25 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
-	import { api, type VModel } from '$lib/api.js';
+	import { api, type AvailableModel, type VModel } from '$lib/api.js';
 	import { getProxyBaseUrl } from '$lib/proxy-base.js';
-	import { buildHaaiPromptCommand, buildChatCompletionUrl } from '$lib/connection-details.js';
 	import {
-		connectableVModels,
-		eligibleVModelsForKey,
-		getVModelAvailabilityIssue
-	} from '$lib/vmodel-utils.js';
+		EXAMPLE_LANGUAGES,
+		EXAMPLE_OPERATIONS,
+		buildExample,
+		getExampleOperation,
+		isExampleSupported,
+		type ExampleLanguage,
+		type ExampleOperation
+	} from '$lib/connection-details.js';
+	import { buildConnectModels, getConnectAvailabilityIssue } from '$lib/connect-models.js';
 
 	interface Props {
 		keyPrefix: string;
 		retrievable: boolean;
 		fetchSecret: () => Promise<string>;
+		/** null/undefined = all; an empty list = none (matches the proxy). */
 		allowedVModels?: string[] | null | undefined;
+		allowedBackends?: string[] | null | undefined;
 		initialSecret?: string | null;
 		class?: string;
 	}
@@ -23,6 +29,7 @@
 		retrievable,
 		fetchSecret,
 		allowedVModels,
+		allowedBackends,
 		initialSecret = null,
 		class: className = ''
 	}: Props = $props();
@@ -32,35 +39,57 @@
 	let loadError = $state<string | null>(null);
 	let secret = $state<string | null>(null);
 	let vmodels = $state<VModel[]>([]);
+	let available = $state<AvailableModel[]>([]);
 	let selectedModelId = $state('');
 	let copiedField = $state<string | null>(null);
 
+	let operation = $state<ExampleOperation>('chat');
+	let language = $state<ExampleLanguage>('haai');
+
 	const baseUrl = $derived(getProxyBaseUrl());
-	const endpointUrl = $derived(buildChatCompletionUrl(baseUrl));
+	const operationInfo = $derived(getExampleOperation(operation));
 
-	const selectableVModels = $derived(eligibleVModelsForKey(vmodels, allowedVModels));
-
-	const availabilityIssue = $derived(getVModelAvailabilityIssue(vmodels, allowedVModels));
-
-	const selectedVModel = $derived(
-		selectableVModels.find((vm) => vm.model_id === selectedModelId) ?? null
+	const allModels = $derived(
+		buildConnectModels(vmodels, available, allowedVModels, allowedBackends)
 	);
 
-	const selectedHasBackends = $derived((selectedVModel?.backends.length ?? 0) > 0);
+	// Only models of the kind the chosen endpoint serves (the proxy rejects a mismatch).
+	const selectableModels = $derived(
+		operationInfo.vmodelKind
+			? allModels.filter((m) => m.kind === operationInfo.vmodelKind)
+			: allModels
+	);
+	const selectableVModels = $derived(selectableModels.filter((m) => m.source === 'vmodel'));
+	const selectablePassthrough = $derived(selectableModels.filter((m) => m.source === 'passthrough'));
+
+	const availabilityIssue = $derived(getConnectAvailabilityIssue(vmodels, available, allModels));
+
+	// Falls back to the best available model when the pick doesn't apply to this endpoint.
+	const activeModelId = $derived.by(() => {
+		if (selectableModels.some((m) => m.id === selectedModelId)) return selectedModelId;
+		return (selectableModels.find((m) => m.ready) ?? selectableModels[0])?.id ?? '';
+	});
+
+	const selectedModel = $derived(selectableModels.find((m) => m.id === activeModelId) ?? null);
 
 	const currentSecret = $derived(secret ?? initialSecret);
 
 	const apiKeyDisplay = $derived(currentSecret ?? (retrievable ? null : `${keyPrefix}…`));
 
-	const cliExample = $derived.by(() => {
-		if (!selectedModelId || !apiKeyDisplay || !selectedHasBackends) return null;
-		return buildHaaiPromptCommand(
+	// The haai CLI can only send chat prompts; other endpoints fall back to curl.
+	const activeLanguage = $derived<ExampleLanguage>(
+		isExampleSupported(language, operation) ? language : 'curl'
+	);
+
+	const example = $derived.by(() => {
+		if (!apiKeyDisplay) return null;
+		if (operationInfo.needsModel && (!selectedModel || !selectedModel.ready)) return null;
+		return buildExample(activeLanguage, operation, {
 			baseUrl,
-			apiKeyDisplay,
-			selectedModelId,
-			'Hello!',
-			selectedVModel?.streaming ?? true
-		);
+			apiKey: apiKeyDisplay,
+			modelId: activeModelId,
+			stream: selectedModel?.streaming ?? true
+		});
 	});
 
 	async function openModal() {
@@ -69,18 +98,24 @@
 		loading = true;
 
 		try {
-			const tasks: Promise<unknown>[] = [api.getVModels()];
+			const tasks: Promise<unknown>[] = [
+				api.getVModels(),
+				// Pass-through models are additive: if the catalog can't load, still offer v-models.
+				api.getAvailableModels().then(
+					(r) => r.models,
+					() => [] as AvailableModel[]
+				)
+			];
 			if (!currentSecret && retrievable) {
 				tasks.push(fetchSecret().then((k) => (secret = k)));
 			}
-			const [loadedVModels] = (await Promise.all(tasks)) as [VModel[]];
+			const [loadedVModels, loadedAvailable] = (await Promise.all(tasks)) as [
+				VModel[],
+				AvailableModel[]
+			];
 
 			vmodels = loadedVModels;
-			const eligible = eligibleVModelsForKey(loadedVModels, allowedVModels);
-			if (!eligible.some((vm) => vm.model_id === selectedModelId)) {
-				const preferred = connectableVModels(loadedVModels, allowedVModels);
-				selectedModelId = (preferred[0] ?? eligible[0])?.model_id ?? '';
-			}
+			available = loadedAvailable;
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load connection details';
 		} finally {
@@ -126,50 +161,17 @@
 		<p class="text-sm text-red-400">{loadError}</p>
 	{:else if availabilityIssue === 'none'}
 		<p class="text-sm text-gray-400">
-			No virtual models are configured yet.
+			No virtual models or backend models are configured yet.
 			<a href="/vmodels/new" class="text-cyan-400 hover:text-cyan-300">Create a v-model →</a>
 		</p>
 	{:else if availabilityIssue === 'key_restricted'}
 		<p class="text-sm text-gray-400">
-			This key is restricted to v-models that don't exist or aren't enabled. Edit the key's
-			<strong class="text-gray-300">allowed v-models</strong> setting.
+			This key isn't allowed to use any models that exist. Edit the key's
+			<strong class="text-gray-300">allowed v-models</strong> or
+			<strong class="text-gray-300">pass-through backends</strong> setting.
 		</p>
-	{:else if selectableVModels.length === 0}
-		<p class="text-sm text-gray-400">No virtual models are available for this key.</p>
 	{:else}
 		<div class="space-y-4">
-			<div>
-				<label for="connect-vmodel" class="block text-xs font-medium text-gray-400 mb-1">
-					Virtual model
-				</label>
-				<select id="connect-vmodel" bind:value={selectedModelId} class="input w-full">
-					{#each selectableVModels as vm (vm.id)}
-						<option value={vm.model_id}>
-							{vm.display_name || vm.model_id} ({vm.model_id}){vm.backends.length === 0
-								? ' — no backends'
-								: ''}
-						</option>
-					{/each}
-				</select>
-			</div>
-
-			{#if selectedVModel && !selectedHasBackends}
-				<p class="text-xs text-amber-400/90 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2">
-					<strong>{selectedVModel.model_id}</strong> has no backends configured — requests will fail until
-					you
-					<a href="/vmodels/{selectedVModel.id}/edit" class="text-cyan-400 hover:text-cyan-300">
-						add a backend
-					</a>.
-				</p>
-			{/if}
-
-			{#if !currentSecret && !retrievable}
-				<p class="text-xs text-amber-400/90 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2">
-					This key was shown once and is not stored. Replace the placeholder below with the key you
-					saved at creation.
-				</p>
-			{/if}
-
 			<div class="space-y-3">
 				<div>
 					<div class="flex items-center justify-between mb-1">
@@ -186,24 +188,6 @@
 						class="block font-mono text-xs text-cyan-300 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 break-all"
 					>
 						{baseUrl}
-					</code>
-				</div>
-
-				<div>
-					<div class="flex items-center justify-between mb-1">
-						<span class="text-xs font-medium text-gray-400">Endpoint</span>
-						<button
-							type="button"
-							onclick={() => copyField('endpoint', endpointUrl)}
-							class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
-						>
-							{copyLabel('endpoint')}
-						</button>
-					</div>
-					<code
-						class="block font-mono text-xs text-cyan-300 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 break-all"
-					>
-						{endpointUrl}
 					</code>
 				</div>
 
@@ -227,55 +211,156 @@
 					</code>
 				</div>
 
-				<div>
-					<div class="flex items-center justify-between mb-1">
-						<span class="text-xs font-medium text-gray-400">Model</span>
-						{#if selectedModelId}
-							<button
-								type="button"
-								onclick={() => copyField('model', selectedModelId)}
-								class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
-							>
-								{copyLabel('model')}
-							</button>
-						{/if}
-					</div>
-					<code
-						class="block font-mono text-xs text-cyan-300 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 break-all"
+				{#if !currentSecret && !retrievable}
+					<p
+						class="text-xs text-amber-400/90 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2"
 					>
-						{selectedModelId}
-					</code>
-				</div>
+						This key was shown once and is not stored. Replace the placeholder above with the key you
+						saved at creation.
+					</p>
+				{/if}
 			</div>
 
-			{#if cliExample}
+			<section
+				class="rounded-lg border border-gray-800 bg-gray-900/50 p-3 space-y-3"
+				aria-label="Try it"
+				data-testid="connect-sandbox"
+			>
 				<div>
-					<div class="flex items-center justify-between mb-1">
-						<span class="text-xs font-medium text-gray-400">haai example</span>
-						<button
-							type="button"
-							onclick={() => copyField('cli', cliExample)}
-							class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
-						>
-							{copyLabel('cli')}
-						</button>
+					<span class="block text-xs font-medium text-gray-400 mb-1">Endpoint</span>
+					<div class="flex items-center gap-1" role="group" aria-label="Endpoint">
+						{#each EXAMPLE_OPERATIONS as op (op.id)}
+							<button
+								type="button"
+								aria-pressed={operation === op.id}
+								data-testid="connect-op-{op.id}"
+								onclick={() => (operation = op.id)}
+								class="px-2.5 py-1 text-xs rounded-md transition-colors {operation === op.id
+									? 'bg-cyan-500 text-white'
+									: 'bg-gray-800 text-gray-300 hover:bg-gray-700'}"
+							>
+								{op.label}
+							</button>
+						{/each}
 					</div>
-					<pre
-						class="font-mono text-xs text-gray-300 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 overflow-x-auto whitespace-pre-wrap break-all max-h-48 overflow-y-auto"
-					><code>{cliExample}</code></pre>
 				</div>
-			{/if}
+
+				{#if operationInfo.needsModel}
+					<div>
+						<div class="flex items-center justify-between mb-1">
+							<label for="connect-vmodel" class="text-xs font-medium text-gray-400">Model</label>
+							{#if activeModelId}
+								<button
+									type="button"
+									onclick={() => copyField('model', activeModelId)}
+									class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
+								>
+									{copyLabel('model')}
+								</button>
+							{/if}
+						</div>
+						{#if selectableModels.length === 0}
+							<p
+								class="text-xs text-amber-400/90 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2"
+							>
+								No {operationInfo.vmodelKind} models are available for this key.
+								<a href="/vmodels/new" class="text-cyan-400 hover:text-cyan-300">Create a v-model →</a>
+							</p>
+						{:else}
+							<select
+								id="connect-vmodel"
+								value={activeModelId}
+								onchange={(e) => (selectedModelId = e.currentTarget.value)}
+								class="input w-full"
+							>
+								{#if selectableVModels.length > 0}
+									<optgroup label="Virtual models">
+										{#each selectableVModels as m (m.id)}
+											<option value={m.id}>{m.label}{m.ready ? '' : ' — no backends'}</option>
+										{/each}
+									</optgroup>
+								{/if}
+								{#if selectablePassthrough.length > 0}
+									<optgroup label="Pass-through backends">
+										{#each selectablePassthrough as m (m.id)}
+											<option value={m.id}>{m.label}</option>
+										{/each}
+									</optgroup>
+								{/if}
+							</select>
+						{/if}
+					</div>
+
+					{#if selectedModel?.vmodel && !selectedModel.ready}
+						<p
+							class="text-xs text-amber-400/90 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2"
+						>
+							<strong>{selectedModel.id}</strong> has no backends configured — requests will fail
+							until you
+							<a href="/vmodels/{selectedModel.vmodel.id}/edit" class="text-cyan-400 hover:text-cyan-300">
+								add a backend
+							</a>.
+						</p>
+					{/if}
+				{/if}
+
+				{#if example}
+					<div>
+						<div class="flex items-center justify-between mb-1">
+							<div class="flex items-center gap-1" role="tablist" aria-label="Example language">
+								{#each EXAMPLE_LANGUAGES as lang (lang.id)}
+									{@const supported = isExampleSupported(lang.id, operation)}
+									<button
+										type="button"
+										role="tab"
+										id="connect-tab-{lang.id}"
+										aria-selected={activeLanguage === lang.id}
+										aria-controls="connect-example"
+										data-testid="connect-lang-{lang.id}"
+										disabled={!supported}
+										title={supported ? undefined : 'The haai CLI has no embeddings command'}
+										onclick={() => (language = lang.id)}
+										class="px-2.5 py-1 text-xs rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed {activeLanguage ===
+										lang.id
+											? 'bg-gray-800 text-cyan-300'
+											: 'text-gray-400 hover:text-gray-200'}"
+									>
+										{lang.label}
+									</button>
+								{/each}
+							</div>
+							<button
+								type="button"
+								onclick={() => copyField('example', example)}
+								class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors min-w-[2.5rem] text-right"
+							>
+								{copyLabel('example')}
+							</button>
+						</div>
+						<div
+							id="connect-example"
+							role="tabpanel"
+							aria-labelledby="connect-tab-{activeLanguage}"
+						>
+							<pre
+								data-testid="connect-example"
+								class="font-mono text-xs text-gray-300 bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 overflow-x-auto max-h-72 overflow-y-auto"
+							><code>{example}</code></pre>
+						</div>
+					</div>
+				{/if}
+			</section>
 		</div>
 	{/if}
 
 	{#snippet footer()}
-		{#if cliExample}
+		{#if example}
 			<button
 				type="button"
-				onclick={() => copyField('cli-footer', cliExample)}
+				onclick={() => copyField('example-footer', example)}
 				class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 text-white rounded-md transition-colors min-w-[7.5rem]"
 			>
-				{copyLabel('cli-footer') === 'Copied' ? 'Copied' : 'Copy command'}
+				{copyLabel('example-footer') === 'Copied' ? 'Copied' : 'Copy example'}
 			</button>
 		{/if}
 		<button

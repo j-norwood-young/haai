@@ -21,3 +21,12 @@ export function buildHaaiPromptCommand(
   if (!stream) parts.push("--no-stream");
   return parts.join(" \\\n  ");
 }
+
+/** Shell command to list the models an API key can use via the haai CLI. */
+export function buildHaaiModelsCommand(baseUrl: string, apiKey: string): string {
+  return [
+    "haai models",
+    `-u ${JSON.stringify(baseUrl.replace(/\/$/, ""))}`,
+    `-k ${JSON.stringify(apiKey)}`,
+  ].join(" \\\n  ");
+}

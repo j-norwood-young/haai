@@ -20,6 +20,7 @@ const TOP_LEVEL_COMMANDS = [
   "user",
   "admin-token",
   "prompt",
+  "models",
   "completion",
 ];
 

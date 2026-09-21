@@ -8,6 +8,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SecretReveal from '$lib/components/SecretReveal.svelte';
 	import KeyConnect from '$lib/components/KeyConnect.svelte';
+	import ScopedPlugins from '$lib/components/ScopedPlugins.svelte';
 	import AllowedVModelsPicker from '$lib/components/AllowedVModelsPicker.svelte';
 	import AllowedBackendsPicker from '$lib/components/AllowedBackendsPicker.svelte';
 	import {
@@ -162,6 +163,7 @@
 					keyPrefix={key.key_prefix}
 					retrievable={key.retrievable}
 					allowedVModels={key.allowed_vmodels}
+					allowedBackends={key.allowed_backends}
 					fetchSecret={() => api.revealKey(id)}
 				/>
 			</div>
@@ -303,6 +305,11 @@
 				{/if}
 			</div>
 		</form>
+
+		<!-- Plugins (outside the form: bindings save immediately) -->
+		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+			<ScopedPlugins scopeType="key" scopeId={key.id} noun="API key" />
+		</div>
 
 		<!-- Card 4: Suspension (outside the form) -->
 		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">

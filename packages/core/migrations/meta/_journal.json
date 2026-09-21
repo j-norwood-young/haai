@@ -92,6 +92,20 @@
       "when": 1781960000000,
       "tag": "0012_model_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1781965000000,
+      "tag": "0013_orphan_plugin_bindings",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1781970000000,
+      "tag": "0014_unique_bindings_and_mappings",
+      "breakpoints": true
     }
   ]
 }

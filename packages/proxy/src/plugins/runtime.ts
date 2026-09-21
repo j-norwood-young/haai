@@ -131,8 +131,12 @@ export class PluginRuntime {
       // Execute the hook inside the isolate
       const resultJson = await ctx.eval(
         `(async () => {
-          const def = globalThis.__haaiPluginDef;
-          if (!def || !def.hooks || !def.hooks['${hookName}']) {
+          // __avmPluginDef: bundles installed before the aivm -> haai rename
+          const def = globalThis.__haaiPluginDef || globalThis.__avmPluginDef;
+          if (!def) {
+            throw new Error('Plugin bundle did not register a plugin definition — reinstall the plugin');
+          }
+          if (!def.hooks || !def.hooks['${hookName}']) {
             return JSON.stringify(${payloadJson});
           }
           const ctx = Object.assign({}, ${pluginCtxJson}, __haaiCapabilities);

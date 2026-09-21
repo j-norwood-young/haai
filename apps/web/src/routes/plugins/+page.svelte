@@ -1,18 +1,46 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.js';
-	import type { Plugin } from '$lib/api.js';
+	import type { ApiKey, Backend, Plugin, PluginBinding, VModel } from '$lib/api.js';
+	import { bindingInactiveReason, bindingScopeLabel } from '$lib/plugin-bindings.js';
+	import HoverCount from '$lib/components/HoverCount.svelte';
+	import type { HoverListItem } from '$lib/components/HoverList.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 
-	let plugins = $state<Plugin[]>([]);
+	let plugins = $state<Array<Plugin & { bindings: PluginBinding[] }>>([]);
+	let vmodels = $state<VModel[]>([]);
+	let backends = $state<Backend[]>([]);
+	let keys = $state<ApiKey[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let deleteConfirm = $state<string | null>(null);
 	let togglingId = $state<string | null>(null);
 
+	function bindingItems(plugin: Plugin & { bindings: PluginBinding[] }): HoverListItem[] {
+		return plugin.bindings.map((binding) => {
+			const item: HoverListItem = { label: bindingScopeLabel(binding, { vmodels, backends, keys }) };
+			const reason = bindingInactiveReason(plugin.enabled, binding.enabled);
+			if (reason) {
+				item.inactive = true;
+				item.note = reason;
+			}
+			return item;
+		});
+	}
+
 	async function load() {
 		try {
-			plugins = await api.getPlugins();
+			// Scope names are a nicety: if a lookup fails the binding falls back to showing its raw ID
+			const [list, vm, be, ke] = await Promise.all([
+				api.getPlugins(),
+				api.getVModels().catch(() => [] as VModel[]),
+				api.getBackends().catch(() => [] as Backend[]),
+				api.getKeys().catch(() => [] as ApiKey[])
+			]);
+			plugins = list;
+			vmodels = vm;
+			backends = be;
+			keys = ke;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load plugins';
 		} finally {
@@ -78,7 +106,7 @@
 						<th>Name</th>
 						<th class="hidden sm:table-cell">Version</th>
 						<th class="hidden md:table-cell">Hooks</th>
-						<th class="hidden lg:table-cell">Bindings</th>
+						<th class="hidden md:table-cell">Bindings</th>
 						<th>Enabled</th>
 						<th class="text-right">Actions</th>
 					</tr>
@@ -106,8 +134,8 @@
 									{/each}
 								</div>
 							</td>
-							<td class="text-[var(--color-text-muted)] hidden lg:table-cell">
-								—
+							<td class="text-gray-400 hidden md:table-cell">
+								<HoverCount heading="Bindings" items={bindingItems(plugin)} />
 							</td>
 							<td>
 								<button
@@ -130,7 +158,7 @@
 							</td>
 							<td class="text-right">
 								<div class="flex items-center justify-end gap-2">
-									<a href="/plugins/{plugin.id}" class="btn btn-sm btn-secondary">Detail</a>
+									<a href="/plugins/{plugin.id}" class="btn btn-sm btn-secondary">Edit</a>
 									{#if deleteConfirm === plugin.id}
 										<button
 											onclick={() => handleDelete(plugin.id)}

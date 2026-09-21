@@ -176,6 +176,17 @@ haai plugin install npm:@my-org/my-plugin
 haai plugin install github:my-org/my-plugin-repo
 ```
 
+### Names and upgrades
+
+Plugin names are unique (case-insensitive). The name is the `name` in your `haai-plugin` manifest, or the
+`--name` / "Name override" you install it under.
+
+- **Name already installed** — the install is refused; choose a different name (`--name "My Plugin (staging)"`)
+  to install a second copy alongside the first.
+- **Name already installed, but this is a newer version** — you're asked to confirm the upgrade (in the web UI a
+  dialog; on the CLI re-run with `--upgrade`). The plugin is replaced in place, so its bindings and their
+  settings are kept. Bump `version` in your manifest when you publish a change so it counts as newer.
+
 ## Sandboxing constraints
 
 Plugins execute in V8 isolates (isolated-vm):

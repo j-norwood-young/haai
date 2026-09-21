@@ -36,7 +36,7 @@ export default async function globalSetup() {
     port: MOCK_PORT,
     hostName: "pw-host",
     provider: "generic",
-    models: [{ id: "pw-model" }],
+    models: [{ id: "pw-model" }, { id: "pw-embed-model" }],
   });
 
   const proxy = await startTestProxy({
@@ -49,14 +49,24 @@ export default async function globalSetup() {
     name: "pw-backend",
     hostName: "pw-host",
     baseUrl: mock.url,
-    availableModels: ["pw-model"],
-    modelCatalog: [{ id: "pw-model", kind: "llm", source: "heuristic" }],
+    availableModels: ["pw-model", "pw-embed-model"],
+    modelCatalog: [
+      { id: "pw-model", kind: "llm", source: "heuristic" },
+      { id: "pw-embed-model", kind: "embeddings", source: "heuristic" },
+    ],
     lastHealthStatus: "healthy",
   });
   await insertVModel(proxy, {
     modelId: "pw-chat",
     displayName: "Playwright Chat",
     backends: [{ backendId, backendModelId: "pw-model" }],
+  });
+  // An embedding-kind v-model, for the key Connect modal's Embeddings endpoint.
+  await insertVModel(proxy, {
+    modelId: "pw-embed",
+    displayName: "Playwright Embeddings",
+    kind: "embedding",
+    backends: [{ backendId, backendModelId: "pw-embed-model" }],
   });
   // Dedicated to vmodel-plugins.spec.ts, which binds and unbinds plugins on it.
   await insertVModel(proxy, {

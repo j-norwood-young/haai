@@ -79,7 +79,7 @@ haai hook delete <name>
 
 ```bash
 haai plugin list
-haai plugin install <package>
+haai plugin install <source> [--name <name>] [--upgrade]
 haai plugin enable <id>
 haai plugin bind <id> --vmodel smart-chat
 ```
@@ -104,7 +104,10 @@ haai user set-password --username jason --password '...'
 
 ```bash
 haai prompt "Hello!" -k haai-sk-... -m smart-chat
+haai models -k haai-sk-...
 ```
+
+`haai models` prints the model IDs the key can use (one per line) — the same list as `GET /v1/models`.
 
 Uses `HAAI_API_KEY` / `HAAI_API_KEY` when `-k` is omitted.
 

@@ -4,15 +4,13 @@
 	import { api } from '$lib/api.js';
 	import type {
 		Backend,
-		Plugin,
 		VModel,
 		VModelBackend,
 		VModelCreateInput
 	} from '$lib/api.js';
 	import { rawBackendModelId } from '$lib/model-ids.js';
-	import { vModelPluginInactiveReason } from '$lib/vmodel-utils.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
-	import PluginConfigForm from '$lib/components/PluginConfigForm.svelte';
+	import ScopedPlugins from '$lib/components/ScopedPlugins.svelte';
 
 	interface Props {
 		/** Present when editing an existing v-model; absent when creating a new one. */
@@ -52,12 +50,6 @@
 	let tempWeight = $state<string>('1');
 	let dragSourceId = $state<string | null>(null);
 
-	// Installed plugins that can be bound to this v-model (edit only).
-	let installedPlugins = $state<Plugin[]>([]);
-	let addPluginId = $state('');
-	let addPluginConfig = $state<Record<string, unknown>>({});
-	let addPluginLoading = $state(false);
-
 	// Available models grouped by backend for dropdowns
 	let availableModelsByBackend = $state<Record<string, ModelOption[]>>({});
 
@@ -87,21 +79,6 @@
 	// A backend picked in the add row but not yet added still counts: submitting adds it first.
 	const hasPendingMapping = $derived(Boolean(addBackendId && newBackendModelId));
 	const canSubmit = $derived(members.length > 0 || hasPendingMapping);
-
-	const boundPluginIds = $derived(new Set((vmodel?.plugins ?? []).map((p) => p.plugin_id)));
-	const bindablePlugins = $derived(installedPlugins.filter((p) => !boundPluginIds.has(p.id)));
-	const selectedPlugin = $derived(installedPlugins.find((p) => p.id === addPluginId) ?? null);
-	const selectedPluginSchema = $derived(
-		selectedPlugin?.configSchema && Object.keys(selectedPlugin.configSchema).length > 0
-			? selectedPlugin.configSchema
-			: null
-	);
-	const missingRequiredConfig = $derived(
-		Object.entries(selectedPluginSchema ?? {}).some(([key, field]) => {
-			const value = addPluginConfig[key];
-			return field.required && (value === undefined || value === null || value === '');
-		})
-	);
 
 	const hasMatchingModels = $derived(
 		addBackendId ? (availableModelsByBackend[addBackendId] ?? []).some(matchesKind) : false
@@ -134,15 +111,12 @@
 		loading = true;
 		error = null;
 		try {
-			const [existing, backendList, available, pluginList] = await Promise.all([
+			const [existing, backendList, available] = await Promise.all([
 				vmodelId ? api.getVModel(vmodelId) : Promise.resolve(null),
 				api.getBackends(),
-				api.getAvailableModels(),
-				// Plugins are optional here: a failure to list them shouldn't block editing the v-model.
-				vmodelId ? api.getPlugins().catch(() => [] as Plugin[]) : Promise.resolve([] as Plugin[])
+				api.getAvailableModels()
 			]);
 			backends = backendList;
-			installedPlugins = pluginList;
 
 			// Group models by backend ID using raw upstream model IDs
 			const grouped: Record<string, ModelOption[]> = {};
@@ -288,43 +262,6 @@
 		} catch (err) {
 			saveError = err instanceof Error ? err.message : 'Failed to reorder backends';
 		}
-	}
-
-	async function handleAddPlugin() {
-		if (!vmodelId || !selectedPlugin || missingRequiredConfig) return;
-		addPluginLoading = true;
-		saveError = null;
-		try {
-			await api.createBinding(selectedPlugin.id, {
-				scopeType: 'vmodel',
-				scopeId: vmodelId,
-				config: Object.keys(addPluginConfig).length > 0 ? addPluginConfig : null
-			});
-			await refreshVModel();
-			addPluginId = '';
-			addPluginConfig = {};
-		} catch (err) {
-			saveError = err instanceof Error ? err.message : 'Failed to add plugin';
-		} finally {
-			addPluginLoading = false;
-		}
-	}
-
-	async function handleRemovePlugin(pluginId: string, bindingId: string) {
-		saveError = null;
-		try {
-			await api.deleteBinding(pluginId, bindingId);
-			if (vmodel) {
-				vmodel = { ...vmodel, plugins: vmodel.plugins.filter((p) => p.id !== bindingId) };
-			}
-		} catch (err) {
-			saveError = err instanceof Error ? err.message : 'Failed to remove plugin';
-		}
-	}
-
-	// Enter in a plugin config field would otherwise submit the whole form.
-	function handlePluginConfigKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.preventDefault();
 	}
 
 	function handleKindChange(next: VModel['kind']) {
@@ -665,87 +602,11 @@
 				</div>
 
 				<div class="sm:col-span-2 border-t border-gray-800 pt-6">
-					<h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Plugins</h2>
 					{#if !isEdit}
+						<h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Plugins</h2>
 						<p class="text-xs text-gray-500">Save the v-model first, then edit it to add plugins.</p>
 					{:else}
-						<p class="text-xs text-gray-500 mb-3">
-							Plugins here run only for requests to this v-model. Changes are saved immediately.
-							Global, backend and key-scoped plugins are managed on the
-							<a href="/plugins" class="text-cyan-400 hover:text-cyan-300">Plugins page</a>.
-						</p>
-						{#if (vmodel?.plugins.length ?? 0) === 0}
-							<p class="text-sm text-gray-500 mb-3">No plugins bound to this v-model.</p>
-						{:else}
-							<div class="space-y-1.5 mb-4">
-								{#each vmodel?.plugins ?? [] as p (p.id)}
-									{@const inactiveReason = vModelPluginInactiveReason(p)}
-									<div class="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2">
-										<a
-											href="/plugins/{p.plugin_id}"
-											class="text-sm text-gray-200 hover:text-cyan-400 flex-1 min-w-0 truncate"
-										>
-											{p.plugin_name}
-										</a>
-										{#if inactiveReason}
-											<span class="text-xs text-amber-400 bg-amber-900/30 rounded px-1.5 py-0.5">
-												{inactiveReason}
-											</span>
-										{/if}
-										<button
-											type="button"
-											onclick={() => handleRemovePlugin(p.plugin_id, p.id)}
-											class="text-xs text-gray-500 hover:text-red-400 transition-colors"
-											aria-label="Remove plugin {p.plugin_name}"
-										>
-											Remove
-										</button>
-									</div>
-								{/each}
-							</div>
-						{/if}
-
-						{#if installedPlugins.length === 0}
-							<p class="text-sm text-gray-500 rounded-lg border border-gray-800 bg-gray-800/30 px-3 py-2">
-								No plugins installed. <a href="/plugins/install" class="text-cyan-400 hover:text-cyan-300">Install a plugin</a> first.
-							</p>
-						{:else if bindablePlugins.length === 0}
-							<p class="text-xs text-gray-500">All installed plugins are already added.</p>
-						{:else}
-							<div class="flex items-center gap-2">
-								<select
-									bind:value={addPluginId}
-									onchange={() => (addPluginConfig = {})}
-									class="input flex-1 min-w-0 text-xs"
-									aria-label="Plugin"
-								>
-									<option value="">Select plugin…</option>
-									{#each bindablePlugins as p (p.id)}
-										<option value={p.id}>{p.name}{p.enabled ? '' : ' (disabled)'}</option>
-									{/each}
-								</select>
-								<button
-									type="button"
-									onclick={() => void handleAddPlugin()}
-									disabled={!selectedPlugin || missingRequiredConfig || addPluginLoading}
-									class="px-3 py-1.5 text-xs bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-800 text-white rounded-md transition-colors shrink-0"
-								>
-									Add
-								</button>
-							</div>
-							{#if selectedPluginSchema}
-								<!-- svelte-ignore a11y_no_static_element_interactions -->
-								<div
-									class="mt-3 rounded-lg border border-gray-800 bg-gray-800/30 p-3"
-									onkeydown={handlePluginConfigKeydown}
-								>
-									<p class="text-xs font-medium text-gray-300 mb-2">Config</p>
-									{#key addPluginId}
-										<PluginConfigForm configSchema={selectedPluginSchema} bind:config={addPluginConfig} />
-									{/key}
-								</div>
-							{/if}
-						{/if}
+						<ScopedPlugins scopeType="vmodel" scopeId={vmodelId!} noun="v-model" />
 					{/if}
 				</div>
 

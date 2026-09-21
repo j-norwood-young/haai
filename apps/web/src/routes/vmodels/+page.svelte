@@ -4,7 +4,8 @@
 	import type { VModel } from '$lib/api.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import VModelHealthDetailsModal from '$lib/components/VModelHealthDetailsModal.svelte';
-	import HoverList, { type HoverListItem } from '$lib/components/HoverList.svelte';
+	import HoverCount from '$lib/components/HoverCount.svelte';
+	import type { HoverListItem } from '$lib/components/HoverList.svelte';
 	import { vModelPluginInactiveReason } from '$lib/vmodel-utils.js';
 	import {
 		hasHealthDetails,
@@ -93,10 +94,6 @@
 		});
 	}
 
-	function activePluginCount(vm: VModel): number {
-		return vm.plugins.filter((p) => vModelPluginInactiveReason(p) === null).length;
-	}
-
 	onMount(load);
 </script>
 
@@ -177,28 +174,10 @@
 								</span>
 							</td>
 							<td class="text-gray-400">
-								{#if vm.backends.length > 0}
-									<HoverList heading="Backends" items={backendItems(vm)}>
-										<span class="cursor-default underline decoration-dotted decoration-gray-600 underline-offset-4">
-											{vm.backends.length}
-										</span>
-									</HoverList>
-								{:else}
-									0
-								{/if}
+								<HoverCount heading="Backends" items={backendItems(vm)} />
 							</td>
-							<td>
-								{#if vm.plugins.length > 0}
-									<HoverList heading="Plugins" items={pluginItems(vm)}>
-										<span
-											class="cursor-default {activePluginCount(vm) > 0 ? 'badge badge-cyan' : 'badge badge-gray'}"
-										>
-											{activePluginCount(vm)}
-										</span>
-									</HoverList>
-								{:else}
-									<span class="text-gray-600">—</span>
-								{/if}
+							<td class="text-gray-400">
+								<HoverCount heading="Plugins" items={pluginItems(vm)} />
 							</td>
 							<td>
 								<span class={vm.enabled ? 'badge badge-green' : 'badge badge-gray'}>

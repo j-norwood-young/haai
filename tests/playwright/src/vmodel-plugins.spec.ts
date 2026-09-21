@@ -13,7 +13,7 @@ test.describe("virtual model plugins", () => {
   test("adds and removes plugins on the edit page and shows them on the index", async ({ page }) => {
     await page.goto("/vmodels");
     const row = page.locator("tr", { hasText: "pw-plugins-chat" });
-    await expect(row.locator("td").nth(PLUGINS_COL)).toHaveText("—");
+    await expect(row.locator("td").nth(PLUGINS_COL)).toHaveText("0");
 
     await row.getByRole("link", { name: "Edit" }).click();
     await expect(page.getByText("No plugins bound to this v-model.")).toBeVisible();
@@ -46,7 +46,7 @@ test.describe("virtual model plugins", () => {
     await page.getByRole("button", { name: "Save Changes" }).click();
     await expect(page).toHaveURL(/\/vmodels\/?$/);
 
-    // Index: the Plugins badge lists the remaining plugin on hover.
+    // Index: the Plugins count lists the remaining plugin on hover.
     const indexRow = page.locator("tr", { hasText: "pw-plugins-chat" });
     await indexRow.locator("td").nth(PLUGINS_COL).getByText("1", { exact: true }).hover();
     const tooltip = page.getByRole("tooltip");

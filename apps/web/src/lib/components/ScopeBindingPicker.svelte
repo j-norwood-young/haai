@@ -9,6 +9,7 @@
 		VModel,
 		ApiKey
 	} from '$lib/api.js';
+	import { bindingScopeLabel, vmodelLabel } from '$lib/plugin-bindings.js';
 	import PluginConfigForm from './PluginConfigForm.svelte';
 
 	interface Props {
@@ -32,6 +33,14 @@
 	let adding = $state(false);
 	let addError = $state<string | null>(null);
 
+	// A plugin binds to a given scope once, so only offer scopes it isn't bound to yet.
+	const globalBound = $derived(bindings.some((b) => b.scopeType === 'global'));
+	const boundIds = (type: PluginScopeType) =>
+		new Set(bindings.filter((b) => b.scopeType === type).map((b) => b.scopeId));
+	const freeVModels = $derived(vmodels.filter((v) => !boundIds('vmodel').has(v.id)));
+	const freeBackends = $derived(backends.filter((b) => !boundIds('backend').has(b.id)));
+	const freeKeys = $derived(keys.filter((k) => !boundIds('key').has(k.id)));
+
 	// Delete confirm
 	let deleteConfirm = $state<string | null>(null);
 
@@ -48,20 +57,7 @@
 	});
 
 	function scopeLabel(binding: PluginBinding): string {
-		if (binding.scopeType === 'global') return 'Global';
-		if (binding.scopeType === 'vmodel') {
-			const vm = vmodels.find((v) => v.id === binding.scopeId);
-			return vm ? `V-Model: ${vm.display_name}` : `V-Model: ${binding.scopeId ?? '—'}`;
-		}
-		if (binding.scopeType === 'backend') {
-			const b = backends.find((b) => b.id === binding.scopeId);
-			return b ? `Backend: ${b.name}` : `Backend: ${binding.scopeId ?? '—'}`;
-		}
-		if (binding.scopeType === 'key') {
-			const k = keys.find((k) => k.id === binding.scopeId);
-			return k ? `Key: ${k.name}` : `Key: ${binding.scopeId ?? '—'}`;
-		}
-		return binding.scopeType;
+		return bindingScopeLabel(binding, { vmodels, backends, keys });
 	}
 
 	function bindingConfig(config: PluginBinding['config']): Record<string, unknown> | null {
@@ -247,6 +243,10 @@
 			</div>
 		</div>
 
+		{#if newScopeType === 'global' && globalBound}
+			<p class="text-xs text-gray-500">Already bound globally.</p>
+		{/if}
+
 		<!-- Scope ID picker (non-global) -->
 		{#if newScopeType !== 'global'}
 			<div>
@@ -256,26 +256,35 @@
 					<label for="new-scope-vmodel" class="block text-xs font-medium text-gray-300 mb-1">V-Model</label>
 					<select id="new-scope-vmodel" class="input" bind:value={newScopeId}>
 						<option value="">— select —</option>
-						{#each vmodels as v (v.id)}
-							<option value={v.id}>{v.display_name}</option>
+						{#each freeVModels as v (v.id)}
+							<option value={v.id}>{vmodelLabel(v, vmodels)}</option>
 						{/each}
 					</select>
+					{#if freeVModels.length === 0}
+						<p class="text-xs text-gray-500 mt-1">Already bound to all v-models.</p>
+					{/if}
 				{:else if newScopeType === 'backend'}
 					<label for="new-scope-backend" class="block text-xs font-medium text-gray-300 mb-1">Backend</label>
 					<select id="new-scope-backend" class="input" bind:value={newScopeId}>
 						<option value="">— select —</option>
-						{#each backends as b (b.id)}
+						{#each freeBackends as b (b.id)}
 							<option value={b.id}>{b.name}</option>
 						{/each}
 					</select>
+					{#if freeBackends.length === 0}
+						<p class="text-xs text-gray-500 mt-1">Already bound to all backends.</p>
+					{/if}
 				{:else if newScopeType === 'key'}
 					<label for="new-scope-key" class="block text-xs font-medium text-gray-300 mb-1">API Key</label>
 					<select id="new-scope-key" class="input" bind:value={newScopeId}>
 						<option value="">— select —</option>
-						{#each keys as k (k.id)}
+						{#each freeKeys as k (k.id)}
 							<option value={k.id}>{k.name}</option>
 						{/each}
 					</select>
+					{#if freeKeys.length === 0}
+						<p class="text-xs text-gray-500 mt-1">Already bound to all API keys.</p>
+					{/if}
 				{/if}
 			</div>
 		{/if}
@@ -295,7 +304,7 @@
 		<button
 			type="button"
 			onclick={handleAdd}
-			disabled={adding || (newScopeType !== 'global' && !newScopeId)}
+			disabled={adding || (newScopeType === 'global' ? globalBound : !newScopeId)}
 			class="btn btn-primary btn-md"
 		>
 			{adding ? 'Adding…' : 'Add Binding'}

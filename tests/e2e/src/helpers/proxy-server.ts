@@ -79,6 +79,8 @@ export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<
       last_available INTEGER, unavailable_reason TEXT,
       created_at INTEGER NOT NULL
     );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_vmodel_backends_unique_model
+      ON vmodel_backends (vmodel_id, backend_id, backend_model_id);
     CREATE TABLE IF NOT EXISTS vmodel_hooks (
       id TEXT PRIMARY KEY, vmodel_id TEXT NOT NULL, hook_id TEXT NOT NULL,
       "order" INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL
@@ -186,6 +188,8 @@ export async function startTestProxy(opts: StartTestProxyOptions = {}): Promise<
       created_at INTEGER NOT NULL,
       FOREIGN KEY (plugin_id) REFERENCES plugins(id) ON DELETE CASCADE
     );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_plugin_bindings_unique_scope
+      ON plugin_bindings (plugin_id, scope_type, COALESCE(scope_id, ''));
   `);
 
   const now = Date.now();

@@ -15,6 +15,7 @@ import {
 import { hashToken } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { requireAuth } from "../../auth-session.js";
+import { removeScopedBindings } from "../../plugins/bindings.js";
 
 type ApiKeyRow = typeof apiKeys.$inferSelect;
 
@@ -271,7 +272,10 @@ export async function keysRoutes(app: FastifyInstance, ctx: AppContext): Promise
 
   // Delete key
   app.delete<{ Params: { id: string } }>("/api/v1/keys/:id", async (req, reply) => {
-    await ctx.db.db.delete(apiKeys).where(eq(apiKeys.id, req.params.id)).run();
+    ctx.db.db.transaction((tx) => {
+      tx.delete(apiKeys).where(eq(apiKeys.id, req.params.id)).run();
+      removeScopedBindings(tx, "key", req.params.id);
+    });
     return reply.status(204).send();
   });
 

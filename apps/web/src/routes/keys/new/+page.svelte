@@ -27,9 +27,9 @@
 	let newKeyPrefix = $state('');
 	let showOnce = $state(false);
 
-	const allowedForConnect = $derived(
-		restrictVModels && selectedVModelIds.length > 0 ? selectedVModelIds : undefined
-	);
+	// null = unrestricted; an empty selection means none (same as the proxy).
+	const allowedVModelsForConnect = $derived(restrictVModels ? selectedVModelIds : null);
+	const allowedBackendsForConnect = $derived(restrictBackends ? selectedBackendIds : null);
 
 	const noModelAccess = $derived(
 		restrictVModels &&
@@ -125,7 +125,8 @@
 					keyPrefix={newKeyPrefix}
 					retrievable={!showOnce}
 					initialSecret={newKeyValue}
-					allowedVModels={allowedForConnect}
+					allowedVModels={allowedVModelsForConnect}
+					allowedBackends={allowedBackendsForConnect}
 					fetchSecret={async () => newKeyValue ?? ''}
 				/>
 			</div>

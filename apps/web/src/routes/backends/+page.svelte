@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.js';
-	import type { Backend } from '$lib/api.js';
+	import type { Backend, Plugin, PluginBinding } from '$lib/api.js';
+	import { scopedPluginItems } from '$lib/plugin-bindings.js';
+	import HoverCount from '$lib/components/HoverCount.svelte';
 	import { sse } from '$lib/sse.svelte.js';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import BackendHealthDetailsModal from '$lib/components/BackendHealthDetailsModal.svelte';
@@ -29,6 +31,9 @@
 	let modelsBackend = $state<Backend | null>(null);
 	// Non-reactive guard so writing it does not re-enter the SSE $effect
 	let lastHandledHealthAt: number | null = null;
+
+	// Plugin bindings are supplementary: if they fail to load the count just reads 0.
+	let plugins = $state<Array<Plugin & { bindings: PluginBinding[] }>>([]);
 
 	async function load() {
 		try {
@@ -155,7 +160,10 @@
 		}
 	}
 
-	onMount(load);
+	onMount(() => {
+		void load();
+		api.getPlugins().then((list) => (plugins = list), () => {});
+	});
 </script>
 
 <svelte:head>
@@ -195,6 +203,7 @@
 						<th class="hidden md:table-cell">URL</th>
 						<th>Health</th>
 						<th class="hidden lg:table-cell">Latency</th>
+						<th>Plugins</th>
 						<th>Enabled</th>
 						<th class="text-right">Actions</th>
 					</tr>
@@ -223,6 +232,9 @@
 							</td>
 							<td class="text-[var(--color-text-muted)] hidden lg:table-cell">
 								{backend.latency_ms != null ? `${backend.latency_ms}ms` : '—'}
+							</td>
+							<td class="text-gray-400">
+								<HoverCount heading="Plugins" items={scopedPluginItems(plugins, 'backend', backend.id)} />
 							</td>
 							<td>
 								<span class="{backend.enabled ? 'badge badge-green' : 'badge badge-gray'}">

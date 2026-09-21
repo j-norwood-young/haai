@@ -6,6 +6,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 // ── Backends ──────────────────────────────────────────────────────────────────
 export const backends = sqliteTable(
@@ -93,6 +94,7 @@ export const vmodelBackends = sqliteTable(
   (t) => [
     index("idx_vmodel_backends_vmodel").on(t.vmodelId),
     index("idx_vmodel_backends_backend").on(t.backendId),
+    uniqueIndex("idx_vmodel_backends_unique_model").on(t.vmodelId, t.backendId, t.backendModelId),
   ],
 );
 
@@ -411,6 +413,9 @@ export const pluginBindings = sqliteTable(
   (t) => [
     index("idx_plugin_bindings_plugin").on(t.pluginId),
     index("idx_plugin_bindings_scope").on(t.scopeType, t.scopeId),
+    // A plugin binds to a given scope once. coalesce: global bindings have a NULL scope_id, and
+    // NULLs are all distinct in a unique index.
+    uniqueIndex("idx_plugin_bindings_unique_scope").on(t.pluginId, t.scopeType, sql`coalesce(${t.scopeId}, '')`),
   ],
 );
 

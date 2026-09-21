@@ -531,6 +531,42 @@ export interface Plugin {
 	updatedAt: number;
 }
 
+/** An example plugin shipped in the repo's examples/plugins/ directory. */
+export interface ExamplePlugin {
+	id: string;
+	name: string;
+	description: string | null;
+	version: string | null;
+	hooks: string[];
+	/** Installer source string, e.g. `local:/abs/path` */
+	source: string;
+	/** False until the example has been compiled; installing it would fail. */
+	built: boolean;
+}
+
+/** 409 payloads from POST /plugins when the plugin's name is already in use. */
+export type PluginInstallConflict =
+	| { code: 'name_taken'; error: string; name: string }
+	| {
+			code: 'upgrade_available';
+			error: string;
+			name: string;
+			pluginId: string;
+			currentVersion: string | null;
+			newVersion: string | null;
+	  };
+
+/** Extract the structured conflict from a failed install, or null for any other error. */
+export function pluginInstallConflict(err: unknown): PluginInstallConflict | null {
+	if (!(err instanceof ApiError) || err.status !== 409 || !err.body) return null;
+	try {
+		const parsed = JSON.parse(err.body) as PluginInstallConflict;
+		return parsed.code === 'name_taken' || parsed.code === 'upgrade_available' ? parsed : null;
+	} catch {
+		return null;
+	}
+}
+
 export type PluginScopeType = 'global' | 'vmodel' | 'backend' | 'key';
 
 export interface PluginBinding {
@@ -767,7 +803,8 @@ export interface LoginResult {
 class ApiError extends Error {
 	constructor(
 		public status: number,
-		message: string
+		message: string,
+		public body?: string
 	) {
 		super(message);
 		this.name = 'ApiError';
@@ -785,7 +822,7 @@ async function request<T>(path: string, init?: RequestInit & { json?: unknown })
 		});
 	} catch (err) {
 		if (err instanceof ApiHttpError) {
-			throw new ApiError(err.status, err.message);
+			throw new ApiError(err.status, err.message, err.body);
 		}
 		throw err;
 	}
@@ -1083,10 +1120,11 @@ export const api = {
 		request<{ success: boolean }>(`/auth/webauthn/credentials/${id}`, { method: 'DELETE' }),
 
 	// Plugins
-	getPlugins: () => request<Plugin[]>('/plugins'),
+	getPlugins: () => request<Array<Plugin & { bindings: PluginBinding[] }>>('/plugins'),
+	getExamplePlugins: () => request<ExamplePlugin[]>('/plugins/examples'),
 	getPlugin: (id: string) => request<Plugin & { bindings: PluginBinding[] }>(`/plugins/${id}`),
-	installPlugin: (source: string, name?: string) =>
-		request<Plugin>('/plugins', { method: 'POST', json: { source, name } }),
+	installPlugin: (source: string, name?: string, upgrade?: boolean) =>
+		request<Plugin>('/plugins', { method: 'POST', json: { source, name, upgrade } }),
 	updatePlugin: (id: string, data: Partial<Pick<Plugin, 'name' | 'description' | 'enabled'>>) =>
 		request<{ success: boolean }>(`/plugins/${id}`, { method: 'PATCH', json: data }),
 	reinstallPlugin: (id: string) =>

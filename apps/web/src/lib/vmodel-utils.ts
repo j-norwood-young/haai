@@ -1,4 +1,5 @@
 import type { VModel, VModelPlugin } from '$lib/api.js';
+import { bindingInactiveReason } from '$lib/plugin-bindings.js';
 
 function hasModelSourceAccess(
 	allowedModels: string[] | null,
@@ -37,42 +38,6 @@ export function normalizeVModelAllowList(ids: string[], vmodels: VModel[]): stri
 	});
 }
 
-/** V-models a key may use for Connect / inference (enabled, optional allow-list). */
-export function eligibleVModelsForKey(
-	vmodels: VModel[],
-	allowedVModels?: string[] | null
-): VModel[] {
-	return vmodels.filter(
-		(vm) =>
-			vm.enabled && (!allowedVModels?.length || vModelMatchesAllowList(vm, allowedVModels))
-	);
-}
-
-export type VModelAvailabilityIssue = 'none' | 'no_backends' | 'key_restricted';
-
-export function getVModelAvailabilityIssue(
-	vmodels: VModel[],
-	allowedVModels?: string[] | null
-): VModelAvailabilityIssue | null {
-	const enabled = vmodels.filter((vm) => vm.enabled);
-	if (enabled.length === 0) return 'none';
-
-	const eligible = eligibleVModelsForKey(vmodels, allowedVModels);
-	if (eligible.length === 0) return 'key_restricted';
-
-	if (eligible.every((vm) => vm.backends.length === 0)) return 'no_backends';
-
-	return null;
-}
-
-/** V-models ready to serve traffic (enabled, has backends, passes allow-list). */
-export function connectableVModels(
-	vmodels: VModel[],
-	allowedVModels?: string[] | null
-): VModel[] {
-	return eligibleVModelsForKey(vmodels, allowedVModels).filter((vm) => vm.backends.length > 0);
-}
-
 export function allowedVModelsPayload(
 	restrict: boolean,
 	selectedIds: string[],
@@ -97,7 +62,5 @@ export function allowedBackendsPayload(
 
 /** Why a v-model's plugin binding will not run, or null when it will. */
 export function vModelPluginInactiveReason(plugin: VModelPlugin): string | null {
-	if (!plugin.plugin_enabled) return 'plugin disabled';
-	if (!plugin.binding_enabled) return 'binding disabled';
-	return null;
+	return bindingInactiveReason(plugin.plugin_enabled, plugin.binding_enabled);
 }

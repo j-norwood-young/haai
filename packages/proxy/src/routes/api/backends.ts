@@ -6,6 +6,7 @@ import { encrypt } from "@haai/core";
 import type { AppContext } from "../../context.js";
 import { checkAndPersistBackendHealth, checkBackendHealth } from "../../health.js";
 import { getLogger } from "../../logger.js";
+import { removeScopedBindings } from "../../plugins/bindings.js";
 
 function scheduleBackendHealthCheck(
   ctx: AppContext,
@@ -235,10 +236,10 @@ export async function backendsRoutes(app: FastifyInstance, ctx: AppContext): Pro
       .get();
     if (!backend) return reply.status(404).send({ error: "Backend not found" });
 
-    await ctx.db.db
-      .delete(backendsTable)
-      .where(eq(backendsTable.id, req.params.id))
-      .run();
+    ctx.db.db.transaction((tx) => {
+      tx.delete(backendsTable).where(eq(backendsTable.id, req.params.id)).run();
+      removeScopedBindings(tx, "backend", req.params.id);
+    });
 
     ctx.sse.broadcast("backend-health", { backendId: req.params.id, action: "deleted" });
 

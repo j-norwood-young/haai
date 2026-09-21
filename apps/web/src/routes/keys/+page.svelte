@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.js';
-	import type { ApiKey } from '$lib/api.js';
+	import type { ApiKey, Plugin, PluginBinding } from '$lib/api.js';
+	import { scopedPluginItems } from '$lib/plugin-bindings.js';
+	import HoverCount from '$lib/components/HoverCount.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SecretReveal from '$lib/components/SecretReveal.svelte';
 	import KeyConnect from '$lib/components/KeyConnect.svelte';
@@ -10,6 +12,9 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let deleteConfirm = $state<string | null>(null);
+
+	// Plugin bindings are supplementary: if they fail to load the count just reads 0.
+	let plugins = $state<Array<Plugin & { bindings: PluginBinding[] }>>([]);
 
 	async function load() {
 		try {
@@ -36,7 +41,10 @@
 		return new Date(ts).toLocaleDateString();
 	}
 
-	onMount(load);
+	onMount(() => {
+		void load();
+		api.getPlugins().then((list) => (plugins = list), () => {});
+	});
 </script>
 
 <svelte:head>
@@ -77,6 +85,7 @@
 						<th>Status</th>
 						<th class="hidden md:table-cell">RPM</th>
 						<th class="hidden md:table-cell">Day Budget</th>
+						<th class="hidden md:table-cell">Plugins</th>
 						<th class="hidden lg:table-cell">Last Used</th>
 						<th class="text-right">Actions</th>
 					</tr>
@@ -96,6 +105,7 @@
 										keyPrefix={key.key_prefix}
 										retrievable={key.retrievable}
 										allowedVModels={key.allowed_vmodels}
+										allowedBackends={key.allowed_backends}
 										fetchSecret={() => api.revealKey(key.id)}
 									/>
 								</div>
@@ -115,6 +125,9 @@
 							</td>
 							<td class="text-[var(--color-text-muted)] hidden md:table-cell">
 								{key.day_budget != null ? `$${key.day_budget}` : '—'}
+							</td>
+							<td class="text-gray-400 hidden md:table-cell">
+								<HoverCount heading="Plugins" items={scopedPluginItems(plugins, 'key', key.id)} />
 							</td>
 							<td class="text-[var(--color-text-muted)] hidden lg:table-cell">{formatDate(key.last_used_at)}</td>
 							<td class="text-right">

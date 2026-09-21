@@ -65,13 +65,36 @@ export async function resolveApiKey(
   }
 }
 
-export async function listInferenceModels(baseUrl: string, apiKey: string): Promise<string[]> {
+/** Readable message for a failed proxy response (OpenAI-style `error` object or string). */
+async function failureDetail(res: Response): Promise<string> {
+  let detail = await res.text();
+  try {
+    const parsed = JSON.parse(detail) as { error?: { message?: string } | string };
+    if (typeof parsed.error === "string") detail = parsed.error;
+    else if (parsed.error?.message) detail = parsed.error.message;
+  } catch {
+    /* use raw text */
+  }
+  return `Request failed (${res.status}): ${detail}`;
+}
+
+/** Models an API key may call, via GET /v1/models. Throws when the proxy rejects the request. */
+export async function fetchInferenceModels(baseUrl: string, apiKey: string): Promise<string[]> {
   const res = await fetch(`${baseUrl.replace(/\/$/, "")}/v1/models`, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(await failureDetail(res));
   const data = (await res.json()) as ModelsListResponse;
   return data.data.map((m) => m.id);
+}
+
+/** Like {@link fetchInferenceModels}, but returns [] on failure (for shell completion). */
+export async function listInferenceModels(baseUrl: string, apiKey: string): Promise<string[]> {
+  try {
+    return await fetchInferenceModels(baseUrl, apiKey);
+  } catch {
+    return [];
+  }
 }
 
 export async function listVModelIds(adminClient: ApiClient): Promise<string[]> {
@@ -99,17 +122,7 @@ export async function sendPrompt(opts: PromptOptions): Promise<void> {
     }),
   });
 
-  if (!res.ok) {
-    let detail = await res.text();
-    try {
-      const parsed = JSON.parse(detail) as { error?: { message?: string } | string };
-      if (typeof parsed.error === "string") detail = parsed.error;
-      else if (parsed.error?.message) detail = parsed.error.message;
-    } catch {
-      /* use raw text */
-    }
-    throw new Error(`Request failed (${res.status}): ${detail}`);
-  }
+  if (!res.ok) throw new Error(await failureDetail(res));
 
   if (opts.stream) {
     await streamResponse(res);

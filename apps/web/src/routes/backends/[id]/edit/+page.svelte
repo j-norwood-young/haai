@@ -8,6 +8,7 @@
 	import InfoTip from '$lib/components/InfoTip.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import ScopedPlugins from '$lib/components/ScopedPlugins.svelte';
 
 	const id = $derived(page.params.id!);
 
@@ -292,6 +293,11 @@
 					</a>
 				</div>
 			</form>
+		</div>
+
+		<!-- Outside the form: bindings save immediately -->
+		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mt-4">
+			<ScopedPlugins scopeType="backend" scopeId={backend.id} noun="backend" />
 		</div>
 	{/if}
 </div>

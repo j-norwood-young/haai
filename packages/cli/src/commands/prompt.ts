@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import chalk from "chalk";
 import { stdin } from "node:process";
 import type { ApiClient } from "../api-client.js";
-import { readApiKeyFromEnv, resolveApiKey, sendPrompt } from "../inference.js";
+import { fetchInferenceModels, readApiKeyFromEnv, resolveApiKey, sendPrompt } from "../inference.js";
 
 async function readStdinMessage(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -68,6 +68,27 @@ export function registerPromptCommands(
           messages,
           stream: opts.stream,
         });
+      } catch (err) {
+        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("models")
+    .description("List the models an API key can use (one ID per line)")
+    .option("-k, --key <key>", "API key (full haai-sk-… or prefix)", readApiKeyFromEnv())
+    .action(async (opts: { key?: string }) => {
+      if (!opts.key) {
+        console.error(
+          chalk.red("Missing --key (-k). Pass an API key or set HAAI_API_KEY."),
+        );
+        process.exit(1);
+      }
+
+      try {
+        const apiKey = await resolveApiKey(opts.key, getClient());
+        for (const id of await fetchInferenceModels(getBaseUrl(), apiKey)) console.log(id);
       } catch (err) {
         console.error(chalk.red(err instanceof Error ? err.message : String(err)));
         process.exit(1);

@@ -17,6 +17,16 @@ export interface InstallResult {
   version: string | null;
 }
 
+/** A resolved plugin package: manifest read, nothing written to the plugins directory yet */
+export interface PreparedPlugin {
+  manifest: PluginManifest;
+  configSchema: Record<string, unknown> | null;
+  needsResponseBuffer: boolean;
+  version: string | null;
+  /** Bundle into `<pluginsDir>/<pluginId>/bundle.js` */
+  bundle: (pluginsDir: string, pluginId: string) => Promise<InstallResult>;
+}
+
 /**
  * Install a plugin and produce a single-file bundle for isolated-vm execution.
  *
@@ -31,9 +41,17 @@ export async function installPlugin(
   pluginsDir: string,
   pluginId: string,
 ): Promise<InstallResult> {
+  const prepared = await preparePlugin(source, pluginId);
+  return prepared.bundle(pluginsDir, pluginId);
+}
+
+/**
+ * Resolve a plugin source and read its manifest without writing to the plugins directory,
+ * so callers can inspect the name/version (e.g. to detect an existing install) before
+ * committing to `bundle()`. `stagingId` only keys the npm/github download sandbox.
+ */
+export async function preparePlugin(source: string, stagingId: string): Promise<PreparedPlugin> {
   const log = getLogger();
-  const pluginDir = join(pluginsDir, pluginId);
-  mkdirSync(pluginDir, { recursive: true });
 
   let packageDir: string;
   let pkgJson: Record<string, unknown>;
@@ -47,7 +65,7 @@ export async function installPlugin(
       ? source.slice("npm:".length)
       : `github:${source.slice("github:".length)}`;
 
-    const tmpInstallDir = join(tmpdir(), `haai-plugin-install-${pluginId}`);
+    const tmpInstallDir = join(tmpdir(), `haai-plugin-install-${stagingId}`);
     mkdirSync(tmpInstallDir, { recursive: true });
 
     // Create a minimal package.json for the install sandbox
@@ -89,38 +107,43 @@ export async function installPlugin(
   const mainField = (pkgJson["module"] ?? pkgJson["main"] ?? "index.js") as string;
   const mainEntry = join(packageDir, mainField);
 
-  // Bundle into a single IIFE for isolated-vm
-  const bundlePath = join(pluginDir, "bundle.js");
-  log.info({ source, mainEntry, bundlePath }, "Bundling plugin");
+  const configSchema = haaiPlugin.configSchema ? (haaiPlugin.configSchema as Record<string, unknown>) : null;
+  const needsResponseBuffer = manifest.needsResponseBuffer ?? false;
+  const version = manifest.version ?? null;
 
-  await esbuild.build({
-    entryPoints: [mainEntry],
-    bundle: true,
-    platform: "neutral",
-    format: "iife",
-    globalName: "__haaiPlugin",
-    outfile: bundlePath,
-    define: { "process.env.NODE_ENV": '"production"' },
-    // After the IIFE, expose the default export as __haaiPluginDef
-    footer: {
-      js: [
-        "if (typeof __haaiPlugin !== 'undefined') {",
-        "  globalThis.__haaiPluginDef = __haaiPlugin && __haaiPlugin.default ? __haaiPlugin.default : __haaiPlugin;",
-        "}",
-      ].join("\n"),
-    },
-    logLevel: "silent",
-  });
+  const bundle = async (pluginsDir: string, targetId: string): Promise<InstallResult> => {
+    const pluginDir = join(pluginsDir, targetId);
+    mkdirSync(pluginDir, { recursive: true });
 
-  log.info({ source, bundlePath }, "Plugin installed and bundled successfully");
+    // Bundle into a single IIFE for isolated-vm
+    const bundlePath = join(pluginDir, "bundle.js");
+    log.info({ source, mainEntry, bundlePath }, "Bundling plugin");
 
-  return {
-    bundlePath,
-    manifest,
-    configSchema: haaiPlugin.configSchema ? (haaiPlugin.configSchema as Record<string, unknown>) : null,
-    needsResponseBuffer: manifest.needsResponseBuffer ?? false,
-    version: manifest.version ?? null,
+    await esbuild.build({
+      entryPoints: [mainEntry],
+      bundle: true,
+      platform: "neutral",
+      format: "iife",
+      globalName: "__haaiPlugin",
+      outfile: bundlePath,
+      define: { "process.env.NODE_ENV": '"production"' },
+      // After the IIFE, expose the default export as __haaiPluginDef
+      footer: {
+        js: [
+          "if (typeof __haaiPlugin !== 'undefined') {",
+          "  globalThis.__haaiPluginDef = __haaiPlugin && __haaiPlugin.default ? __haaiPlugin.default : __haaiPlugin;",
+          "}",
+        ].join("\n"),
+      },
+      logLevel: "silent",
+    });
+
+    log.info({ source, bundlePath }, "Plugin installed and bundled successfully");
+
+    return { bundlePath, manifest, configSchema, needsResponseBuffer, version };
   };
+
+  return { manifest, configSchema, needsResponseBuffer, version, bundle };
 }
 
 function readPkgJson(dir: string): Record<string, unknown> {

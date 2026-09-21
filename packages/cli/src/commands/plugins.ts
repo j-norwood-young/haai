@@ -3,7 +3,7 @@ import { resolve, join } from "node:path";
 import type { Command } from "commander";
 import chalk from "chalk";
 import { table } from "table";
-import type { ApiClient } from "../api-client.js";
+import { ApiHttpError, type ApiClient } from "../api-client.js";
 
 interface Plugin {
   id: string;
@@ -68,13 +68,19 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
       '  github:owner/repo          Install from GitHub\n' +
       '  local:/path/to/plugin      Local directory',
     )
-    .option("--name <name>", "Override plugin display name")
-    .action(async (source: string, opts: { name?: string }) => {
+    .option("--name <name>", "Override plugin display name (names must be unique)")
+    .option("--upgrade", "Upgrade in place if a plugin with this name is installed at an older version")
+    .action(async (source: string, opts: { name?: string; upgrade?: boolean }) => {
       const client = getClient();
       console.log(chalk.cyan(`Installing plugin from ${source}...`));
       try {
-        const plugin = await client.post<Plugin>("/api/v1/plugins", { source, name: opts.name });
-        console.log(chalk.green(`✓ Plugin '${plugin.name}' installed (${plugin.id})`));
+        const plugin = await client.post<Plugin & { upgradedFrom?: string | null }>("/api/v1/plugins", {
+          source,
+          name: opts.name,
+          upgrade: opts.upgrade,
+        });
+        const verb = "upgradedFrom" in plugin ? `upgraded from v${plugin.upgradedFrom ?? "?"}` : "installed";
+        console.log(chalk.green(`✓ Plugin '${plugin.name}' ${verb} (${plugin.id})`));
         console.log(`  Version: ${plugin.version ?? "unknown"}`);
         console.log(`  Hooks:   ${plugin.manifest.hooks.join(", ") || "none"}`);
         if (plugin.manifest.description) {
@@ -87,6 +93,13 @@ export function registerPluginCommands(program: Command, getClient: () => ApiCli
         console.log(`  haai plugin bind ${plugin.id} --scope backend --scope-id <backendId>`);
       } catch (err) {
         console.error(chalk.red("Installation failed:"), err instanceof Error ? err.message : String(err));
+        const code = err instanceof ApiHttpError && err.status === 409 ? conflictCode(err.body) : undefined;
+        if (code === "upgrade_available") {
+          console.error(chalk.yellow("Re-run with --upgrade to upgrade it in place (bindings are kept),"));
+          console.error(chalk.yellow("or with --name <name> to install it as a separate plugin."));
+        } else if (code === "name_taken") {
+          console.error(chalk.yellow("Re-run with --name <name> to install it under a different name."));
+        }
         process.exit(1);
       }
     });
@@ -368,4 +381,12 @@ See \`package.json\` under the \`"haai-plugin".configSchema\` key for available 
       }
       console.log();
     });
+}
+
+function conflictCode(body: string | undefined): string | undefined {
+  try {
+    return (JSON.parse(body ?? "") as { code?: string }).code;
+  } catch {
+    return undefined;
+  }
 }
