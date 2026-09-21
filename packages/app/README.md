@@ -6,7 +6,7 @@ One endpoint for your apps; behind it HAAI handles virtual models, load balancin
 
 ## Requirements
 
-- Node.js 24 or newer
+- Node.js 22 or newer
 
 ## Quickstart
 

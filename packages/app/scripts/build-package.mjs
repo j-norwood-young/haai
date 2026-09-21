@@ -84,12 +84,12 @@ const externalizeThirdParty = {
   },
 };
 
-/** Shared esbuild options: node ESM, Node 24, everything third-party external. */
+/** Shared esbuild options: node ESM, Node 22, everything third-party external. */
 const baseOptions = {
   bundle: true,
   platform: "node",
   format: "esm",
-  target: "node24",
+  target: "node22",
   sourcemap: false,
   logLevel: "warning",
   absWorkingDir: rootDir,

@@ -2,7 +2,7 @@
 
 ## npm / npx (recommended)
 
-**Requirements:** Node.js 24 or newer. No Docker, no pnpm, no git clone required.
+**Requirements:** Node.js 22 or newer. No Docker, no pnpm, no git clone required.
 
 ```bash
 # Run without installing (quickest):
@@ -69,7 +69,7 @@ pnpm start
 
 ### Requirements (source)
 
-- **Node.js** 24 or later
+- **Node.js** 22 or later
 - **pnpm** 9 or later — must match the `packageManager` field in the root `package.json`
 - **Build toolchain** for native modules (`better-sqlite3`): Python 3, g++, and node-gyp
 

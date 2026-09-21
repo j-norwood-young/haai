@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:22-alpine
 RUN npm install -g pnpm@latest
 WORKDIR /app
 COPY tools/mock-backend/package.json ./

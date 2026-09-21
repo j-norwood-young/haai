@@ -3,7 +3,7 @@
  * `haai` bin shim — hard-gates the Node version, then hands every invocation
  * (including `serve`) to the bundled CLI.
  */
-const MIN_NODE_MAJOR = 24;
+const MIN_NODE_MAJOR = 22;
 
 const nodeMajor = Number(process.versions.node.split(".")[0]);
 if (!Number.isFinite(nodeMajor) || nodeMajor < MIN_NODE_MAJOR) {

@@ -7,14 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- ⚠️ HAAI now requires **Node.js 24 or newer** (previously 22). The `haai` bin refuses to start on older versions, `engines` is `>=24.0.0`, the Docker images use `node:24-alpine`, the package is built for the `node24` target, and `better-sqlite3` is upgraded to 12.x (11.x aborts on process teardown under Node 24).
-
-### Fixed
-
-- `haai` failed to start on Windows with `ERR_UNSUPPORTED_ESM_URL_SCHEME`: the bin shim handed a `C:\…` path (rather than a `file://` URL) to `import()`. `haai serve`'s background/foreground server launch had the same Windows path problem.
-
 ## [0.4.0] - 2026-09-21
 
 ### Added
@@ -24,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - ⚠️ `haai serve` now runs HAAI **in the background** by default: it starts the server detached, waits for it to become healthy, opens the admin UI and returns your shell. Output goes to `<data dir>/logs/haai.log` and the PID is kept in `<data dir>/haai.pid`. Pass `--no-daemon` for the previous foreground behaviour (needed under systemd, launchd or other process managers that expect the process to stay attached).
+- `better-sqlite3` is upgraded to 12.x: 11.x aborts on process teardown under Node 24. HAAI supports Node 22 and 24, and CI runs the unit, e2e, Playwright and packaged-install smoke tests on both.
 
 ### Fixed
 
+- `haai` failed to start on Windows with `ERR_UNSUPPORTED_ESM_URL_SCHEME`: the bin shim handed a `C:\…` path (rather than a `file://` URL) to `import()`. `haai serve`'s server launch had the same Windows path problem.
 - `haai serve --no-open` now actually skips opening the browser (the flag was being read under the wrong name and had no effect).
 
 ## [0.3.0] - 2026-09-21

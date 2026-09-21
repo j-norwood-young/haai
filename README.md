@@ -29,7 +29,7 @@ Key management with rate limits and token budgets, request/response hooks, sandb
 
 ### npm / npx (easiest)
 
-Requires **Node.js 24+** — that's it. No Docker, no pnpm, no clone.
+Requires **Node.js 22+** — that's it. No Docker, no pnpm, no clone.
 
 ```bash
 # Quick start (no install needed):
@@ -151,7 +151,7 @@ LM Studio, Ollama, vLLM, oMLX, OpenAI, and generic OpenAI-compatible backends.
 
 ### Requirements
 
-- Node.js 24+
+- Node.js 22+
 - If building from source: pnpm 9+ (otherwise use `npm i -g @jasony/haai` or `pnpm add -g @jasony/haai`)
 
 ### Quick start (build from source)

@@ -187,7 +187,7 @@ Plugin (onResponse) → Client Response
 
 | Layer | Technology |
 |-------|------------|
-| Runtime | Node.js 24+ |
+| Runtime | Node.js 22+ |
 | Package Manager | pnpm 9+ |
 | Monorepo Tool | Turbo |
 | API Framework | Fastify |

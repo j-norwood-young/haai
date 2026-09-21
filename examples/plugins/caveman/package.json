@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@haai/plugin-sdk": "workspace:*",
-    "@types/node": "^24.0.0",
+    "@types/node": "^22.15.30",
     "typescript": "^5.8.3"
   }
 }
