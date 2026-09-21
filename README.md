@@ -33,10 +33,10 @@ Requires **Node.js 22+** — that's it. No Docker, no pnpm, no clone.
 
 ```bash
 # Quick start (no install needed):
-npx @haai/haai serve
+npx @jasony/haai serve
 
 # Or install globally:
-npm i -g @haai/haai && haai serve
+npm i -g @jasony/haai && haai serve
 ```
 
 HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you.
@@ -150,7 +150,7 @@ LM Studio, Ollama, vLLM, oMLX, OpenAI, and generic OpenAI-compatible backends.
 ### Requirements
 
 - Node.js 22+
-- If building from source: pnpm 9+ (otherwise use `npm i -g @haai/haai` or `pnpm add -g @haai/haai`)
+- If building from source: pnpm 9+ (otherwise use `npm i -g @jasony/haai` or `pnpm add -g @jasony/haai`)
 
 ### Quick start (build from source)
 

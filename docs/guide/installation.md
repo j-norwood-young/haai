@@ -6,10 +6,10 @@
 
 ```bash
 # Run without installing (quickest):
-npx @haai/haai serve
+npx @jasony/haai serve
 
 # Or install globally for repeated use:
-npm i -g @haai/haai
+npm i -g @jasony/haai
 haai serve
 ```
 
@@ -25,7 +25,7 @@ haai serve --no-open
 
 ### Using pnpm?
 
-If you install HAAI via pnpm (`pnpm add -g @haai/haai`), pnpm blocks dependency install scripts by default. Approve the native module builds once:
+If you install HAAI via pnpm (`pnpm add -g @jasony/haai`), pnpm blocks dependency install scripts by default. Approve the native module builds once:
 
 ```bash
 pnpm approve-builds   # approve better-sqlite3, isolated-vm, esbuild
@@ -88,7 +88,7 @@ On first start, HAAI creates the data directory (overridable with `HAAI_DATA_DIR
 
 ## Upgrading
 
-- **npm install:** `npm i -g @haai/haai@latest` (or `pnpm add -g @haai/haai@latest`)
+- **npm install:** `npm i -g @jasony/haai@latest` (or `pnpm add -g @jasony/haai@latest`)
 - **Docker:** `docker compose pull && docker compose up -d`
 - **Source:** `git pull && pnpm install && pnpm build && pnpm start`
 

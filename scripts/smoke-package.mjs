@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * End-to-end smoke test for the packaged `@haai/haai` npm package.
+ * End-to-end smoke test for the packaged `@jasony/haai` npm package.
  *
  * Prerequisites: `npm pack` in packages/app (tarball present), then this script
  * installs the tarball globally and exercises the real installed bins:
@@ -86,7 +86,7 @@ function findTarball() {
   const explicit = argValue("--tarball");
   if (explicit) return resolve(explicit);
   const appDir = join(REPO_ROOT, "packages/app");
-  const tarballs = readdirSync(appDir).filter((f) => /^haai-(?:haai-)?\d.*\.tgz$/.test(f));
+  const tarballs = readdirSync(appDir).filter((f) => /^(?:jasony-)?haai-\d.*\.tgz$/.test(f));
   if (tarballs.length === 0) {
     console.error("No haai-*.tgz found in packages/app — run `npm pack` there first.");
     process.exit(1);

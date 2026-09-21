@@ -7,7 +7,7 @@ Get HAAI running in under a minute. Three options: npm/npx (no Docker), Docker, 
 Requires **Node.js 22+** only:
 
 ```bash
-npx @haai/haai serve
+npx @jasony/haai serve
 ```
 
 HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all on one port — and opens the browser for you.
@@ -15,7 +15,7 @@ HAAI boots on **http://localhost:4000** — admin UI, API, docs, and Swagger all
 Or install globally:
 
 ```bash
-npm i -g @haai/haai
+npm i -g @jasony/haai
 haai serve
 ```
 

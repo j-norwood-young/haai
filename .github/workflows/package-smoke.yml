@@ -19,12 +19,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @haai/haai package
+      - run: pnpm --filter @jasony/haai package
       - working-directory: packages/app
         run: npm pack
       - shell: bash
         run: |
-          TARBALL=$(ls "${{ github.workspace }}/packages/app"/haai-*.tgz | tail -1)
+          TARBALL=$(ls "${{ github.workspace }}/packages/app"/*haai-*.tgz | tail -1)
           npm install --global "$TARBALL"
       - shell: bash
         env:

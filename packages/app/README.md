@@ -11,7 +11,7 @@ One endpoint for your apps; behind it HAAI handles virtual models, load balancin
 ## Quickstart
 
 ```bash
-npx @haai/haai serve
+npx @jasony/haai serve
 ```
 
 That's it — HAAI boots on **http://localhost:4000** with the admin UI, OpenAI-compatible API (`/v1/*`), management API (`/api/v1/*`), and Swagger docs (`/api/docs`) all on one port, and opens the browser for you.
@@ -19,7 +19,7 @@ That's it — HAAI boots on **http://localhost:4000** with the admin UI, OpenAI-
 Or install globally:
 
 ```bash
-npm i -g @haai/haai
+npm i -g @jasony/haai
 haai serve          # boot server + admin UI
 haai status         # check a running instance
 haai --help         # full CLI
@@ -67,7 +67,7 @@ Docker remains a supported install path — see [docker-compose.yml](https://git
 
 ## Using pnpm?
 
-pnpm blocks dependency install scripts by default. After installing HAAI with pnpm (e.g. `pnpm add -g @haai/haai`), approve the native-module builds once:
+pnpm blocks dependency install scripts by default. After installing HAAI with pnpm (e.g. `pnpm add -g @jasony/haai`), approve the native-module builds once:
 
 ```bash
 pnpm approve-builds   # approve better-sqlite3, isolated-vm, esbuild

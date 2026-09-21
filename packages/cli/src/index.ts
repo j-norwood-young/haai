@@ -94,7 +94,7 @@ async function main(): Promise<void> {
     if (opts.token) client["opts"].token = opts.token;
     thisCmd.setOptionValue("client", client);
   });
-  // Start the bundled server (npx @haai/haai / npm i -g @haai/haai)
+  // Start the bundled server (npx @jasony/haai / npm i -g @jasony/haai)
   program
     .command(serveCommand)
     .description(serveDescriptor)
