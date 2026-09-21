@@ -83,24 +83,24 @@
 	<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
 		<form onsubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 			<div>
-				<label class="block text-xs font-medium text-gray-400 mb-1">Name *</label>
-				<input bind:value={name} required placeholder={hookType === 'webhook' ? 'my-webhook' : 'budget-alerter'} class="input w-full" />
+				<label for="hook-new-name" class="block text-xs font-medium text-gray-400 mb-1">Name *</label>
+				<input id="hook-new-name" bind:value={name} required placeholder={hookType === 'webhook' ? 'my-webhook' : 'budget-alerter'} class="input w-full" />
 			</div>
 			<div>
-				<label class="block text-xs font-medium text-gray-400 mb-1">Trigger *</label>
-				<select bind:value={trigger} class="input w-full">
+				<label for="hook-new-trigger" class="block text-xs font-medium text-gray-400 mb-1">Trigger *</label>
+				<select id="hook-new-trigger" bind:value={trigger} class="input w-full">
 					{#each triggers as t}<option value={t}>{t}</option>{/each}
 				</select>
 			</div>
 			{#if hookType === 'webhook'}
 				<div class="sm:col-span-2">
-					<label class="block text-xs font-medium text-gray-400 mb-1">URL *</label>
-					<input bind:value={url} required type="url" placeholder="https://example.com/webhook" class="input w-full" />
+					<label for="hook-new-url" class="block text-xs font-medium text-gray-400 mb-1">URL *</label>
+					<input id="hook-new-url" bind:value={url} required type="url" placeholder="https://example.com/webhook" class="input w-full" />
 				</div>
 			{:else}
 				<div class="sm:col-span-2">
-					<label class="block text-xs font-medium text-gray-400 mb-1">Module *</label>
-					<input bind:value={module} required placeholder="hooks/budget_alert" class="input w-full" />
+					<label for="hook-new-module" class="block text-xs font-medium text-gray-400 mb-1">Module *</label>
+					<input id="hook-new-module" bind:value={module} required placeholder="hooks/budget_alert" class="input w-full" />
 				</div>
 			{/if}
 

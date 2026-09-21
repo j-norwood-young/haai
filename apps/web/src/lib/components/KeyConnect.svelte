@@ -30,7 +30,7 @@
 	let modalOpen = $state(false);
 	let loading = $state(false);
 	let loadError = $state<string | null>(null);
-	let secret = $state<string | null>(initialSecret);
+	let secret = $state<string | null>(null);
 	let vmodels = $state<VModel[]>([]);
 	let selectedModelId = $state('');
 	let copiedField = $state<string | null>(null);
@@ -48,7 +48,9 @@
 
 	const selectedHasBackends = $derived((selectedVModel?.backends.length ?? 0) > 0);
 
-	const apiKeyDisplay = $derived(secret ?? (retrievable ? null : `${keyPrefix}…`));
+	const currentSecret = $derived(secret ?? initialSecret);
+
+	const apiKeyDisplay = $derived(currentSecret ?? (retrievable ? null : `${keyPrefix}…`));
 
 	const cliExample = $derived.by(() => {
 		if (!selectedModelId || !apiKeyDisplay || !selectedHasBackends) return null;
@@ -68,7 +70,7 @@
 
 		try {
 			const tasks: Promise<unknown>[] = [api.getVModels()];
-			if (!(secret ?? initialSecret) && retrievable) {
+			if (!currentSecret && retrievable) {
 				tasks.push(fetchSecret().then((k) => (secret = k)));
 			}
 			const [loadedVModels] = (await Promise.all(tasks)) as [VModel[]];
@@ -90,9 +92,7 @@
 		modalOpen = false;
 		loadError = null;
 		copiedField = null;
-		if (!initialSecret) {
-			secret = null;
-		}
+		secret = null;
 	}
 
 	async function copyField(field: string, value: string) {
@@ -163,7 +163,7 @@
 				</p>
 			{/if}
 
-			{#if !secret && !retrievable}
+			{#if !currentSecret && !retrievable}
 				<p class="text-xs text-amber-400/90 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2">
 					This key was shown once and is not stored. Replace the placeholder below with the key you
 					saved at creation.

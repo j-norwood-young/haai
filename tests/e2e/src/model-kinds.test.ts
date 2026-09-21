@@ -88,14 +88,27 @@ describe("model kind classification", () => {
         provider: "generic",
         models: [{ id: "mock-model-1" }, { id: "bge-m3" }],
       });
-      await insertBackend(proxy, {
+      const backendId = await insertBackend(proxy, {
         name: "generic-backend",
         hostName: mock.config.hostName,
         baseUrl: mock.url,
         provider: "generic",
-        availableModels: ["mock-model-1", "bge-m3"],
-        // No modelCatalog seeded — classification falls back to the id heuristic.
       });
+      // /v1/models only reads the cached catalog, which the health poll populates.
+      // A generic backend has no native kind info, so the poll classifies by id heuristic.
+      await checkAndPersistBackendHealth(
+        proxy.db,
+        proxy.masterKey,
+        {
+          id: backendId,
+          baseUrl: mock.url,
+          name: "generic-backend",
+          provider: "generic",
+          keyMode: "passthrough",
+          encryptedApiKey: null,
+        },
+        5000,
+      );
     });
 
     afterAll(async () => mock.stop());

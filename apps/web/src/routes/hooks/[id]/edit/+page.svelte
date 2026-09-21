@@ -83,20 +83,20 @@
 		<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
 			<form onsubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Name</label>
-					<input bind:value={name} required class="input w-full" />
+					<label for="hook-edit-name" class="block text-xs font-medium text-gray-400 mb-1">Name</label>
+					<input id="hook-edit-name" bind:value={name} required class="input w-full" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Type</label>
-					<input value={hook.type} disabled class="input w-full opacity-60 cursor-not-allowed capitalize" />
+					<label for="hook-edit-type" class="block text-xs font-medium text-gray-400 mb-1">Type</label>
+					<input id="hook-edit-type" value={hook.type} disabled class="input w-full opacity-60 cursor-not-allowed capitalize" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Trigger</label>
-					<input value={hook.trigger} disabled class="input w-full opacity-60 cursor-not-allowed font-mono text-xs" />
+					<label for="hook-edit-trigger" class="block text-xs font-medium text-gray-400 mb-1">Trigger</label>
+					<input id="hook-edit-trigger" value={hook.trigger} disabled class="input w-full opacity-60 cursor-not-allowed font-mono text-xs" />
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Target</label>
-					<input value={hook.url ?? hook.module ?? '—'} disabled class="input w-full opacity-60 cursor-not-allowed text-xs" />
+					<label for="hook-edit-target" class="block text-xs font-medium text-gray-400 mb-1">Target</label>
+					<input id="hook-edit-target" value={hook.url ?? hook.module ?? '—'} disabled class="input w-full opacity-60 cursor-not-allowed text-xs" />
 				</div>
 				<div class="sm:col-span-2 flex items-center gap-3">
 					<button
@@ -107,6 +107,7 @@
 						class:bg-gray-700={!enabled}
 						role="switch"
 						aria-checked={enabled}
+						aria-label="Enabled"
 					>
 						<span
 							class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"

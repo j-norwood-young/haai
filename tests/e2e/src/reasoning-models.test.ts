@@ -29,6 +29,7 @@ describe("Reasoning capability advertisement on /v1/models", () => {
       baseUrl: vllmUpstream.url,
       provider: "vllm",
       availableModels: ["vllm-model"],
+      modelCatalog: [{ id: "vllm-model", kind: "llm", source: "heuristic" }],
       lastHealthStatus: "healthy",
     });
     await insertBackend(proxy, {
@@ -37,6 +38,7 @@ describe("Reasoning capability advertisement on /v1/models", () => {
       baseUrl: omlxUpstream.url,
       provider: "omlx",
       availableModels: ["omlx-model"],
+      modelCatalog: [{ id: "omlx-model", kind: "llm", source: "heuristic" }],
       lastHealthStatus: "healthy",
     });
     await insertBackend(proxy, {
@@ -45,6 +47,7 @@ describe("Reasoning capability advertisement on /v1/models", () => {
       baseUrl: genericUpstream.url,
       provider: "generic",
       availableModels: ["generic-model"],
+      modelCatalog: [{ id: "generic-model", kind: "llm", source: "heuristic" }],
       lastHealthStatus: "healthy",
     });
 

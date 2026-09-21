@@ -93,6 +93,8 @@
 			<!-- hover hit areas -->
 			<div class="absolute inset-0 flex">
 				{#each buckets as bucket, i (bucket.t)}
+					<!-- tabindex is only set together with role="button" (when onselect is provided) -->
+					<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 					<div
 						class="flex-1 relative group"
 						onpointerenter={() => (hoverIndex = i)}

@@ -158,45 +158,45 @@
 				<thead>
 					<tr class="text-left text-[10px] uppercase tracking-wider text-[var(--color-text-subtle)]">
 						<th>Name</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('requests')} onclick={() => toggleSort('requests')}>
+						<th aria-sort={ariaSort('requests')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('requests')}>
 								Requests {sortKey === 'requests' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('error_rate')} onclick={() => toggleSort('error_rate')}>
+						<th aria-sort={ariaSort('error_rate')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('error_rate')}>
 								Errors {sortKey === 'error_rate' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('total_tokens')} onclick={() => toggleSort('total_tokens')}>
+						<th aria-sort={ariaSort('total_tokens')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('total_tokens')}>
 								Tokens {sortKey === 'total_tokens' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('ttft_p50_ms')} onclick={() => toggleSort('ttft_p50_ms')}>
+						<th aria-sort={ariaSort('ttft_p50_ms')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('ttft_p50_ms')}>
 								TTFT p50/p95 {sortKey === 'ttft_p50_ms' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 							<InfoTip text="p95 TTFT: 95% of requests received their first token faster than this." />
 						</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('duration_p50_ms')} onclick={() => toggleSort('duration_p50_ms')}>
+						<th aria-sort={ariaSort('duration_p50_ms')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('duration_p50_ms')}>
 								Duration p50/p95 {sortKey === 'duration_p50_ms' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('tps_avg')} onclick={() => toggleSort('tps_avg')}>
+						<th aria-sort={ariaSort('tps_avg')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('tps_avg')}>
 								TPS p50/max {sortKey === 'tps_avg' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('tool_calls')} onclick={() => toggleSort('tool_calls')}>
+						<th aria-sort={ariaSort('tool_calls')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('tool_calls')}>
 								Tools {sortKey === 'tool_calls' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>
 						<th>Trend</th>
-						<th>
-							<button type="button" class="uppercase tracking-wider" aria-sort={ariaSort('last_seen')} onclick={() => toggleSort('last_seen')}>
+						<th aria-sort={ariaSort('last_seen')}>
+							<button type="button" class="uppercase tracking-wider" onclick={() => toggleSort('last_seen')}>
 								Last seen {sortKey === 'last_seen' ? (sortAsc ? '▲' : '▼') : ''}
 							</button>
 						</th>

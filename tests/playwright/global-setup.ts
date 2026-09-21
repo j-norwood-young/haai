@@ -50,6 +50,7 @@ export default async function globalSetup() {
     hostName: "pw-host",
     baseUrl: mock.url,
     availableModels: ["pw-model"],
+    modelCatalog: [{ id: "pw-model", kind: "llm", source: "heuristic" }],
     lastHealthStatus: "healthy",
   });
   await insertVModel(proxy, {

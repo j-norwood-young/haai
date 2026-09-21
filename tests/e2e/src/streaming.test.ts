@@ -42,6 +42,7 @@ describe("Streaming proxy", () => {
       maxConcurrency: 10,
       healthCheckEnabled: false,
       availableModels: JSON.stringify(["test-model"]),
+      modelCatalog: JSON.stringify([{ id: "test-model", kind: "llm", source: "heuristic" }]),
       createdAt: now,
       updatedAt: now,
     }).run();

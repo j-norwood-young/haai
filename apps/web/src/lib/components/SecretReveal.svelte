@@ -27,8 +27,10 @@
 		class: className = ''
 	}: Props = $props();
 
+	// Initial props only seed the state; later changes are handled by displaySecret/openModal.
+	// svelte-ignore state_referenced_locally
 	let modalOpen = $state(autoOpen && initialSecret != null);
-	let secret = $state<string | null>(autoOpen && initialSecret ? initialSecret : null);
+	let secret = $state<string | null>(null);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let copied = $state(false);

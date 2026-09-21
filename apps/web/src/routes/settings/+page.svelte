@@ -315,8 +315,8 @@
 			<p class="text-sm text-green-400 mb-4">2FA is enabled on your account.</p>
 			<form onsubmit={handleDisableTotp} class="space-y-3 max-w-sm">
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Verification code</label>
-					<input
+					<label for="settings-verification-code" class="block text-xs font-medium text-gray-400 mb-1">Verification code</label>
+					<input id="settings-verification-code"
 						type="text"
 						inputmode="numeric"
 						maxlength="6"
@@ -344,8 +344,8 @@
 			{/if}
 			<form onsubmit={handleEnableTotp} class="space-y-3 max-w-sm">
 				<div>
-					<label class="block text-xs font-medium text-gray-400 mb-1">Verification code</label>
-					<input
+					<label for="settings-verification-code-2" class="block text-xs font-medium text-gray-400 mb-1">Verification code</label>
+					<input id="settings-verification-code-2"
 						type="text"
 						inputmode="numeric"
 						maxlength="6"
@@ -532,8 +532,8 @@
 		<h2 class="text-base font-semibold text-gray-100 mb-4">Change Password</h2>
 		<form onsubmit={handleChangePassword} class="space-y-4 max-w-sm">
 			<div>
-				<label class="block text-xs font-medium text-gray-400 mb-1">Current Password</label>
-				<input
+				<label for="settings-current-password" class="block text-xs font-medium text-gray-400 mb-1">Current Password</label>
+				<input id="settings-current-password"
 					type="password"
 					bind:value={currentPassword}
 					required
@@ -542,8 +542,8 @@
 				/>
 			</div>
 			<div>
-				<label class="block text-xs font-medium text-gray-400 mb-1">New Password</label>
-				<input
+				<label for="settings-new-password" class="block text-xs font-medium text-gray-400 mb-1">New Password</label>
+				<input id="settings-new-password"
 					type="password"
 					bind:value={newPassword}
 					required
@@ -553,8 +553,8 @@
 				/>
 			</div>
 			<div>
-				<label class="block text-xs font-medium text-gray-400 mb-1">Confirm New Password</label>
-				<input
+				<label for="settings-confirm-new-password" class="block text-xs font-medium text-gray-400 mb-1">Confirm New Password</label>
+				<input id="settings-confirm-new-password"
 					type="password"
 					bind:value={confirmPassword}
 					required

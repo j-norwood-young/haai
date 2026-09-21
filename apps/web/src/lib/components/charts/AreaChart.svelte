@@ -36,7 +36,7 @@
 
 	let hidden = $state(new Set<string>());
 	let hoverIndex = $state<number | null>(null);
-	let container: HTMLElement | null = null;
+	let container = $state<HTMLElement | null>(null);
 
 	const count = $derived(Math.max(timestamps.length, ...series.map((s) => s.values.length)));
 	const hasData = $derived(timestamps.length >= 2 && series.some((s) => s.values.length >= 2));
