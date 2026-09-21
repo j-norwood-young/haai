@@ -20,7 +20,7 @@
     "@types/react": "^18.3.21"
   },
   "devDependencies": {
-    "@types/node": "^22.15.30",
+    "@types/node": "^24.0.0",
     "typescript": "^5.8.3"
   }
 }

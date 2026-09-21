@@ -10,6 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { defaultDataDir, ensureDataDir, loadConfig } from "@haai/core/config";
 
@@ -53,6 +54,11 @@ interface DaemonInfo {
 
 function hasBundledServer(): boolean {
   return existsSync(new URL("./server.js", import.meta.url));
+}
+
+// fileURLToPath, not URL.pathname: the latter is `/C:/…` on Windows.
+function serverScriptPath(): string {
+  return fileURLToPath(new URL("./server.js", import.meta.url));
 }
 
 // `loadConfig` would also work out the data dir, but `stop` shouldn't fail on
@@ -112,8 +118,7 @@ export async function serve(opts: ServeOptions): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function serveForeground(port: number, host: string, noOpen: boolean): void {
-  const serverPath = new URL("./server.js", import.meta.url);
-  const child: ChildProcess = spawn(process.execPath, [serverPath.pathname], {
+  const child: ChildProcess = spawn(process.execPath, [serverScriptPath()], {
     stdio: "inherit",
   });
 
@@ -208,7 +213,7 @@ async function serveDaemon(port: number, host: string, noOpen: boolean): Promise
   const logFd = openSync(logPath, "a", 0o600);
   let child: ChildProcess;
   try {
-    child = spawn(process.execPath, [new URL("./server.js", import.meta.url).pathname], {
+    child = spawn(process.execPath, [serverScriptPath()], {
       stdio: ["ignore", logFd, logFd],
       detached: true,
       windowsHide: true,

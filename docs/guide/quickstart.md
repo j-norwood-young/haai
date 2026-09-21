@@ -4,7 +4,7 @@ Get HAAI running in under a minute. Three options: npm/npx (no Docker), Docker, 
 
 ## npm / npx (easiest — no Docker)
 
-Requires **Node.js 22+** only:
+Requires **Node.js 24+** only:
 
 ```bash
 npx @jasony/haai serve

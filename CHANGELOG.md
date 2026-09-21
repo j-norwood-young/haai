@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- ⚠️ HAAI now requires **Node.js 24 or newer** (previously 22). The `haai` bin refuses to start on older versions, `engines` is `>=24.0.0`, the Docker images use `node:24-alpine`, and the package is built for the `node24` target.
+
+### Fixed
+
+- `haai` failed to start on Windows with `ERR_UNSUPPORTED_ESM_URL_SCHEME`: the bin shim handed a `C:\…` path (rather than a `file://` URL) to `import()`. `haai serve`'s background/foreground server launch had the same Windows path problem.
+
 ## [0.4.0] - 2026-09-21
 
 ### Added

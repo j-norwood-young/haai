@@ -3,9 +3,7 @@
  * `haai` bin shim — hard-gates the Node version, then hands every invocation
  * (including `serve`) to the bundled CLI.
  */
-import { fileURLToPath } from "node:url";
-
-const MIN_NODE_MAJOR = 22;
+const MIN_NODE_MAJOR = 24;
 
 const nodeMajor = Number(process.versions.node.split(".")[0]);
 if (!Number.isFinite(nodeMajor) || nodeMajor < MIN_NODE_MAJOR) {
@@ -16,4 +14,5 @@ if (!Number.isFinite(nodeMajor) || nodeMajor < MIN_NODE_MAJOR) {
   process.exit(1);
 }
 
-await import(fileURLToPath(new URL("../dist/cli.js", import.meta.url)));
+// import() takes a URL, not a path: on Windows fileURLToPath() yields `C:\…`, which the ESM loader rejects.
+await import(new URL("../dist/cli.js", import.meta.url).href);

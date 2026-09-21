@@ -11,7 +11,7 @@
  * the `haai plugin install` leg (CI enables it on Linux only).
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import process from "node:process";
@@ -80,6 +80,23 @@ async function pollHealth(timeoutMs = 90_000) {
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`Server did not become healthy within ${timeoutMs}ms`);
+}
+
+async function isHealthy() {
+  try {
+    return (await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(1_500) })).ok;
+  } catch {
+    return false;
+  }
+}
+
+async function waitUntilDown(timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!(await isHealthy())) return true;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return false;
 }
 
 function findTarball() {
@@ -251,10 +268,42 @@ try {
     }
   });
 
+  // `haai serve` daemonizes by default; exercise the detach → healthy → `haai stop` round trip
+  // (the piece most likely to differ per OS: detached spawn, PID file, signalling).
+  await step("haai serve daemonizes and haai stop stops it", async () => {
+    assert(await waitUntilDown(), "port still busy after stopping the server");
+    const env = { HAAI_DATA_DIR: dataDir };
+    const started = runBin(
+      "haai",
+      ["serve", "--no-open", "--port", String(PORT)],
+      env,
+      { cwd: dataDir, timeoutMs: 120_000 },
+    );
+    assert(started.status === 0, `haai serve failed:\n${started.stdout}\n${started.stderr}`);
+    assert(await isHealthy(), "server not healthy after `haai serve` returned");
+    assert(existsSync(join(dataDir, "haai.pid")), "haai.pid not written");
+
+    const again = runBin("haai", ["serve", "--no-open", "--port", String(PORT)], env, { cwd: dataDir });
+    assert(
+      again.status === 0 && /already running/i.test(again.stdout),
+      `second serve should report already running:\n${again.stdout}\n${again.stderr}`,
+    );
+
+    const stopped = runBin("haai", ["stop"], env, { cwd: dataDir });
+    assert(stopped.status === 0, `haai stop failed:\n${stopped.stdout}\n${stopped.stderr}`);
+    assert(await waitUntilDown(), "server still answering after `haai stop`");
+    assert(!existsSync(join(dataDir, "haai.pid")), "haai.pid not removed by `haai stop`");
+  });
+
   console.log(`\nSmoke test PASSED (${stepResults.filter((r) => r.ok).length} checks)`);
 } catch {
   console.log(`\nSmoke test FAILED — server logs (tail):`);
   console.log(serverLogs.slice(-40).join(""));
+  const daemonLog = join(dataDir, "logs", "haai.log");
+  if (existsSync(daemonLog)) {
+    console.log(`\nDaemon log (tail):`);
+    console.log(readFileSync(daemonLog, "utf8").split("\n").slice(-40).join("\n"));
+  }
   if (server && server.exitCode === null && !IS_WIN) server.kill("SIGKILL");
   process.exitCode = 1;
 } finally {

@@ -4,7 +4,7 @@ This guide is for **contributors** working on the HAAI source tree. End users ru
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 24+
 - pnpm 9+ (version must match `packageManager` in the root `package.json`)
 - Build tools for `better-sqlite3` (`python3`, `g++`, `node-gyp`)
 

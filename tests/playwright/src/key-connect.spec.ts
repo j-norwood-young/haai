@@ -80,7 +80,7 @@ test.describe("API key Connect modal", () => {
     await page.getByTestId("connect-lang-python").click();
     await expect(example).toContainText('"model": "pw-plugins-chat"');
     await page.getByTestId("connect-lang-haai").click();
-    await expect(example).toContainText('-m "pw-plugins-chat"');
+    await expect(example).toContainText("-m 'pw-plugins-chat'");
   });
 
   test("Endpoint, Model and the example live together in a sandbox below the API key", async ({
