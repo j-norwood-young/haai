@@ -1,4 +1,4 @@
-import { buildHaaiModelsCommand, buildHaaiPromptCommand } from "./chat.js";
+import { buildHaaiModelsCommand, buildHaaiPromptCommand, shellQuote } from "./chat.js";
 
 export type ExampleLanguage = "haai" | "curl" | "javascript" | "python";
 export type ExampleOperation = "chat" | "embeddings" | "models";
@@ -155,10 +155,6 @@ function literal(value: unknown, d: Dialect, indent = ""): string {
   }
   const fields = entries.map(([k, v]) => `${inner}${d.key(k)}: ${literal(v, d, inner)},`);
   return `{\n${fields.join("\n")}\n${indent}}`;
-}
-
-function shellQuote(value: string): string {
-  return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
 function renderCurl(r: Request, apiKey: string): string {

@@ -3,6 +3,11 @@ export function buildChatCompletionUrl(baseUrl: string): string {
   return `${baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
 }
 
+/** Single-quote a value for POSIX shells so `!`, `$` and backticks are not expanded. */
+export function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
 /** Shell command to send a test prompt via the haai CLI. */
 export function buildHaaiPromptCommand(
   baseUrl: string,
@@ -13,10 +18,10 @@ export function buildHaaiPromptCommand(
 ): string {
   const parts = [
     "haai prompt",
-    JSON.stringify(message),
-    `-u ${JSON.stringify(baseUrl.replace(/\/$/, ""))}`,
-    `-k ${JSON.stringify(apiKey)}`,
-    `-m ${JSON.stringify(modelId)}`,
+    shellQuote(message),
+    `-u ${shellQuote(baseUrl.replace(/\/$/, ""))}`,
+    `-k ${shellQuote(apiKey)}`,
+    `-m ${shellQuote(modelId)}`,
   ];
   if (!stream) parts.push("--no-stream");
   return parts.join(" \\\n  ");
@@ -26,7 +31,7 @@ export function buildHaaiPromptCommand(
 export function buildHaaiModelsCommand(baseUrl: string, apiKey: string): string {
   return [
     "haai models",
-    `-u ${JSON.stringify(baseUrl.replace(/\/$/, ""))}`,
-    `-k ${JSON.stringify(apiKey)}`,
+    `-u ${shellQuote(baseUrl.replace(/\/$/, ""))}`,
+    `-k ${shellQuote(apiKey)}`,
   ].join(" \\\n  ");
 }

@@ -103,7 +103,7 @@ haai user set-password --username jason --password '...'
 ### Inference
 
 ```bash
-haai prompt "Hello!" -k haai-sk-... -m smart-chat
+haai prompt 'Hello!' -k haai-sk-... -m smart-chat
 haai models -k haai-sk-...
 ```
 
