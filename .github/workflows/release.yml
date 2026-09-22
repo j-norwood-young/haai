@@ -28,7 +28,7 @@ jobs:
       - run: pnpm --filter @jasony/haai package
       - name: Set version from tag
         working-directory: packages/app
-        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - name: Upgrade npm for OIDC trusted publishing
         run: npm install -g npm@latest
       - name: Publish with provenance

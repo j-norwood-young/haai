@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-22
+
+### Fixed
+
+- The GitHub Actions release workflow failed to publish `v0.4.0` to npm: it tried to set `packages/app`'s version to match the tag, but the version was already bumped by the release commit, and `npm version` refuses to no-op. The workflow now passes `--allow-same-version`.
+
 ## [0.4.0] - 2026-09-21
 
 ### Added
