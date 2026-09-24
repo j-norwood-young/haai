@@ -37,7 +37,10 @@ try {
   runMigrations(dbPath);
   log.info("Database migrations applied");
 } catch (err) {
-  log.warn({ err }, "Migration failed (may already be applied)");
+  // Pending migrations run in one transaction, so a failure leaves the schema entirely un-migrated.
+  log.fatal({ err }, "Database migration failed; refusing to start against an outdated schema");
+  await new Promise<void>((resolve) => log.flush(() => resolve()));
+  process.exit(1);
 }
 
 // Master encryption key
