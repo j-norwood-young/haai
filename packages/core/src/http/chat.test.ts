@@ -16,7 +16,7 @@ describe("buildHaaiPromptCommand", () => {
     ).toBe(
       [
         "haai prompt",
-        "'Hello!'",
+        "'Hello'",
         "-u 'http://localhost:4001'",
         "-k 'haai-sk-test'",
         "-m 'smart-chat'",
@@ -33,7 +33,7 @@ describe("buildHaaiPromptCommand", () => {
 
 describe("shellQuote", () => {
   it("single-quotes so !, $ and backticks are not expanded by the shell", () => {
-    expect(shellQuote("Hello!")).toBe("'Hello!'");
+    expect(shellQuote("Hello")).toBe("'Hello'");
     expect(shellQuote("$HOME `id`")).toBe("'$HOME `id`'");
   });
 

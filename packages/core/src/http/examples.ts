@@ -83,7 +83,7 @@ function buildRequest(operation: ExampleOperation, p: ExampleParams): Request {
         stream,
         body: {
           model,
-          messages: [{ role: "user", content: p.message ?? "Hello!" }],
+          messages: [{ role: "user", content: p.message ?? "Hello" }],
           stream,
         },
       };
@@ -271,7 +271,7 @@ export function buildExample(
         params.baseUrl,
         params.apiKey,
         params.modelId ?? "",
-        params.message ?? "Hello!",
+        params.message ?? "Hello",
         request.stream,
       );
     case "curl":

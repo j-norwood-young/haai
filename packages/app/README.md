@@ -50,7 +50,7 @@ Then call it like any OpenAI endpoint:
 curl http://localhost:4000/v1/chat/completions \
   -H "Authorization: Bearer haai-sk-YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model": "smart-chat", "messages": [{"role": "user", "content": "Hello!"}]}'
+  -d '{"model": "smart-chat", "messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
 Create keys with `haai key create --name "my-app"`.

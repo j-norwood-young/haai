@@ -13,7 +13,7 @@ export function buildHaaiPromptCommand(
   baseUrl: string,
   apiKey: string,
   modelId: string,
-  message = "Hello!",
+  message = "Hello",
   stream = true,
 ): string {
   const parts = [

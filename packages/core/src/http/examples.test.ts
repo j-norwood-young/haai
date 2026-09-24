@@ -49,7 +49,7 @@ describe("buildExample", () => {
 
   it("builds the haai chat command", () => {
     expect(buildExample("haai", "chat", base)).toBe(
-      ["haai prompt", "'Hello!'", "-u 'http://localhost:4001'", "-k 'haai-sk-test'", "-m 'smart-chat'"].join(
+      ["haai prompt", "'Hello'", "-u 'http://localhost:4001'", "-k 'haai-sk-test'", "-m 'smart-chat'"].join(
         " \\\n  ",
       ),
     );
@@ -68,7 +68,7 @@ describe("buildExample", () => {
         "curl -N 'http://localhost:4001/v1/chat/completions'",
         "-H 'Content-Type: application/json'",
         "-H 'Authorization: Bearer haai-sk-test'",
-        `-d '{"model":"smart-chat","messages":[{"role":"user","content":"Hello!"}],"stream":true}'`,
+        `-d '{"model":"smart-chat","messages":[{"role":"user","content":"Hello"}],"stream":true}'`,
       ].join(" \\\n  "),
     );
   });
