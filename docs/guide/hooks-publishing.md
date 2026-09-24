@@ -31,7 +31,7 @@ my-haai-hook/
     }
   },
   "dependencies": {
-    "@haai/hooks-sdk": "^0.4.1"
+    "@haai/hooks-sdk": "^0.4.2"
   }
 }
 ```

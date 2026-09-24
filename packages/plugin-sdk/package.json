@@ -1,6 +1,6 @@
 {
   "name": "@haai/plugin-sdk",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "SDK for authoring haai plugins",
   "type": "module",
   "exports": {

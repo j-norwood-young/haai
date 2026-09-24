@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-09-24
+
+### Fixed
+
+- Upgrading an older install could fail to migrate the database when several backends shared a host name: migrations `0010` and `0011` add unique indexes on `host_name` and couldn't create them over duplicates. Both migrations now dedupe first, keeping the oldest backend's host name and renaming the rest to `<host_name>-<backend name>`. This also repairs databases that already applied the original `0010`.
+- HAAI no longer starts when database migrations fail. Previously it logged a warning ("may already be applied") and kept running against an outdated schema. It now logs a fatal error and exits.
+
+### Changed
+
+- The default message in the example prompt commands (and the matching docs) is now `Hello` rather than `Hello!`.
+
 ## [0.4.1] - 2026-09-22
 
 ### Fixed
@@ -134,9 +145,11 @@ Initial public release of haai (HAAI): a streaming reverse proxy for OpenAI-comp
 - Example plugins (e.g. system-prompt injection, token compression, vLLM compatibility fixes)
 
 [0.2.3]: https://github.com/j-norwood-young/haai/compare/v0.2.2...v0.2.3
+[0.4.2]: https://github.com/j-norwood-young/haai/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/j-norwood-young/haai/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/j-norwood-young/haai/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/j-norwood-young/haai/compare/v0.2.3...v0.3.0
-[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/j-norwood-young/haai/compare/v0.4.2...HEAD
 [0.2.2]: https://github.com/j-norwood-young/haai/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/j-norwood-young/haai/compare/v0.1.0...v0.2.1
 [0.1.0]: https://github.com/j-norwood-young/haai/releases/tag/v0.1.0
